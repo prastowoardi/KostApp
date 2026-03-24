@@ -4,28 +4,56 @@ import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
-const API_URL = "URL_NGROK_KAMU/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
 
     const fetchAdminData = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            // Ganti ke endpoint admin kamu nanti
+            // Pastikan endpoint /admin/stats sudah dibuat di Laravel
             const response = await axios.get(`${API_URL}/admin/stats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setStats(response.data);
         } catch (error) {
-            console.log("Error Admin:", error.message);
+            console.log("Error Fetch Data:", error.message);
+            // Fallback data jika API belum siap (untuk testing UI)
+            setStats({
+                total_rooms: 24,
+                occupied_rooms: 20,
+                vacant_rooms: 4,
+                monthly_income: 28500000,
+                latest_complaints: [
+                    { id: 1, room: "B-04", user: "Budi", issue: "AC Tidak Dingin", status: "Urgent" },
+                    { id: 2, room: "A-10", user: "Siti", issue: "Air Kamar Mandi Bocor", status: "Pending" }
+                ]
+            });
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchAdminData();
     };
 
     const handleLogout = async () => {
@@ -38,135 +66,261 @@ export default function AdminDashboard() {
         ]);
     };
 
-    useEffect(() => { fetchAdminData(); }, []);
+    useEffect(() => {
+        fetchAdminData();
+    }, []);
 
-    if (loading) return <ActivityIndicator size="large" color="#4e73df" style={{flex:1}} />;
+    if (loading) {
+        return (
+            <View style={styles.loadingWrap}>
+                <ActivityIndicator size="large" color="#4e73df" />
+                <Text style={{marginTop: 10, color: '#858796'}}>Memuat Data Admin...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                showsVerticalScrollIndicator={false}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 
-                {/* HEADER ADMIN */}
-                <LinearGradient colors={['#1a2a6c', '#b21f1f', '#fdbb2d']} start={{x:0, y:0}} end={{x:1, y:0}} style={styles.header}>
+                {/* HEADER DENGAN GRADASI */}
+                <LinearGradient 
+                    colors={['#1a2a6c', '#b21f1f', '#fdbb2d']} 
+                    start={{x:0, y:0}} 
+                    end={{x:1, y:0}} 
+                    style={styles.header}
+                >
                     <View style={styles.headerTop}>
                         <View>
-                            <Text style={styles.adminTag}>Administrator</Text>
-                            <Text style={styles.userName}>Super Admin 👋</Text>
+                            <Text style={styles.adminTag}>Administrator Panel</Text>
+                            <Text style={styles.userName}>Owner Kost 👋</Text>
                         </View>
                         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-                            <Ionicons name="power" size={22} color="white" />
+                            <Ionicons name="log-out-outline" size={24} color="white" />
                         </TouchableOpacity>
                     </View>
 
-                    {/* STATS OVERVIEW */}
+                    {/* RINGKASAN STATISTIK */}
                     <View style={styles.statsRow}>
-                        <StatItem label="Total Kamar" value="24" icon="business" />
-                        <StatItem label="Terisi" value="20" icon="people" />
-                        <StatItem label="Kosong" value="4" icon="log-out" />
+                        <StatItem label="Kamar" value={stats?.total_rooms} icon="business" />
+                        <StatItem label="Terisi" value={stats?.occupied_rooms} icon="people" />
+                        <StatItem label="Kosong" value={stats?.vacant_rooms} icon="log-out" />
                     </View>
                 </LinearGradient>
 
                 <View style={styles.content}>
-                    {/* RINGKASAN KEUANGAN */}
-                    <Text style={styles.sectionTitle}>Keuangan Bulan Ini</Text>
-                    <View style={styles.incomeCard}>
+                    
+                    {/* CARD KEUANGAN */}
+                    <Text style={styles.sectionTitle}>Status Keuangan</Text>
+                    <TouchableOpacity 
+                        style={styles.incomeCard}
+                        onPress={() => Alert.alert("Laporan", "Menuju detail laporan keuangan...")}
+                    >
                         <View>
-                            <Text style={styles.incomeLabel}>Pendapatan Masuk</Text>
-                            <Text style={styles.incomeValue}>Rp 28.500.000</Text>
+                            <Text style={styles.incomeLabel}>Pendapatan Bulan Ini</Text>
+                            <Text style={styles.incomeValue}>
+                                Rp {(stats?.monthly_income || 0).toLocaleString('id-ID')}
+                            </Text>
                         </View>
-                        <Ionicons name="trending-up" size={30} color="#1cc88a" />
-                    </View>
+                        <View style={styles.incomeIconWrap}>
+                            <Ionicons name="trending-up" size={28} color="#1cc88a" />
+                        </View>
+                    </TouchableOpacity>
 
-                    {/* PANEL KONTROL */}
+                    {/* MENU UTAMA (CONTROL PANEL) */}
                     <Text style={styles.sectionTitle}>Manajemen Properti</Text>
-                    <View style={styles.gridMenu}>
-                        <ControlBtn title="Kamar" icon="bed-outline" color="#4e73df" />
-                        <ControlBtn title="Tenant" icon="people-outline" color="#1cc88a" />
-                        <ControlBtn title="Tagihan" icon="card-outline" color="#f6c23e" />
-                        <ControlBtn title="Laporan" icon="bar-chart-outline" color="#e74a3b" />
-                    </View>
+                    <ScrollView 
+                        horizontal={true} 
+                        showsHorizontalScrollIndicator={false} 
+                        contentContainerStyle={styles.horizontalMenu}
+                    >
+                        <ControlBtn 
+                            title="Verifikasi" 
+                            icon="shield-checkmark" 
+                            color="#1cc88a" 
+                            onPress={() => router.push('/admin/verify-payment')} 
+                        />
+                        <ControlBtn 
+                            title="Komplain" 
+                            icon="chatbubbles-outline" 
+                            color="#f6c23e" 
+                            onPress={() => router.push('/admin/complaints')}
+                        />
+                        <ControlBtn 
+                            title="Kamar" 
+                            icon="bed" 
+                            color="#4e73df" 
+                            onPress={() => Alert.alert("Info", "Fitur Kelola Kamar")} 
+                        />
+                        <ControlBtn 
+                            title="Tenant" 
+                            icon="people" 
+                            color="#36b9cc" 
+                            onPress={() => router.push('/admin/manage-tenant')}
+                        />
+                        <ControlBtn 
+                            title="Tagihan" 
+                            icon="receipt" 
+                            color="#f6c23e" 
+                            onPress={() => Alert.alert("Info", "Fitur Kirim Tagihan")} 
+                        />
+                    </ScrollView>
 
-                    {/* DAFTAR KELUHAN (URGENT) */}
+                    {/* DAFTAR KELUHAN TERBARU */}
                     <View style={styles.complaintHeader}>
                         <Text style={styles.sectionTitle}>Keluhan Tenant</Text>
-                        <Text style={styles.seeAll}>Lihat Semua</Text>
+                        <TouchableOpacity onPress={() => router.push('/admin/complaints')}>
+                            <Text style={styles.seeAll}>Lihat Semua</Text>
+                        </TouchableOpacity>
                     </View>
 
-                    <ComplaintCard 
-                        room="Kamar B-04" 
-                        user="Budi" 
-                        issue="AC Tidak Dingin" 
-                        status="Urgent" 
-                    />
-                    <ComplaintCard 
-                        room="Kamar A-10" 
-                        user="Siti" 
-                        issue="Air Kamar Mandi Bocor" 
-                        status="Pending" 
-                    />
+                    {stats?.latest_complaints?.length > 0 ? (
+                        stats.latest_complaints.map((item, index) => (
+                            <ComplaintCard 
+                                key={index}
+                                room={item.room} 
+                                user={item.user} 
+                                issue={item.issue} 
+                                status={item.status} 
+                            />
+                        ))
+                    ) : (
+                        <View style={styles.emptyBox}>
+                            <Text style={styles.emptyText}>Tidak ada keluhan aktif.</Text>
+                        </View>
+                    )}
+
                 </View>
-                <View style={{height: 30}} />
+                <View style={{height: 40}} />
             </ScrollView>
         </View>
     );
 }
 
-// Komponen Pendukung
+// --- KOMPONEN PENDUKUNG ---
+
 const StatItem = ({ label, value, icon }) => (
     <View style={styles.statItem}>
-        <Ionicons name={icon} size={18} color="white" style={{opacity: 0.8}} />
+        <View style={styles.statIconCircle}>
+            <Ionicons name={icon} size={20} color="white" />
+        </View>
         <Text style={styles.statValue}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
     </View>
 );
 
-const ControlBtn = ({ title, icon, color }) => (
-    <TouchableOpacity style={styles.controlBtn}>
+const ControlBtn = ({ title, icon, color, onPress }) => (
+    <TouchableOpacity style={styles.controlBtn} onPress={onPress}>
         <View style={[styles.iconWrap, {backgroundColor: color}]}>
-            <Ionicons name={icon} size={24} color="white" />
+            <Ionicons name={icon} size={26} color="white" />
         </View>
         <Text style={styles.controlText}>{title}</Text>
     </TouchableOpacity>
 );
 
 const ComplaintCard = ({ room, user, issue, status }) => (
-    <View style={styles.cCard}>
-        <View style={{flex: 1}}>
-            <Text style={styles.cRoom}>{room} - {user}</Text>
-            <Text style={styles.cIssue}>{issue}</Text>
+    <TouchableOpacity style={styles.cCard}>
+        <View style={styles.cIconInfo}>
+            <Ionicons name="warning" size={24} color={status === 'Urgent' ? '#e74a3b' : '#f6c23e'} />
         </View>
-        <View style={[styles.badge, {backgroundColor: status === 'Urgent' ? '#e74a3b' : '#f6c23e'}]}>
-            <Text style={styles.badgeText}>{status}</Text>
+        <View style={{flex: 1, marginLeft: 10}}>
+            <Text style={styles.cRoom}>Kamar {room} • {user}</Text>
+            <Text style={styles.cIssue} numberOfLines={1}>{issue}</Text>
         </View>
-    </View>
+        <Ionicons name="chevron-forward" size={18} color="#ccc" />
+    </TouchableOpacity>
 );
 
+// --- STYLING ---
+
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f4f6f9' },
-    header: { paddingHorizontal: 25, paddingTop: 60, paddingBottom: 40, borderBottomLeftRadius: 35, borderBottomRightRadius: 35 },
-    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 },
-    adminTag: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase' },
-    userName: { color: 'white', fontSize: 24, fontWeight: 'bold' },
-    logoutBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 10, borderRadius: 12 },
-    statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    statItem: { alignItems: 'center', width: '30%' },
-    statValue: { color: 'white', fontSize: 20, fontWeight: 'bold', marginTop: 5 },
-    statLabel: { color: 'white', fontSize: 10, opacity: 0.8 },
-    content: { paddingHorizontal: 25, marginTop: 20 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50', marginVertical: 15 },
-    incomeCard: { backgroundColor: 'white', borderRadius: 20, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 4 },
-    incomeLabel: { color: '#858796', fontSize: 13 },
-    incomeValue: { fontSize: 22, fontWeight: 'bold', color: '#1cc88a' },
-    gridMenu: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    controlBtn: { width: '23%', alignItems: 'center', marginBottom: 15 },
-    iconWrap: { padding: 15, borderRadius: 15, marginBottom: 8, elevation: 3 },
-    controlText: { fontSize: 11, fontWeight: '600', color: '#4e73df' },
-    complaintHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    seeAll: { color: '#4e73df', fontSize: 12, fontWeight: 'bold' },
-    cCard: { backgroundColor: 'white', padding: 15, borderRadius: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 10, borderLeftWidth: 4, borderLeftColor: '#4e73df' },
-    cRoom: { fontWeight: 'bold', color: '#2c3e50', fontSize: 14 },
-    cIssue: { color: '#858796', fontSize: 12, marginTop: 2 },
-    badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-    badgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' }
+    container: { flex: 1, backgroundColor: '#f8f9fc' },
+    loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    header: { 
+        paddingHorizontal: 25, 
+        paddingTop: 60, 
+        paddingBottom: 35, 
+        borderBottomLeftRadius: 35, 
+        borderBottomRightRadius: 35,
+        elevation: 10
+    },
+    headerTop: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 30 
+    },
+    adminTag: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+    userName: { color: 'white', fontSize: 26, fontWeight: 'bold' },
+    logoutBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 12, borderRadius: 15 },
+    statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 },
+    statItem: { alignItems: 'center' },
+    statIconCircle: { backgroundColor: 'rgba(255,255,255,0.15)', padding: 10, borderRadius: 50, marginBottom: 5 },
+    statValue: { color: 'white', fontSize: 22, fontWeight: 'bold' },
+    statLabel: { color: 'white', fontSize: 11, opacity: 0.9, fontWeight: '500' },
+    content: { paddingHorizontal: 25, marginTop: 25 },
+    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50', marginBottom: 15, marginTop: 10 },
+    incomeCard: { 
+        backgroundColor: 'white', 
+        borderRadius: 22, 
+        padding: 22, 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10
+    },
+    incomeLabel: { color: '#858796', fontSize: 14, fontWeight: '500' },
+    incomeValue: { fontSize: 24, fontWeight: 'bold', color: '#1cc88a', marginTop: 5 },
+    incomeIconWrap: { backgroundColor: '#f0fff4', padding: 12, borderRadius: 15 },
+    gridMenu: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 5 },
+    horizontalMenu: {
+        paddingLeft: 0,
+        paddingRight: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingVertical: 10,
+    },
+    controlBtn: { 
+        width: 80,
+        alignItems: 'center', 
+        marginRight: 15,
+    },
+    iconWrap: { 
+        width: 60, 
+        height: 60, 
+        borderRadius: 20, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+    },
+    controlText: { fontSize: 12, fontWeight: '700', color: '#4e73df', marginTop: 8 },
+    complaintHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
+    seeAll: { color: '#4e73df', fontSize: 13, fontWeight: 'bold' },
+    cCard: { 
+        backgroundColor: 'white', 
+        padding: 18, 
+        borderRadius: 18, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        marginBottom: 12,
+        borderLeftWidth: 5,
+        borderLeftColor: '#4e73df',
+        elevation: 2
+    },
+    cIconInfo: { padding: 5 },
+    cRoom: { fontWeight: 'bold', color: '#2c3e50', fontSize: 15 },
+    cIssue: { color: '#858796', fontSize: 13, marginTop: 3 },
+    emptyBox: { alignItems: 'center', padding: 30 },
+    emptyText: { color: '#ccc', fontStyle: 'italic' }
 });

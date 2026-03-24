@@ -2,86 +2,190 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+    ActivityIndicator,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import GlobalAlert from '../components/GlobalAlert';
 
-const API_URL = "http://192.168.1.235:8000/api"; 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'success',
+        onConfirm: () => {}
+    });
 
     const router = useRouter();
 
+    const showAlert = (title, message, type = 'success', onConfirm = null) => {
+        setAlertConfig({ 
+            visible: true, 
+            title, 
+            message, 
+            type, 
+            onConfirm: onConfirm || (() => setAlertConfig(prev => ({ ...prev, visible: false })))
+        });
+    };
+
     const handleLogin = async () => {
         if (!email || !password) {
-            return Alert.alert("Eits!", "Email dan Password harus diisi.");
+            return showAlert("Opps!", "Email dan Password tidak boleh kosong.", "warning");
         }
 
         try {
+            setLoading(true);
             const response = await axios.post(`${API_URL}/login`, {
                 email: email,
                 password: password
+            }, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': '69420'
+                }
             });
 
             if (response.data.token) {
-                await AsyncStorage.setItem('userToken', response.data.token);
-                await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
-                
-                const userRole = response.data.user.role;
-                await AsyncStorage.setItem('userRole', userRole);
+                const { token, user } = response.data;
 
-                Alert.alert("Berhasil", `Halo ${response.data.user.name}, kamu berhasil login!`);
+                await AsyncStorage.setItem('userToken', token);
+                await AsyncStorage.setItem('userData', JSON.stringify(user));
+                await AsyncStorage.setItem('userRole', user.role);
 
-                if (userRole === 'admin') {
-                    router.replace('/admin/dashboard');
-                } else {
-                    router.replace('/tenant/dashboard');
-                }
+                showAlert(
+                    "Berhasil Masuk", 
+                    `Selamat datang kembali, ${user.name}!`, 
+                    "success", 
+                    () => {
+                        setAlertConfig(prev => ({ ...prev, visible: false }));
+                        if (user.role === 'admin') {
+                            router.replace('/admin/dashboard');
+                        } else {
+                            router.replace('/tenant/dashboard');
+                        }
+                    }
+                );
             }
         } catch (error) {
             console.log("Error Login:", error.response ? error.response.data : error.message);
-            Alert.alert("Login Gagal", "Pastikan Email/Password benar!");
+            showAlert(
+                "Login Gagal", 
+                error.response?.data?.message || "Email atau Password salah, periksa kembali!", 
+                "error"
+            );
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.logo}>Serrata Kost</Text>
+            <StatusBar barStyle="dark-content" />
+            
+            <View style={styles.headerArea}>
+                <Text style={styles.logo}>Serrata Kost</Text>
+                <Text style={styles.tagline}>Manajemen kos jadi lebih mudah</Text>
+            </View>
             
             <View style={styles.card}>
+                <Text style={styles.label}>Email</Text>
                 <TextInput 
                     style={styles.input} 
-                    placeholder="Email" 
+                    placeholder="Masukkan email anda" 
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    editable={!loading}
                 />
 
+                <Text style={styles.label}>Password</Text>
                 <TextInput 
                     style={styles.input} 
-                    placeholder="Password" 
+                    placeholder="Masukkan password" 
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry 
+                    editable={!loading}
                 />
 
-                <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>MASUK</Text>
+                <TouchableOpacity 
+                    style={[styles.button, loading && { opacity: 0.7 }]} 
+                    onPress={handleLogin}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>MASUK KE AKUN</Text>
+                    )}
                 </TouchableOpacity>
             </View>
 
             <Text style={styles.footer}>© 2026 Serrata Management</Text>
+
+            {/* Render Custom Alert */}
+            <GlobalAlert 
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={alertConfig.onConfirm}
+            />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', padding: 25, backgroundColor: '#f5f6fa' },
-    logo: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 30, color: '#2c3e50' },
-    card: { backgroundColor: 'white', padding: 20, borderRadius: 15, elevation: 5, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
-    input: { borderBottomWidth: 1, borderBottomColor: '#ddd', padding: 12, marginBottom: 20, fontSize: 16 },
-    button: { backgroundColor: '#3498db', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
-    buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-    footer: { textAlign: 'center', marginTop: 50, color: '#95a5a6', fontSize: 12 }
+    container: { flex: 1, justifyContent: 'center', padding: 25, backgroundColor: '#f8f9fa' },
+    headerArea: { marginBottom: 40 },
+    logo: { fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: '#1a2a6c' },
+    tagline: { fontSize: 14, textAlign: 'center', color: '#7f8c8d', marginTop: 5 },
+    card: { 
+        backgroundColor: 'white', 
+        padding: 25, 
+        borderRadius: 20, 
+        elevation: 8, 
+        shadowColor: '#000', 
+        shadowOpacity: 0.1, 
+        shadowRadius: 15,
+        shadowOffset: { width: 0, height: 5 }
+    },
+    label: { fontSize: 13, fontWeight: 'bold', color: '#34495e', marginBottom: 8 },
+    input: { 
+        backgroundColor: '#f1f3f9',
+        borderRadius: 12,
+        padding: 15, 
+        marginBottom: 20, 
+        fontSize: 16,
+        color: '#2c3e50',
+        borderWidth: 1,
+        borderColor: '#e1e8ef'
+    },
+    button: { 
+        backgroundColor: '#1a2a6c', 
+        padding: 18, 
+        borderRadius: 12, 
+        alignItems: 'center', 
+        marginTop: 10,
+        shadowColor: '#1a2a6c',
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 5
+    },
+    buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
+    footer: { textAlign: 'center', marginTop: 50, color: '#bdc3c7', fontSize: 12 }
 });

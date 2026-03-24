@@ -94,7 +94,7 @@ export default function TenantDashboard() {
                     <Text style={styles.sectionTitle}>Layanan Tenant</Text>
                     <View style={styles.menuGrid}>
                         <ActionMenu icon="receipt-outline" title="Riwayat" color="#4e73df" />
-                        <ActionMenu icon="chatbubble-ellipses-outline" title="Komplain" color="#f6c23e" />
+                        <ActionMenu icon="chatbubble-ellipses-outline" title="Komplain" color="#f6c23e" onPress={() => router.push('/tenant/report')} />
                         <ActionMenu icon="shield-checkmark-outline" title="Peraturan" color="#1cc88a" />
                         <ActionMenu icon="settings-outline" title="Profil" color="#858796" />
                     </View>
@@ -114,8 +114,8 @@ export default function TenantDashboard() {
     );
 }
 
-const ActionMenu = ({ icon, title, color }) => (
-    <TouchableOpacity style={styles.menuItem}>
+const ActionMenu = ({ icon, title, color , onPress}) => (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
         <View style={[styles.iconCircle, { backgroundColor: color + '20' }]}>
             <Ionicons name={icon} size={26} color={color} />
         </View>

@@ -148,7 +148,7 @@ export default function AdminDashboard() {
                             title="Komplain" 
                             icon="chatbubbles-outline" 
                             color="#f6c23e" 
-                            onPress={() => router.push('/admin/complaints')}
+                            onPress={() => router.push('/admin/complaint')}
                         />
                         <ControlBtn 
                             title="Kamar" 

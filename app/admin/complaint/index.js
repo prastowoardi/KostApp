@@ -8,7 +8,9 @@ import {
     ActivityIndicator,
     Alert,
     FlatList,
+    Image,
     Modal,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -20,6 +22,8 @@ import {
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function AdminComplaints() {
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [selectedImg, setSelectedImg] = useState(null);
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -31,11 +35,19 @@ export default function AdminComplaints() {
         try {
             const token = await AsyncStorage.getItem('userToken');
             const response = await axios.get(`${API_URL}/admin/complaints`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    "ngrok-skip-browser-warning": "69420" 
+                }
             });
-            setComplaints(response.data);
+
+            console.log("ISI DATA DARI LARAVEL:", response.data);
+
+            if (response.data && response.data.data) {
+                setComplaints(response.data.data);
+            }
         } catch (error) {
-            console.log("Error:", error.message);
+            console.log("ERRORNYA APA:", error.message);
         } finally {
             setLoading(false);
         }
@@ -76,7 +88,7 @@ export default function AdminComplaints() {
             }}
         >
             <View style={styles.cardHeader}>
-                <Text style={styles.roomText}>Kamar {item.tenant?.room?.room_number} - {item.tenant?.user?.name}</Text>
+                <Text style={styles.roomText}>Kamar {item.room?.room_number || '-'} • {item.tenant?.name || 'User'}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: item.status === 'pending' ? '#ffeaea' : '#fff4e5' }]}>
                     <Text style={[styles.statusText, { color: item.status === 'pending' ? '#e74a3b' : '#d39e00' }]}>
                         {item.status.toUpperCase()}
@@ -121,6 +133,33 @@ export default function AdminComplaints() {
                 <View style={styles.modalBg}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Respon Laporan</Text>
+                        
+                        {/* --- BAGIAN GAMBAR BARU --- */}
+                        <Text style={styles.modalLabel}>Lampiran Foto:</Text>
+                        <View style={{ marginBottom: 15 }}>
+                            {selectedItem?.images && selectedItem.images.length > 0 ? (
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    {selectedItem.images.map((img, index) => {
+                                        const imgUrl = `${API_URL.replace('/api', '')}/storage/${img.image_path}`;
+                                        return (
+                                            <TouchableOpacity 
+                                                key={index} 
+                                                onPress={() => {
+                                                    setSelectedImg(imgUrl);
+                                                    setPreviewVisible(true);
+                                                }}
+                                            >
+                                                <Image source={{ uri: imgUrl }} style={styles.modalImage} />
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
+                            ) : (
+                                <Text style={styles.noImageText}>Tidak ada foto lampiran</Text>
+                            )}
+                        </View>
+                        {/* ------------------------- */}
+
                         <Text style={styles.modalLabel}>Keluhan:</Text>
                         <Text style={styles.modalDesc}>{selectedItem?.description}</Text>
                         
@@ -153,11 +192,60 @@ export default function AdminComplaints() {
                     </View>
                 </View>
             </Modal>
+            <Modal visible={previewVisible} transparent={true} animationType="fade">
+                <View style={styles.fullImageBg}>
+                    <TouchableOpacity 
+                        style={styles.closePreviewBtn} 
+                        onPress={() => setPreviewVisible(false)}
+                    >
+                        <Ionicons name="close-circle" size={45} color="white" />
+                    </TouchableOpacity>
+                    
+                    {selectedImg && (
+                        <Image 
+                            source={{ uri: selectedImg }} 
+                            style={styles.fullImage} 
+                            resizeMode="contain" 
+                        />
+                    )}
+                </View>
+            </Modal>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    modalImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        marginRight: 10,
+        backgroundColor: '#eee',
+        borderWidth: 1,
+        borderColor: '#ddd'
+    },
+    noImageText: {
+        fontSize: 12,
+        color: '#bdc3c7',
+        fontStyle: 'italic',
+        marginBottom: 10
+    },
+    fullImageBg: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullImage: {
+        width: '100%',
+        height: '80%',
+    },
+    closePreviewBtn: {
+        position: 'absolute',
+        top: 50,
+        right: 30,
+        zIndex: 99,
+    },
     container: { flex: 1, backgroundColor: '#f4f6f9' },
     header: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
     headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

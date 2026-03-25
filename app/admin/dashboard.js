@@ -172,8 +172,8 @@ export default function AdminDashboard() {
 
                     {/* DAFTAR KELUHAN TERBARU */}
                     <View style={styles.complaintHeader}>
-                        <Text style={styles.sectionTitle}>Keluhan Tenant</Text>
-                        <TouchableOpacity onPress={() => router.push('/admin/complaints')}>
+                        <Text style={styles.sectionTitle}>Komplain Penghuni</Text>
+                        <TouchableOpacity onPress={() => router.push('/admin/complaint')}>
                             <Text style={styles.seeAll}>Lihat Semua</Text>
                         </TouchableOpacity>
                     </View>

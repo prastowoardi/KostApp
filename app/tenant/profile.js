@@ -48,7 +48,7 @@ export default function ProfileScreen() {
                     "ngrok-skip-browser-warning": "69420"
                 }
             });
-            console.log("ISI DATA USER DARI SERVER:", JSON.stringify(response.data, null, 2));
+            console.log("User Data:", JSON.stringify(response.data, null, 2));
 
             const userData = response.data.user || response.data;
             setUser(userData);

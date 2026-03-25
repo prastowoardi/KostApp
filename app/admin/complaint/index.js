@@ -41,7 +41,7 @@ export default function AdminComplaints() {
                 }
             });
 
-            console.log("ISI DATA DARI LARAVEL:", response.data);
+            console.log("Complaint Data:", response.data);
 
             if (response.data && response.data.data) {
                 setComplaints(response.data.data);

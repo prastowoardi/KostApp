@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     StatusBar,
     StyleSheet,
     Text,
@@ -12,6 +13,7 @@ import {
     View
 } from 'react-native';
 import GlobalAlert from '../components/GlobalAlert';
+import { registerForPushNotificationsAsync } from '../helpers/notificationHelper';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -42,50 +44,42 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            return showAlert("Opps!", "Email dan Password tidak boleh kosong.", "warning");
+            Alert.alert("Error", "Email dan password harus diisi.");
+            return;
         }
 
+        setLoading(true);
         try {
-            setLoading(true);
-            const response = await axios.post(`${API_URL}/login`, {
+            let pushToken = null;
+            try {
+                pushToken = await registerForPushNotificationsAsync();
+                console.log("Push Token:", pushToken);
+            } catch (tokenError) {
+                console.log("Failed get token :", tokenError.message);
+            }
+
+            const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/login`, {
                 email: email,
-                password: password
-            }, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': '69420'
-                }
+                password: password,
+                push_token: pushToken 
             });
 
-            if (response.data.token) {
+            if (response.data.status === 'success') {
                 const { token, user } = response.data;
 
                 await AsyncStorage.setItem('userToken', token);
                 await AsyncStorage.setItem('userData', JSON.stringify(user));
-                await AsyncStorage.setItem('userRole', user.role);
 
-                showAlert(
-                    "Berhasil Masuk", 
-                    `Selamat datang kembali, ${user.name}!`, 
-                    "success", 
-                    () => {
-                        setAlertConfig(prev => ({ ...prev, visible: false }));
-                        if (user.role === 'admin') {
-                            router.replace('/admin/dashboard');
-                        } else {
-                            router.replace('/tenant/dashboard');
-                        }
-                    }
-                );
+                if (user.role === 'admin') {
+                    router.replace('/admin/dashboard');
+                } else {
+                    router.replace('/tenant/dashboard');
+                }
             }
         } catch (error) {
-            console.log("Error Login:", error.response ? error.response.data : error.message);
-            showAlert(
-                "Login Gagal", 
-                error.response?.data?.message || "Email atau Password salah, periksa kembali!", 
-                "error"
-            );
+            console.log("Error Login:", error.response?.data || error.message);
+            const errorMsg = error.response?.data?.message || "Email atau password salah.";
+            Alert.alert("Login Gagal", errorMsg);
         } finally {
             setLoading(false);
         }

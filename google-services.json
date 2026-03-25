@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "407267775477",
+    "project_id": "kostapp-f1da3",
+    "storage_bucket": "kostapp-f1da3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407267775477:android:8bda912bb6550c521546bc",
+        "android_client_info": {
+          "package_name": "com.moonsky.KostApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdbWEf8sssV75ZH3qF1K8ce29zXtt2gRI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

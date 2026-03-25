@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "KostApp",
+    "name": "Serrata Kost",
     "slug": "KostApp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,6 +22,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "usesCleartextTraffic": true,
+      "package": "com.moonsky.KostApp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -45,6 +47,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e25e49f6-e121-4ac7-8188-3cefe73b3edb"
+      }
+    },
+    "owner": "moonsky"
   }
 }

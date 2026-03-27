@@ -71,35 +71,40 @@ export default function VerifyPayment() {
     };
 
     const handleAction = async (id, status) => {
-        const actionLabel = status === 'success' ? '*MENERIMA*' : '*MENOLAK*';
-        const alertType = status === 'success' ? 'paid' : 'overdue';
+        const apiStatus = status === 'success' ? 'paid' : 'rejected';
         
-        showAlert(
-            "Konfirmasi", 
-            `Apakah Anda yakin ingin ${actionLabel} pembayaran ini?`, 
-            'info',
-            async () => {
-                // Tutup alert dulu baru proses
-                setAlertConfig(prev => ({ ...prev, visible: false }));
+        console.log("Payment ID:", id, "Asking for Status:", apiStatus);
+
+        showAlert("Konfirmasi", `Yakin ingin proses ini?`, 'info', async () => {
+            setAlertConfig(prev => ({ ...prev, visible: false }));
+            setProcessing(true);
+
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+                const url = `${API_URL}/admin/payments/${id}/verify`;
+
+                const response = await axios.post(url, 
+                    { status: apiStatus }, 
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                console.log("Server Response:", response.data);
+                
+                showAlert("Berhasil", "Status telah diperbarui.", "success");
+                fetchPendingPayments();
+            } catch (e) {
+                console.log("FOUND ERROR:");
+                console.log("- Message:", e.message);
+                console.log("- Data:", e.response?.data);
+                
+                showAlert("Gagal", `Error: ${e.response?.data?.message || e.message}`,
+                    "error"
+                );
+            } finally {
                 setProcessing(true);
-                try {
-                    const token = await AsyncStorage.getItem('userToken');
-                    await axios.post(`${API_URL}/admin/payments/${id}/verify`, 
-                        { status: apiStatus }, 
-                        { headers: { Authorization: `Bearer ${token}` }
-                    });
-                    
-                    showAlert("Berhasil", `Status pembayaran diperbarui menjadi ${status}.`, "success");
-                    fetchPendingPayments();
-                } catch (e) {
-                    showAlert("Gagal", "Terjadi kesalahan saat memperbarui status.", 
-                        "error"
-                    );
-                } finally {
-                    setProcessing(false);
-                }
+                setProcessing(false);
             }
-        );
+        });
     };
 
     const renderItem = ({ item }) => (

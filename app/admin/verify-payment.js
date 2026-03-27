@@ -6,7 +6,6 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Dimensions,
     FlatList,
     Image,
@@ -17,10 +16,13 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import GlobalAlert from '../../components/GlobalAlert';
+
 
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-const STORAGE_URL = "process.env.EXPO_PUBLIC_API_URL;:8000/storage/"; // URL publik foto di Laravel
+const BASE_URL = API_URL.replace('/api', ''); 
+const STORAGE_URL = `${BASE_URL}/storage/`;
 
 export default function VerifyPayment() {
     const [payments, setPayments] = useState([]);
@@ -45,27 +47,49 @@ export default function VerifyPayment() {
 
     useEffect(() => { fetchPendingPayments(); }, []);
 
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'success',
+        onConfirm: () => {}
+    });
+
+    const showAlert = (title, message, type = 'success', onConfirm = null) => {
+        setAlertConfig({ 
+            visible: true, title, message, type, 
+            onConfirm: onConfirm || (() => setAlertConfig(prev => ({ ...prev, visible: false })))
+        });
+    };
+
     const handleAction = async (id, status) => {
-        const actionLabel = status === 'success' ? 'MENERIMA' : 'MENOLAK';
+        const actionLabel = status === 'success' ? '*MENERIMA*' : '*MENOLAK*';
+        const alertType = status === 'success' ? 'success' : 'warning';
         
-        Alert.alert("Konfirmasi", `Apakah Anda yakin ingin ${actionLabel} pembayaran ini?`, [
-            { text: "Batal", style: "cancel" },
-            { text: "Ya, Proses", onPress: async () => {
+        showAlert(
+            "Konfirmasi", 
+            `Apakah Anda yakin ingin ${actionLabel} pembayaran ini?`, 
+            alertType,
+            async () => {
+                // Tutup alert dulu baru proses
+                setAlertConfig(prev => ({ ...prev, visible: false }));
                 setProcessing(true);
                 try {
                     const token = await AsyncStorage.getItem('userToken');
                     await axios.post(`${API_URL}/admin/payments/${id}/verify`, { status }, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
-                    Alert.alert("Berhasil", `Status pembayaran diperbarui menjadi ${status}.`);
+                    
+                    // Tampilkan sukses setelah API berhasil
+                    showAlert("Berhasil", `Status pembayaran diperbarui menjadi ${status}.`, "success");
                     fetchPendingPayments();
                 } catch (e) {
-                    Alert.alert("Gagal", "Gagal memperbarui status.");
+                    showAlert("Gagal", "Terjadi kesalahan saat memperbarui status.", "error");
                 } finally {
                     setProcessing(false);
                 }
-            }}
-        ]);
+            }
+        );
     };
 
     const renderItem = ({ item }) => (
@@ -84,11 +108,31 @@ export default function VerifyPayment() {
 
             {/* Tombol Preview Bukti */}
             <TouchableOpacity 
-                style={styles.proofPreview} 
-                onPress={() => setSelectedImg(STORAGE_URL + item.receipt_file)}
+                style={[
+                    styles.proofPreview, 
+                    (!item.receipt_file && !item.proof_of_payment) && { opacity: 0.5 } // Kasih efek pudar kalau ga ada gambar
+                ]} 
+                onPress={() => {
+                    const file = item.receipt_file || item.proof_of_payment;
+                    if (file) {
+                        setSelectedImg(STORAGE_URL + file);
+                    } else {
+                        showAlert(
+                            "Data Kosong", 
+                            "Pembayaran ini (INV: " + item.invoice_number + ") tidak memiliki lampiran bukti foto.",
+                            "error"
+                        );
+                    }
+                }}
             >
-                <Ionicons name="image-outline" size={20} color="#4e73df" />
-                <Text style={styles.proofText}>Lihat Bukti Transfer</Text>
+                <Ionicons 
+                    name={ (item.receipt_file || item.proof_of_payment) ? "image-outline" : "alert-circle-outline" } 
+                    size={20} 
+                    color="#4e73df" 
+                />
+                <Text style={styles.proofText}>
+                    { (item.receipt_file || item.proof_of_payment) ? "Lihat Bukti Transfer" : "Tidak Ada Bukti" }
+                </Text>
             </TouchableOpacity>
 
             <View style={styles.actionButtons}>
@@ -147,7 +191,18 @@ export default function VerifyPayment() {
                     <TouchableOpacity style={styles.closeModal} onPress={() => setSelectedImg(null)}>
                         <Ionicons name="close-circle" size={45} color="white" />
                     </TouchableOpacity>
-                    <Image source={{ uri: selectedImg }} style={styles.fullImage} resizeMode="contain" />
+                    <Image 
+                        source={{ 
+                            uri: selectedImg,
+                            headers: {
+                                'ngrok-skip-browser-warning': '69420'
+                            }
+                        }} 
+                        style={styles.fullImage} 
+                        resizeMode="contain" 
+                        onLoadStart={() => console.log("Get image:", selectedImg)}
+                        onError={(e) => console.log("Failed load image. Error:", e.nativeEvent.error)}
+                    />
                 </View>
             </Modal>
 
@@ -156,6 +211,17 @@ export default function VerifyPayment() {
                     <ActivityIndicator size="large" color="white" />
                 </View>
             )}
+
+            <GlobalAlert 
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+                onConfirm={alertConfig.onConfirm} 
+                confirmText="Ya, Lanjutkan"
+                cancelText="Batal"
+            />
         </View>
     );
 }

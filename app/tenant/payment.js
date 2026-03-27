@@ -4,7 +4,7 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Image,
@@ -23,7 +23,28 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 export default function PaymentScreen() {
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [billData, setBillData] = useState(null);
     const router = useRouter();
+
+    const fetchBillDetail = async () => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
+            const response = await axios.get(`${API_URL}/me`, {
+                headers: { 
+                    'Authorization': `Bearer ${cleanToken}`,
+                    'Accept': 'application/json'
+                }
+            });
+            setBillData(response.data);
+        } catch (error) {
+            console.log("Error Fetch Bill:", error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchBillDetail();
+    }, []);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -112,17 +133,24 @@ export default function PaymentScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.infoCard}>
                     <Text style={styles.infoTitle}>Detail Tagihan</Text>
+                    
                     <View style={styles.row}>
                         <Text style={styles.label}>Bulan</Text>
-                        <Text style={styles.value}>Maret 2026</Text>
+                        <Text style={styles.value}>
+                            {new Date().toLocaleString('id-ID', { month: 'long', year: 'numeric' })}
+                        </Text>
                     </View>
+
                     <View style={styles.row}>
                         <Text style={styles.label}>Total Bayar</Text>
-                        <Text style={[styles.value, {color: '#1cc88a', fontWeight: 'bold'}]}>Rp 1.500.000</Text>
+                        <Text style={[styles.value, {color: '#1cc88a', fontWeight: 'bold'}]}>
+                            Rp {(billData?.bill_amount || 0).toLocaleString('id-ID')}
+                        </Text>
                     </View>
+
                     <View style={styles.divider} />
                     <Text style={styles.bankTitle}>Transfer Ke:</Text>
-                    <Text style={styles.bankInfo}>Bank Mandiri (Serrata Kost)</Text>
+                    <Text style={styles.bankInfo}>Bank Mandiri</Text>
                     <Text style={styles.bankInfo}>No. Rek: 136-001-440-6059</Text>
                     <Text style={styles.bankInfo}>A/N Prastowo Ardi Widigdo</Text>
                 </View>

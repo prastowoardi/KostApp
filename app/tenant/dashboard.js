@@ -17,13 +17,19 @@ export default function TenantDashboard() {
     const fetchData = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
+            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
+
             const response = await axios.get(`${API_URL}/me`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { 
+                    'Authorization': `Bearer ${cleanToken}`,
+                    'Accept': 'application/json' 
+                }
             });
+            
+            console.log("Dashboard Data:", response.data);
             setData(response.data);
         } catch (error) {
-            console.log("Error:", error.message);
-            if (error.response?.status === 401) router.replace('/');
+            console.log("Error Fetch Dashboard:", error.message);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -135,7 +141,7 @@ export default function TenantDashboard() {
                             icon="shield-checkmark-outline" 
                             title="Peraturan" 
                             color="#1cc88a" 
-                            onPress={() => { router.push('/tenant/rules') }}
+                            // onPress={() => { router.push('/tenant/rules') }}
                         />
                         <ActionMenu 
                             icon="wallet-outline" 

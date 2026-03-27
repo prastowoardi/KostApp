@@ -22,6 +22,12 @@ export default function Layout() {
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
       console.log("Notifikasi diklik dengan data:", data);
+      if (data.type === 'payment_verified') {
+        router.push({
+              pathname: '/tenant/payment/payment-detail', 
+              params: { id: data.id } 
+          });
+      }
 
       if (data && data.type === 'complaint_update') {
         router.push('/tenant/complaint-history'); 

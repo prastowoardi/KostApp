@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     StatusBar,
     StyleSheet,
     Text,
@@ -44,42 +43,85 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert("Error", "Email dan password harus diisi.");
+            showAlert("Error", "Email dan password harus diisi!",
+                "error"
+            );
             return;
         }
 
         setLoading(true);
+        console.log("--- Trying to Login ---");
+        console.log("URL Target:", `${API_URL}/login`);
+
         try {
             let pushToken = null;
             try {
                 pushToken = await registerForPushNotificationsAsync();
-                console.log("Push Token:", pushToken);
+                console.log("Push Token Created Successfully:", pushToken);
             } catch (tokenError) {
-                console.log("Failed get token :", tokenError.message);
+                console.log("Failed Get Push Token:", tokenError.message);
             }
 
-            const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/login`, {
+            const response = await axios.post(`${API_URL}/login`, {
                 email: email,
                 password: password,
                 push_token: pushToken 
+            }, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': '69420'
+                },
+                timeout: 10000
             });
 
-            if (response.data.status === 'success') {
-                const { token, user } = response.data;
+            console.log("Response from Server:", response.data);
 
-                await AsyncStorage.setItem('userToken', token);
+            if (response.data.token) {
+                const { token, user } = response.data;
+                const cleanToken = token.toString().replace(/"/g, '').trim();
+
+                console.log("Clean token saved:", cleanToken);
+
+                await AsyncStorage.setItem('userToken', cleanToken);
                 await AsyncStorage.setItem('userData', JSON.stringify(user));
 
-                if (user.role === 'admin') {
-                    router.replace('/admin/dashboard');
-                } else {
-                    router.replace('/tenant/dashboard');
-                }
+                console.log("Navigating to dashboard role:", user.role);
+
+                showAlert(
+                    "Berhasil Masuk", 
+                    `Selamat datang kembali, ${user.name}!`, 
+                    "success", 
+                    () => {
+                        setAlertConfig(prev => ({ ...prev, visible: false }));
+                        if (user.role === 'admin') {
+                            router.replace('/admin/dashboard');
+                        } else {
+                            router.replace('/tenant/dashboard');
+                        }
+                    }
+                );
             }
         } catch (error) {
-            console.log("Error Login:", error.response?.data || error.message);
-            const errorMsg = error.response?.data?.message || "Email atau password salah.";
-            Alert.alert("Login Gagal", errorMsg);
+            console.log("Detail Error Login:");
+            if (error.response) {
+                console.log("Data Error:", error.response.data);
+                console.log("Status Error:", error.response.status);
+                showAlert(
+                    "Login Gagal", "Email atau password salah.", 
+                    "error"
+                );
+            } else if (error.request) {
+                console.log("Request Error (Ngrok mati?):", error.request);
+                showAlert("Error", "Server tidak merespon. Cek koneksi ke Server!",
+                    "error"
+                );
+            } else {
+                console.log("General Error:", error.message);
+                showAlert("Error", error.message,
+                    "error"
+                );
+            }
         } finally {
             setLoading(false);
         }

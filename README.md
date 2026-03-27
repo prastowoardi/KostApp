@@ -1,50 +1,79 @@
-# Welcome to your Expo app 👋
+# 🏠 Kos-Management System (MacBook M1 Edition)
+> "Panduan sat-set buat jalanin Backend, Mobile, dan Build APK."
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+---
 
-## Get started
+## 🚀 1. Persiapan Backend (Laravel)
+Jalankan di terminal folder `backend`:
 
-1. Install dependencies
+1.  **Install & Setup Env:**
+    ```bash
+    composer install
+    ```
+2.  **Migrate & Seed:**
+    ```bash
+    php artisan migrate:fresh --seed
+    ```
+3.  **Jalankan Server:**
+    ```bash
+    php artisan serve
+    ```
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## 🌐 2. Generate URL Ngrok (Public API)
+Agar HP Android bisa nembak API dari MacBook kamu, buka terminal baru:
 
-   ```bash
-   npx expo start
-   ```
+1.  **Jalankan Ngrok (Port 8000):**
+    ```bash
+    ngrok http 8000 --host-header=rewrite
+    ```
+2.  **Update Mobile Config:**
+    Salin URL `http://xxxx-xxxx.ngrok-free.app` yang muncul, lalu buka file `.env` di folder **Mobile** dan ganti:
+    ```env
+    EXPO_PUBLIC_API_URL=[http://xxxx-xxxx.ngrok-free.app/api](http://xxxx-xxxx.ngrok-free.app/api)
+    ```
+    *⚠️ Gunakan HTTP (bukan HTTPS) agar tidak kena error SSL 'Trust anchor not found' di Android.*
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📱 3. Running Mobile (Expo Go)
+Jalankan di terminal folder `mobile`:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1.  **Install & Start:**
+    ```bash
+    npm install
+    ```
+2.  **Clear Cache & Run:**
+    ```bash
+    npx expo start -c
+    ```
+    *Scan QR Code pakai aplikasi **Expo Go** di HP.*
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 📦 4. Cara Build APK (Android)
+Kita pakai **EAS Build** agar proses build dilakukan di Cloud (tidak membebani RAM MacBook).
 
-```bash
-npm run reset-project
-```
+1.  **Login ke Expo (Jika belum):**
+    ```bash
+    npx eas login
+    ```
+2.  **Konfigurasi Project:**
+    ```bash
+    npx eas build:configure
+    ```
+3.  **Install Dev Client (Wajib):**
+    ```bash
+    npx expo install expo-dev-client
+    ```
+4.  **Eksekusi Build APK:**
+    ```bash
+    npx eas build --profile development --platform android
+    ```
+    *Tunggu proses selesai, lalu download file `.apk` dari link yang diberikan terminal.*
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🔑 Akun Testing
+* **Admin:** `admin@kos.com` | `password`

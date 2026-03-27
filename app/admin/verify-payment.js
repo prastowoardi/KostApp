@@ -10,6 +10,7 @@ import {
     FlatList,
     Image,
     Modal,
+    RefreshControl,
     StatusBar,
     StyleSheet,
     Text,
@@ -29,6 +30,7 @@ export default function VerifyPayment() {
     const [loading, setLoading] = useState(true);
     const [selectedImg, setSelectedImg] = useState(null);
     const [processing, setProcessing] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
 
     const fetchPendingPayments = async () => {
@@ -55,36 +57,44 @@ export default function VerifyPayment() {
         onConfirm: () => {}
     });
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchPendingPayments();
+        setRefreshing(false);
+    };
+
     const showAlert = (title, message, type = 'success', onConfirm = null) => {
         setAlertConfig({ 
             visible: true, title, message, type, 
-            onConfirm: onConfirm || (() => setAlertConfig(prev => ({ ...prev, visible: false })))
+            onConfirm: onConfirm
         });
     };
 
     const handleAction = async (id, status) => {
         const actionLabel = status === 'success' ? '*MENERIMA*' : '*MENOLAK*';
-        const alertType = status === 'success' ? 'success' : 'warning';
+        const alertType = status === 'success' ? 'paid' : 'overdue';
         
         showAlert(
             "Konfirmasi", 
             `Apakah Anda yakin ingin ${actionLabel} pembayaran ini?`, 
-            alertType,
+            'info',
             async () => {
                 // Tutup alert dulu baru proses
                 setAlertConfig(prev => ({ ...prev, visible: false }));
                 setProcessing(true);
                 try {
                     const token = await AsyncStorage.getItem('userToken');
-                    await axios.post(`${API_URL}/admin/payments/${id}/verify`, { status }, {
-                        headers: { Authorization: `Bearer ${token}` }
+                    await axios.post(`${API_URL}/admin/payments/${id}/verify`, 
+                        { status: apiStatus }, 
+                        { headers: { Authorization: `Bearer ${token}` }
                     });
                     
-                    // Tampilkan sukses setelah API berhasil
                     showAlert("Berhasil", `Status pembayaran diperbarui menjadi ${status}.`, "success");
                     fetchPendingPayments();
                 } catch (e) {
-                    showAlert("Gagal", "Terjadi kesalahan saat memperbarui status.", "error");
+                    showAlert("Gagal", "Terjadi kesalahan saat memperbarui status.", 
+                        "error"
+                    );
                 } finally {
                     setProcessing(false);
                 }
@@ -176,6 +186,14 @@ export default function VerifyPayment() {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={renderItem}
                     contentContainerStyle={styles.listContainer}
+                    refreshControl={
+                        <RefreshControl 
+                            refreshing={refreshing} 
+                            onRefresh={onRefresh} 
+                            colors={['#b21f1f']}
+                            tintColor="#b21f1f"
+                        />
+                    }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Ionicons name="checkmark-done-circle-outline" size={80} color="#ccc" />

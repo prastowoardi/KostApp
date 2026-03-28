@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GlobalAlert from '../../components/GlobalAlert';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL; 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function TenantDashboard() {
     const [data, setData] = useState(null);
@@ -21,12 +21,14 @@ export default function TenantDashboard() {
             const cleanToken = token ? token.replace(/"/g, '').trim() : '';
 
             const response = await axios.get(`${API_URL}/me`, {
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${cleanToken}`,
-                    'Accept': 'application/json' 
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    "ngrok-skip-browser-warning": "69420"
                 }
             });
-            
+
             console.log("Dashboard Data:", response.data);
             setData(response.data);
         } catch (error) {
@@ -47,7 +49,7 @@ export default function TenantDashboard() {
         title: '',
         message: '',
         type: 'success',
-        onConfirm: () => {}
+        onConfirm: () => { }
     });
 
     const handleLogout = () => {
@@ -70,27 +72,36 @@ export default function TenantDashboard() {
     useEffect(() => { fetchData(); }, []);
 
     if (loading) return (
-        <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#4e73df" />
         </View>
     );
 
     const getStatusColor = () => {
-        switch(data?.payment_status) {
-            case 'Lunas': return '#1cc88a';
-            case 'Pending': return '#f6c23e';
-            default: return '#e74a3b';
+        const status = data?.payment_status?.toLowerCase();
+        switch (status) {
+            case 'paid':
+            case 'lunas':
+                return '#1cc88a';
+            case 'pending':
+            case 'waiting':
+                return '#f6c23e';
+            default:
+                return '#e74a3b';
         }
     };
+
+    const isLunas = data?.payment_status?.toLowerCase() === 'lunas' || data?.payment_status?.toLowerCase() === 'paid';
+    const isPending = data?.payment_status?.toLowerCase() === 'pending' || data?.payment_status?.toLowerCase() === 'waiting';
 
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <ScrollView 
+            <ScrollView
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             >
-                
+
                 {/* HEADER BERGRADASI */}
                 <LinearGradient colors={['#4e73df', '#224abe']} style={styles.header}>
                     <View style={styles.headerTop}>
@@ -111,7 +122,7 @@ export default function TenantDashboard() {
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.roomInfo}>
-                            <Ionicons name="calendar" size={20} color="#e74a3b" />
+                            <Ionicons name="calendar" size={20} color={isLunas ? "#1cc88a" : "#e74a3b"} />
                             <Text style={styles.roomText}>Tempo: {data?.due_date || '-'}</Text>
                         </View>
                     </View>
@@ -121,82 +132,64 @@ export default function TenantDashboard() {
                     {/* SECTION TAGIHAN DINAMIS */}
                     <Text style={styles.sectionTitle}>Status Tagihan</Text>
                     <View style={[styles.billCard, { borderLeftWidth: 5, borderLeftColor: getStatusColor() }]}>
-                        <View>
+                        <View style={{ flex: 1 }}>
                             <Text style={styles.billLabel}>Tagihan: {data?.payment_status || 'Belum Bayar'}</Text>
                             <Text style={styles.billAmount}>Rp {(data?.bill_amount || 0).toLocaleString('id-ID')}</Text>
+                            {/* MENAMPILKAN SISA HARI / TELAT */}
+                            {data?.days_left_msg ? (
+                                <Text style={[styles.daysText, { color: getStatusColor() }]}>
+                                    {data?.days_left_msg}
+                                </Text>
+                            ) : null}
                         </View>
-                        
-                        {data?.payment_status === 'Belum Bayar' ? (
-                            <TouchableOpacity 
-                                style={styles.payButton} 
+
+                        {isLunas ? (
+                            <View style={{ alignItems: 'center' }}>
+                                <Ionicons name="checkmark-circle" size={32} color="#1cc88a" />
+                                <Text style={styles.statusLabelSmall}>LUNAS</Text>
+                            </View>
+                        ) : isPending ? (
+                            <View style={{ alignItems: 'center' }}>
+                                <Ionicons name="time" size={32} color="#f6c23e" />
+                                <Text style={styles.statusLabelSmall}>PENDING</Text>
+                            </View>
+                        ) : (
+                            <TouchableOpacity
+                                style={styles.payButton}
                                 onPress={() => router.push('/tenant/payment')}
                             >
                                 <Text style={styles.payButtonText}>Bayar</Text>
                             </TouchableOpacity>
-                        ) : (
-                            <View style={{alignItems: 'center'}}>
-                                <Ionicons 
-                                    name={data?.payment_status === 'Lunas' ? "checkmark-circle" : "time"} 
-                                    size={30} 
-                                    color={getStatusColor()} 
-                                />
-                                <Text style={{fontSize: 10, color: '#858796'}}>{data?.payment_status}</Text>
-                            </View>
                         )}
                     </View>
 
                     {/* QUICK ACTIONS */}
                     <Text style={styles.sectionTitle}>Layanan Penghuni</Text>
                     <View style={styles.menuGrid}>
-                        <ActionMenu 
-                            icon="shield-checkmark-outline" 
-                            title="Peraturan" 
-                            color="#1cc88a" 
-                            // onPress={() => { router.push('/tenant/rules') }}
-                        />
-                        <ActionMenu 
-                            icon="wallet-outline" 
-                            title="Riwayat Bayar" 
-                            color="#1cc88a" 
-                            onPress={() => { router.push('/tenant/payment/payment-history') }} 
-                        />
-                        <ActionMenu 
-                            icon="chatbubble-ellipses-outline" 
-                            title="Komplain" 
-                            color="#f6c23e" 
-                            onPress={() => { router.push('/tenant/report') }} 
-                        />
-                        <ActionMenu 
-                            icon="receipt-outline" 
-                            title="Riwayat Komplain" 
-                            color="#4e73df" 
-                            onPress={() => { router.push('/tenant/complaint-history') }}
-                        />
-                        <ActionMenu 
-                            icon="settings-outline" 
-                            title="Profil" 
-                            color="#858796" 
-                            onPress={() => { router.push('/tenant/profile') }}
-                        />
+                        <ActionMenu icon="shield-checkmark-outline" title="Peraturan" color="#1cc88a" />
+                        <ActionMenu icon="wallet-outline" title="Riwayat Bayar" color="#1cc88a" onPress={() => router.push('/tenant/payment/payment-history')} />
+                        <ActionMenu icon="chatbubble-ellipses-outline" title="Komplain" color="#f6c23e" onPress={() => router.push('/tenant/report')} />
+                        <ActionMenu icon="receipt-outline" title="Riwayat Komplain" color="#4e73df" onPress={() => router.push('/tenant/complaint-history')} />
+                        <ActionMenu icon="settings-outline" title="Profil" color="#858796" onPress={() => router.push('/tenant/profile')} />
                     </View>
 
                     {/* BANNER INFO */}
                     <View style={styles.infoBanner}>
                         <Ionicons name="megaphone" size={24} color="#4e73df" />
-                        <View style={{marginLeft: 15, flex: 1}}>
-                            <Text style={{fontWeight: 'bold', color: '#2c3e50'}}>Pengumuman</Text>
-                            <Text style={{fontSize: 12, color: '#7f8c8d'}}>Gunakan aplikasi untuk mempermudah pelaporan kendala kamar.</Text>
+                        <View style={{ marginLeft: 15, flex: 1 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#2c3e50' }}>Pengumuman</Text>
+                            <Text style={{ fontSize: 12, color: '#7f8c8d' }}>Gunakan aplikasi untuk mempermudah pelaporan kendala kamar.</Text>
                         </View>
                     </View>
                 </View>
             </ScrollView>
-            <GlobalAlert 
+            <GlobalAlert
                 visible={alertConfig.visible}
                 title={alertConfig.title}
                 message={alertConfig.message}
                 type={alertConfig.type}
                 onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
-                onConfirm={alertConfig.onConfirm} 
+                onConfirm={alertConfig.onConfirm}
                 confirmText="Ya, Lanjutkan"
                 cancelText="Batal"
             />
@@ -229,11 +222,13 @@ const styles = StyleSheet.create({
     billCard: { backgroundColor: 'white', borderRadius: 20, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25, elevation: 3 },
     billLabel: { color: '#858796', fontSize: 12 },
     billAmount: { fontSize: 20, fontWeight: 'bold', color: '#2c3e50' },
+    daysText: { fontSize: 12, fontWeight: 'bold', marginTop: 4 },
+    statusLabelSmall: { fontSize: 10, color: '#858796', fontWeight: 'bold', marginTop: 2 },
     payButton: { backgroundColor: '#1cc88a', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10 },
     payButtonText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
     menuGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
     menuItem: { width: '47%', backgroundColor: 'white', padding: 20, borderRadius: 20, alignItems: 'center', marginBottom: 15, elevation: 2 },
     iconCircle: { padding: 15, borderRadius: 50, marginBottom: 10 },
-    menuLabel: { fontWeight: '600', color: '#4e73df', fontSize: 13 },
+    menuLabel: { fontWeight: '600', color: '#4e73df', fontSize: 13, textAlign: 'center' },
     infoBanner: { backgroundColor: '#eef2ff', padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginBottom: 30 }
 });

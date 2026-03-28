@@ -48,8 +48,8 @@ export default function TenantDashboard() {
         visible: false,
         title: '',
         message: '',
-        type: 'success',
-        onConfirm: () => { }
+        type: 'info',
+        onConfirm: () => {}
     });
 
     const handleLogout = () => {
@@ -57,7 +57,7 @@ export default function TenantDashboard() {
             visible: true,
             title: "Konfirmasi Keluar",
             message: "Apakah Anda yakin ingin keluar dari aplikasi?",
-            type: "confirm",
+            type: "confirmation",
             onConfirm: async () => {
                 await AsyncStorage.multiRemove(['userToken', 'userData']);
                 setAlertConfig(prev => ({ ...prev, visible: false }));

@@ -8,6 +8,7 @@ const GlobalAlert = ({ visible, title, message, type, onClose, onConfirm, confir
         error: { icon: 'close-circle', color: '#e74c3c', btn: '#e74c3c' },
         warning: { icon: 'warning', color: '#f1c40f', btn: '#f1c40f' },
         info: { icon: 'information-circle', color: '#3498db', btn: '#3498db' },
+        confirmation: { icon: 'help-circle-outline', color:'#3498db', btn: '#3498db' },
     };
 
     const theme = config[type] || config.success;

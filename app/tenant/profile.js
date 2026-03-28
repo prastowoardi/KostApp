@@ -28,7 +28,7 @@ export default function ProfileScreen() {
         visible: false,
         title: '',
         message: '',
-        type: 'success',
+        type: 'info',
         onConfirm: () => {}
     });
 
@@ -38,7 +38,7 @@ export default function ProfileScreen() {
         setRefreshing(false);
     };
 
-    const showAlert = (title, message, type = 'success', onConfirm = null) => {
+    const showAlert = (title, message, type = 'info', onConfirm = null) => {
         setAlertConfig({ 
             visible: true, title, message, type, 
             onConfirm: onConfirm
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
             visible: true,
             title: "Konfirmasi Keluar",
             message: "Apakah Anda yakin ingin keluar dari aplikasi?",
-            type: "confirm",
+            type: "confirmation",
             onConfirm: async () => {
                 await AsyncStorage.multiRemove(['userToken', 'userData']);
                 setAlertConfig(prev => ({ ...prev, visible: false }));

@@ -1,9 +1,15 @@
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
     ActivityIndicator,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -20,46 +26,45 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [secureText, setSecureText] = useState(true);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
         title: '',
         message: '',
-        type: 'success',
-        onConfirm: () => {}
+        type: 'info', 
+        onConfirm: null
     });
 
     const router = useRouter();
 
-    const showAlert = (title, message, type = 'success', onConfirm = null) => {
+    const showAlert = (title, message, type = 'info', onConfirm = null) => {
         setAlertConfig({ 
             visible: true, 
             title, 
             message, 
             type, 
-            onConfirm: onConfirm || (() => setAlertConfig(prev => ({ ...prev, visible: false })))
+            onConfirm: onConfirm
         });
     };
 
     const handleLogin = async () => {
         if (!email || !password) {
-            showAlert("Error", "Email dan password harus diisi!",
-                "error"
+            showAlert(
+                "Oops!", 
+                "Email dan password tidak boleh kosong.", 
+                "warning"
             );
             return;
         }
 
         setLoading(true);
-        console.log("--- Trying to Login ---");
-        console.log("URL Target:", `${API_URL}/login`);
-
         try {
             let pushToken = null;
             try {
                 pushToken = await registerForPushNotificationsAsync();
-                console.log("Push Token Created Successfully:", pushToken);
             } catch (tokenError) {
-                console.log("Failed Get Push Token:", tokenError.message);
+                console.log("Token Error:", tokenError.message);
             }
 
             const response = await axios.post(`${API_URL}/login`, {
@@ -67,161 +72,153 @@ export default function LoginScreen() {
                 password: password,
                 push_token: pushToken 
             }, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': '69420'
-                },
+                headers: { 'Accept': 'application/json' },
                 timeout: 10000
             });
-
-            console.log("Response from Server:", response.data);
 
             if (response.data.token) {
                 const { token, user } = response.data;
                 const cleanToken = token.toString().replace(/"/g, '').trim();
 
-                console.log("Clean token saved:", cleanToken);
-
                 await AsyncStorage.setItem('userToken', cleanToken);
                 await AsyncStorage.setItem('userData', JSON.stringify(user));
-
-                console.log("Navigating to dashboard role:", user.role);
-
                 showAlert(
-                    "Berhasil Masuk", 
-                    `Selamat datang kembali, ${user.name}!`, 
-                    "success", 
-                    () => {
-                        setAlertConfig(prev => ({ ...prev, visible: false }));
-                        if (user.role === 'admin') {
-                            router.replace('/admin/dashboard');
-                        } else {
-                            router.replace('/tenant/dashboard');
-                        }
-                    }
+                    "Login Berhasil", 
+                    `Selamat datang, *${user.name}*!`,
+                    "info", 
                 );
+                router.replace(user.role === 'admin' ? '/admin/dashboard' : '/tenant/dashboard');
             }
         } catch (error) {
-            console.log("Detail Error Login:");
-            if (error.response) {
-                console.log("Data Error:", error.response.data);
-                console.log("Status Error:", error.response.status);
-                showAlert(
-                    "Login Gagal", "Email atau password salah.", 
-                    "error"
-                );
-            } else if (error.request) {
-                console.log("Request Error (Ngrok mati?):", error.request);
-                showAlert("Error", "Server tidak merespon. Cek koneksi ke Server!",
-                    "error"
-                );
-            } else {
-                console.log("General Error:", error.message);
-                showAlert("Error", error.message,
-                    "error"
-                );
-            }
+            const msg = error.response?.data?.message || "Email atau password salah.";
+            showAlert("Login Gagal", msg, "error");
         } finally {
             setLoading(false);
         }
     };
 
+    const handleLogout = () => {
+        setAlertConfig({
+            visible: true,
+            title: "Konfirmasi Keluar",
+            message: "Apakah Anda yakin ingin keluar dari aplikasi?",
+            type: "confirmation",
+            onConfirm: async () => {
+                await AsyncStorage.multiRemove(['userToken', 'userData']);
+                setAlertConfig(prev => ({ ...prev, visible: false }));
+                router.replace('/');
+            },
+            onCancel: () => {
+                setAlertConfig(prev => ({ ...prev, visible: false }));
+            }
+        });
+    };
+
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" />
-            
-            <View style={styles.headerArea}>
-                <Text style={styles.logo}>Serrata Kost</Text>
-                <Text style={styles.tagline}>Manajemen kos jadi lebih mudah</Text>
-            </View>
-            
-            <View style={styles.card}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput 
-                    style={styles.input} 
-                    placeholder="Masukkan email anda" 
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    editable={!loading}
-                />
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+        >
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
+                <StatusBar barStyle="light-content" />
+                
+                <LinearGradient colors={['#4e73df', '#224abe']} style={styles.header}>
+                    <View style={styles.logoCircle}>
+                        <Image 
+                            source={require('../assets/serrata.png')}
+                            style={styles.logoImage}
+                            resizeMode="contain"
+                        />
+                    </View>
+                    <Text style={styles.logoText}>Serrata Kost</Text>
+                    <Text style={styles.tagline}>Chill & Comfort Living.</Text>
+                </LinearGradient>
 
-                <Text style={styles.label}>Password</Text>
-                <TextInput 
-                    style={styles.input} 
-                    placeholder="Masukkan password" 
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry 
-                    editable={!loading}
-                />
+                <View style={styles.formContainer}>
+                    <View style={styles.card}>
+                        <Text style={styles.title}>Silakan Masuk</Text>
+                        
+                        <View style={styles.inputGroup}>
+                            <Ionicons name="mail-outline" size={20} color="#4e73df" style={styles.inputIcon} />
+                            <TextInput 
+                                style={styles.input} 
+                                placeholder="Email" 
+                                value={email}
+                                onChangeText={setEmail}
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                                editable={!loading}
+                                placeholderTextColor={"#858796"}
+                            />
+                        </View>
 
-                <TouchableOpacity 
-                    style={[styles.button, loading && { opacity: 0.7 }]} 
-                    onPress={handleLogin}
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <Text style={styles.buttonText}>MASUK KE AKUN</Text>
-                    )}
-                </TouchableOpacity>
-            </View>
+                        <View style={styles.inputGroup}>
+                            <Ionicons name="lock-closed-outline" size={20} color="#4e73df" style={styles.inputIcon} />
+                            <TextInput 
+                                style={styles.input} 
+                                placeholder="Password" 
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={secureText}
+                                editable={!loading}
+                                placeholderTextColor={"#858796"}
+                            />
+                            <TouchableOpacity onPress={() => setSecureText(!secureText)}>
+                                <Ionicons name={secureText ? "eye-off-outline" : "eye-outline"} size={20} color="#858796" />
+                            </TouchableOpacity>
+                        </View>
 
-            <Text style={styles.footer}>© 2026 Serrata Management</Text>
+                        <TouchableOpacity 
+                            style={[styles.button, loading && { opacity: 0.8 }]} 
+                            onPress={handleLogin}
+                            disabled={loading}
+                        >
+                            <LinearGradient 
+                                colors={['#4e73df', '#224abe']} 
+                                start={{ x: 0, y: 0 }} 
+                                end={{ x: 1, y: 0 }} 
+                                style={styles.gradientBtn}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <Text style={styles.buttonText}>LOGIN SEKARANG</Text>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.footerText}>© 2026 Serrata Kost Management System</Text>
+                </View>
+            </ScrollView>
 
-            {/* Render Custom Alert */}
             <GlobalAlert 
                 visible={alertConfig.visible}
                 title={alertConfig.title}
                 message={alertConfig.message}
                 type={alertConfig.type}
-                onClose={alertConfig.onConfirm}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+                onConfirm={alertConfig.onConfirm} 
+                confirmText="Ya, Lanjutkan"
+                cancelText="Batal"
             />
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', padding: 25, backgroundColor: '#f8f9fa' },
-    headerArea: { marginBottom: 40 },
-    logo: { fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: '#1a2a6c' },
-    tagline: { fontSize: 14, textAlign: 'center', color: '#7f8c8d', marginTop: 5 },
-    card: { 
-        backgroundColor: 'white', 
-        padding: 25, 
-        borderRadius: 20, 
-        elevation: 8, 
-        shadowColor: '#000', 
-        shadowOpacity: 0.1, 
-        shadowRadius: 15,
-        shadowOffset: { width: 0, height: 5 }
-    },
-    label: { fontSize: 13, fontWeight: 'bold', color: '#34495e', marginBottom: 8 },
-    input: { 
-        backgroundColor: '#f1f3f9',
-        borderRadius: 12,
-        padding: 15, 
-        marginBottom: 20, 
-        fontSize: 16,
-        color: '#2c3e50',
-        borderWidth: 1,
-        borderColor: '#e1e8ef'
-    },
-    button: { 
-        backgroundColor: '#1a2a6c', 
-        padding: 18, 
-        borderRadius: 12, 
-        alignItems: 'center', 
-        marginTop: 10,
-        shadowColor: '#1a2a6c',
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
-        elevation: 5
-    },
-    buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
-    footer: { textAlign: 'center', marginTop: 50, color: '#bdc3c7', fontSize: 12 }
+    header: { height: 300, justifyContent: 'center', alignItems: 'center', borderBottomLeftRadius: 60 },
+    logoCircle: { width: 100, height: 100, backgroundColor: 'white', borderRadius: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 15, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5, overflow: 'hidden' },
+    logoImage: { width: '100%', height: '100%' },
+    logoText: { color: 'white', fontSize: 32, fontWeight: 'bold' },
+    tagline: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
+    formContainer: { flex: 1, backgroundColor: '#F8F9FC', marginTop: -50, paddingHorizontal: 30 },
+    card: { marginTop:100, backgroundColor: 'white', borderRadius: 25, padding: 25, elevation: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
+    title: { fontSize: 20, fontWeight: 'bold', color: '#2c3e50', marginBottom: 25, textAlign: 'center' },
+    inputGroup: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f3f9', borderRadius: 15, paddingHorizontal: 15, marginBottom: 15, borderWidth: 1, borderColor: '#e1e8ef' },
+    inputIcon: { marginRight: 10 },
+    input: { flex: 1, paddingVertical: 15, fontSize: 16, color: '#2c3e50' },
+    button: { marginTop: 10, borderRadius: 15, overflow: 'hidden' },
+    gradientBtn: { paddingVertical: 18, alignItems: 'center', justifyContent: 'center' },
+    buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
+    footerText: { textAlign: 'center', marginTop: 40, color: '#bdc3c7', fontSize: 12, paddingBottom: 20 }
 });

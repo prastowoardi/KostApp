@@ -31,12 +31,18 @@ export default function PaymentHistory() {
             console.log(`📌 [PAYMENT_HISTORY] Fetching Data User: ${userName}`);
 
             const response = await axios.get(`${API_URL}/tenant/payments`, {
-                headers: { Authorization: `Bearer ${cleanToken}` }
+                headers: { Authorization: `Bearer ${cleanToken}` },
+                "ngrok-skip-browser-warning": "69420"
             });
             
             console.log("📦 [PAYMENT_DATA_JSON]:", JSON.stringify(response.data, null, 2));
 
-            setPayments(Array.isArray(response.data) ? response.data : []);
+            const arrayData = response.data.data;
+            if (Array.isArray(arrayData)) {
+                setPayments(arrayData);
+            } else {
+                setPayments([]);
+            }
         } catch (error) {
             console.log("❌ [RESPONSE_ERROR] Failed Get History");
             console.log("⚠️ [ERROR_DETAIL]:", error.response?.data || error.message);
@@ -57,8 +63,7 @@ export default function PaymentHistory() {
 
     const renderItem = ({ item }) => {
         if (!item) return null;
-        
-        const isPaid = item.status === 'paid';
+        const isPaid = item.status === 'paid' || item.status === 'Lunas' || item.status === 'verified';
         const formattedDate = item.period_month 
             ? new Date(item.period_month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
             : '-';
@@ -75,7 +80,9 @@ export default function PaymentHistory() {
                     <View style={{ flex: 1 }}>
                         <Text style={styles.invoiceText}>#{item.invoice_number || 'INV-000'}</Text>
                         <Text style={styles.dateText}>Periode: {formattedDate}</Text>
-                        <Text style={styles.amountText}>Rp {Math.round(item.total || 0).toLocaleString('id-ID')}</Text>
+                        <Text style={styles.amountText}>
+                            Rp {Math.round(item.total || item.amount || 0).toLocaleString('id-ID')}
+                        </Text>
                     </View>
                     
                     <View style={styles.rightInfo}>
@@ -103,14 +110,14 @@ export default function PaymentHistory() {
     return (
         <SafeAreaView style={styles.container}>
             <LinearGradient colors={['#4e73df', '#224abe']} style={styles.header}>
-            <View style={styles.headerTop}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={24} color="white" />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, {color: 'white'}]}>Riwayat Bayar</Text>
-                <View style={{ width: 44 }} />
-            </View>
-        </LinearGradient>
+                <View style={styles.headerTop}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                        <Ionicons name="chevron-back" size={24} color="white" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Riwayat Bayar</Text>
+                    <View style={{ width: 44 }} />
+                </View>
+            </LinearGradient>
 
             <FlatList
                 data={payments}
@@ -130,53 +137,32 @@ export default function PaymentHistory() {
 }
 
 const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#F8F9FC' },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     header: { 
         paddingHorizontal: 25, 
-        paddingTop: 60, 
-        paddingBottom: 30, // Lebih tipis dari dashboard karena tidak ada card room
+        paddingTop: 50, 
+        paddingBottom: 25, 
         borderBottomLeftRadius: 30, 
         borderBottomRightRadius: 30 
     },
-    headerTop: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center' 
-    },
-    headerTitle: { 
-        color: 'white', 
-        fontSize: 20, 
-        fontWeight: 'bold' 
-    },
-    backBtn: { 
-        backgroundColor: 'rgba(255,255,255,0.2)', 
-        padding: 5, 
-        borderRadius: 10,
-        marginRight: 15
-    },
-    listContainer: { 
-        paddingHorizontal: 25, 
-        paddingTop: 30,
-        paddingBottom: 40 
-    },
+    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    headerTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
+    listContainer: { paddingHorizontal: 25, paddingTop: 30, paddingBottom: 40 },
     card: { 
         backgroundColor: 'white', 
         borderRadius: 20, 
-        padding: 20, 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
         marginBottom: 15, 
         elevation: 3,
         shadowColor: '#000',
         shadowOpacity: 0.05,
         shadowRadius: 10,
         borderLeftWidth: 5, 
+        flexDirection: 'row', // Tambahkan ini agar konten sejajar
+        overflow: 'hidden'
     },
-    container: { flex: 1, backgroundColor: '#F8F9FC' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    backBtn: { padding: 5 },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50' },
-    cardContent: { padding: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    cardContent: { flex: 1, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     invoiceText: { fontSize: 11, color: '#858796', fontWeight: 'bold' },
     dateText: { fontSize: 14, color: '#2c3e50', marginVertical: 4, fontWeight: '500' },
     amountText: { fontSize: 16, fontWeight: 'bold', color: '#4e73df' },

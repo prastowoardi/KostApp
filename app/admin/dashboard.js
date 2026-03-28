@@ -15,6 +15,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import GlobalAlert from '../../components/GlobalAlert';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -55,16 +56,33 @@ export default function AdminDashboard() {
         setRefreshing(true);
         fetchAdminData();
     };
+    
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => {}
+    });
 
-    const handleLogout = async () => {
-        Alert.alert("Keluar", "Akhiri sesi admin?", [
-            { text: "Batal", style: "cancel" },
-            { text: "Keluar", onPress: async () => {
-                await AsyncStorage.multiRemove(['userToken', 'userData', 'userRole']);
+    const handleLogout = () => {
+        setAlertConfig({
+            visible: true,
+            title: "Konfirmasi Keluar",
+            message: "Apakah Anda yakin ingin keluar dari aplikasi?",
+            type: "confirmation",
+            onConfirm: async () => {
+                await AsyncStorage.multiRemove(['userToken', 'userData']);
+                setAlertConfig(prev => ({ ...prev, visible: false }));
                 router.replace('/');
-            }}
-        ]);
+            },
+            onCancel: () => {
+                setAlertConfig(prev => ({ ...prev, visible: false }));
+            }
+        });
     };
+
+    
 
     useEffect(() => {
         fetchAdminData();
@@ -197,6 +215,16 @@ export default function AdminDashboard() {
                 </View>
                 <View style={{height: 40}} />
             </ScrollView>
+            <GlobalAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+                onConfirm={alertConfig.onConfirm}
+                confirmText="Ya, Lanjutkan"
+                cancelText="Batal"
+            />
         </View>
     );
 }

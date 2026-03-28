@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    RefreshControl,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -20,6 +21,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 export default function ProfileScreen() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
 
     const [alertConfig, setAlertConfig] = useState({
@@ -30,10 +32,16 @@ export default function ProfileScreen() {
         onConfirm: () => {}
     });
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchProfile();
+        setRefreshing(false);
+    };
+
     const showAlert = (title, message, type = 'success', onConfirm = null) => {
         setAlertConfig({ 
             visible: true, title, message, type, 
-            onConfirm: onConfirm || (() => setAlertConfig(prev => ({ ...prev, visible: false })))
+            onConfirm: onConfirm
         });
     };
 
@@ -64,16 +72,22 @@ export default function ProfileScreen() {
     };
 
     const handleLogout = () => {
-        showAlert(
-            "Konfirmasi", 
-            "Apakah Anda yakin ingin keluar dari aplikasi?", 
-            "warning", 
-            async () => {
-                await AsyncStorage.clear();
+        setAlertConfig({
+            visible: true,
+            title: "Konfirmasi Keluar",
+            message: "Apakah Anda yakin ingin keluar dari aplikasi?",
+            type: "confirm", // Gunakan type khusus untuk memicu dua tombol
+            onConfirm: async () => {
+                console.log("User memilih: YES");
+                await AsyncStorage.multiRemove(['userToken', 'userData']);
                 setAlertConfig(prev => ({ ...prev, visible: false }));
                 router.replace('/');
+            },
+            onCancel: () => {
+                console.log("User memilih: NO");
+                setAlertConfig(prev => ({ ...prev, visible: false }));
             }
-        );
+        });
     };
 
     useEffect(() => { fetchProfile(); }, []);
@@ -117,7 +131,14 @@ export default function ProfileScreen() {
                 </View>
             </LinearGradient>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false} refreshControl={
+                <RefreshControl 
+                    refreshing={refreshing} 
+                    onRefresh={onRefresh} 
+                    colors={['#b21f1f']}
+                    tintColor="#b21f1f"
+                />
+            }>
                 <View style={styles.infoSection}>
                     <Text style={styles.sectionLabel}>Informasi Pribadi</Text>
                     
@@ -154,7 +175,7 @@ export default function ProfileScreen() {
                     <MenuButton 
                         icon="help-circle-outline" 
                         label="Pusat Bantuan" 
-                        onPress={() => showAlert("Bantuan", "Hubungi pengelola di 0812-xxxx-xxxx", "success")} 
+                        onPress={() => showAlert("Bantuan", "Hubungi pengelola di *085111203521*", "info")} 
                     />
                 </View>
 
@@ -168,13 +189,15 @@ export default function ProfileScreen() {
                 <View style={{height: 50}} />
             </ScrollView>
 
-            {/* Global Alert Component */}
             <GlobalAlert 
                 visible={alertConfig.visible}
                 title={alertConfig.title}
                 message={alertConfig.message}
                 type={alertConfig.type}
-                onClose={alertConfig.onConfirm}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+                onConfirm={alertConfig.onConfirm} 
+                confirmText="Ya, Lanjutkan"
+                cancelText="Batal"
             />
         </View>
     );

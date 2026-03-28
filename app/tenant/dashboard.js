@@ -4,7 +4,8 @@ import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import GlobalAlert from '../../components/GlobalAlert';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL; 
 
@@ -41,19 +42,29 @@ export default function TenantDashboard() {
         fetchData();
     };
 
-    const handleLogout = async () => {
-        Alert.alert("Konfirmasi", "Apakah kamu yakin ingin keluar?", [
-            { text: "Batal", style: "cancel" },
-            { text: "Ya, Keluar", onPress: async () => {
-                try {
-                    const token = await AsyncStorage.getItem('userToken');
-                    await axios.post(`${API_URL}/logout`, {}, { headers: { Authorization: `Bearer ${token}` } });
-                } finally {
-                    await AsyncStorage.multiRemove(['userToken', 'userData', 'userRole']);
-                    router.replace('/');
-                }
-            }}
-        ]);
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        type: 'success',
+        onConfirm: () => {}
+    });
+
+    const handleLogout = () => {
+        setAlertConfig({
+            visible: true,
+            title: "Konfirmasi Keluar",
+            message: "Apakah Anda yakin ingin keluar dari aplikasi?",
+            type: "confirm",
+            onConfirm: async () => {
+                await AsyncStorage.multiRemove(['userToken', 'userData']);
+                setAlertConfig(prev => ({ ...prev, visible: false }));
+                router.replace('/');
+            },
+            onCancel: () => {
+                setAlertConfig(prev => ({ ...prev, visible: false }));
+            }
+        });
     };
 
     useEffect(() => { fetchData(); }, []);
@@ -147,10 +158,7 @@ export default function TenantDashboard() {
                             icon="wallet-outline" 
                             title="Riwayat Bayar" 
                             color="#1cc88a" 
-                            onPress={() => {
-                                console.log("Klik Tombol Riwayat...");
-                                router.push('/tenant/payment/payment-history');
-                            }} 
+                            onPress={() => { router.push('/tenant/payment/payment-history') }} 
                         />
                         <ActionMenu 
                             icon="chatbubble-ellipses-outline" 
@@ -181,8 +189,17 @@ export default function TenantDashboard() {
                         </View>
                     </View>
                 </View>
-
             </ScrollView>
+            <GlobalAlert 
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+                onConfirm={alertConfig.onConfirm} 
+                confirmText="Ya, Lanjutkan"
+                cancelText="Batal"
+            />
         </View>
     );
 }

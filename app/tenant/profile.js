@@ -76,15 +76,13 @@ export default function ProfileScreen() {
             visible: true,
             title: "Konfirmasi Keluar",
             message: "Apakah Anda yakin ingin keluar dari aplikasi?",
-            type: "confirm", // Gunakan type khusus untuk memicu dua tombol
+            type: "confirm",
             onConfirm: async () => {
-                console.log("User memilih: YES");
                 await AsyncStorage.multiRemove(['userToken', 'userData']);
                 setAlertConfig(prev => ({ ...prev, visible: false }));
                 router.replace('/');
             },
             onCancel: () => {
-                console.log("User memilih: NO");
                 setAlertConfig(prev => ({ ...prev, visible: false }));
             }
         });

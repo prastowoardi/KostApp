@@ -84,7 +84,7 @@ export default function LoginScreen() {
                 await AsyncStorage.setItem('userData', JSON.stringify(user));
                 showAlert(
                     "Login Berhasil", 
-                    `Selamat datang, *${user.name}*!`,
+                    `Silakan ganti password untuk kemanan akun, *${user.name}*!`,
                     "info", 
                 );
                 router.replace(user.role === 'admin' ? '/admin/dashboard' : '/tenant/dashboard');

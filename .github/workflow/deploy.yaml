@@ -1,0 +1,31 @@
+name: Deploy KostApp to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # Masuk ke folder aplikasi di VPS
+            cd /var/www/KostApp
+            
+            # Tarik kode terbaru dari GitHub
+            git pull origin main
+            
+            # Install dependencies baru jika ada
+            npm install --production
+            
+            echo "✅ Kode berhasil di-pull ke server!"

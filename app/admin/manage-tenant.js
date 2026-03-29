@@ -305,8 +305,8 @@ const styles = StyleSheet.create({
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
     modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1a2a6c' },
     label: { fontSize: 13, fontWeight: 'bold', marginTop: 18, marginBottom: 8, color: '#34495e' },
-    input: { backgroundColor: '#f1f3f9', borderRadius: 12, padding: 14, fontSize: 15, borderWidth: 1, borderColor: '#e1e8ef' },
-    
+    input: { backgroundColor: '#f1f3f9', borderRadius: 12, padding: 14, color: 'black', fontSize: 15, borderWidth: 1, borderColor: '#e1e8ef' },
+
     customPickerTrigger: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f1f3f9', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#e1e8ef' },
     
     saveBtn: { backgroundColor: '#1a2a6c', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 30, elevation: 3 },

@@ -1,4 +1,4 @@
-name: Deploy KostApp to VPS
+name: Deploy React App to VPS
 
 on:
   push:
@@ -19,13 +19,15 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            # Masuk ke folder aplikasi di VPS
             cd /var/www/KostApp
             
-            # Tarik kode terbaru dari GitHub
+            # 1. Ambil kode terbaru
             git pull origin main
             
-            # Install dependencies baru jika ada
+            # 2. Install dependensi
             npm install --production
             
-            echo "✅ Kode berhasil di-pull ke server!"
+            # 3. Build aplikasi React (Menghasilkan folder /dist atau /build)
+            npm run build
+            
+            echo "✅ React App Berhasil di-Build di Server!"

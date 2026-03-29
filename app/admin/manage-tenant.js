@@ -195,27 +195,27 @@ export default function ManageTenant() {
                         </TouchableOpacity>
 
                         <Text style={styles.label}>Nama Lengkap</Text>
-                        <TextInput style={styles.input} placeholder="Contoh: Budi Santoso" onChangeText={(v) => setForm({...form, name: v})} />
+                        <TextInput style={[styles.input, { color: 'black' }]} placeholder="Contoh: Budi Santoso" onChangeText={(v) => setForm({...form, name: v})} />
 
                         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
                             <View style={{width: '48%'}}>
                                 <Text style={styles.label}>Email</Text>
-                                <TextInput style={styles.input} placeholder="budi@mail.com" autoCapitalize="none" onChangeText={(v) => setForm({...form, email: v})} />
+                                <TextInput style={[styles.input, { color: 'black' }]} placeholder="budi@mail.com" autoCapitalize="none" onChangeText={(v) => setForm({...form, email: v})} />
                             </View>
                             <View style={{width: '48%'}}>
                                 <Text style={styles.label}>No. Telepon</Text>
-                                <TextInput style={styles.input} placeholder="0812..." keyboardType="phone-pad" onChangeText={(v) => setForm({...form, phone: v})} />
+                                <TextInput style={[styles.input, { color: 'black' }]} placeholder="0812..." keyboardType="phone-pad" onChangeText={(v) => setForm({...form, phone: v})} />
                             </View>
                         </View>
 
                         <Text style={styles.label}>No. KTP</Text>
-                        <TextInput style={styles.input} placeholder="3201..." keyboardType="numeric" onChangeText={(v) => setForm({...form, id_card: v})} />
+                        <TextInput style={[styles.input, { color: 'black' }]} placeholder="3201..." keyboardType="numeric" onChangeText={(v) => setForm({...form, id_card: v})} />
 
                         <Text style={styles.label}>Alamat Asal</Text>
-                        <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top'}]} multiline placeholder="Alamat lengkap sesuai KTP" onChangeText={(v) => setForm({...form, address: v})} />
+                        <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top', color: 'black' }]} multiline placeholder="Alamat lengkap sesuai KTP" onChangeText={(v) => setForm({...form, address: v})} />
 
                         <Text style={styles.label}>Tanggal Masuk</Text>
-                        <TextInput style={styles.input} value={form.entry_date} onChangeText={(v) => setForm({...form, entry_date: v})} />
+                        <TextInput style={[styles.input, { color: 'black' }]} value={form.entry_date} onChangeText={(v) => setForm({...form, entry_date: v})} />
 
                         <View style={styles.divider} />
                         <Text style={styles.sectionSub}>Kontak Darurat</Text>

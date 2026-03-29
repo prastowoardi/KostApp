@@ -8,6 +8,9 @@
       "developmentClient": true,
       "distribution": "internal"
     },
+    "env": {
+      "EXPO_PUBLIC_API_URL": "https://serrata.xyz/api"
+    },
     "preview": {
       "distribution": "internal"
     },

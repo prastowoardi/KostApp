@@ -1,4 +1,4 @@
-# 🏠 Kos-Management System (MacBook M1 Edition)
+# 🏠 Kos-Management System
 > "Panduan sat-set buat jalanin Backend, Mobile, dan Build APK."
 
 ---

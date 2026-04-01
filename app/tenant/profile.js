@@ -182,7 +182,7 @@ export default function ProfileScreen() {
           <MenuButton
             icon="lock-closed-outline"
             label="Ganti Password"
-            onPress={() => router.push("/change-password")}
+            onPress={() => router.push("/tenant/change-password")}
           />
           <MenuButton
             icon="help-circle-outline"

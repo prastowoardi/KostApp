@@ -82,35 +82,42 @@ export default function PaymentScreen() {
         setLoading(true);
         try {
             const token = await AsyncStorage.getItem('userToken');
+            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
+
             const formData = new FormData();
-            
-            const uri = Platform.OS === 'android' ? image : image.replace('file://', '');
-            const filename = uri.split('/').pop();
-            const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : `image`;
 
-            formData.append('proof_image', {
-                uri: uri,
-                name: filename || 'payment_proof.jpg',
-                type: type,
-            });
+            if (Platform.OS === 'web') {
+                const response = await fetch(image);
+                const blob = await response.blob();
+                formData.append('proof_image', blob, 'payment_proof.jpg');
+            } else {
+                const filename = image.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-            await axios.post(`${API_URL}/payments/upload`, formData, {
+                formData.append('proof_image', {
+                    uri: image,
+                    name: filename,
+                    type: type,
+                });
+            }
+
+            const res = await axios.post(`${API_URL}/payments/upload`, formData, {
                 headers: { 
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${cleanToken}`,
                     'Content-Type': 'multipart/form-data',
-                    'ngrok-skip-browser-warning': '69420'
-                }
+                    'Accept': 'application/json',
+                },
             });
 
-            showAlert("Berhasil", "Bukti bayar terkirim! Admin akan segera melakukan verifikasi.", "success", () => {
-                setAlertConfig(prev => ({ ...prev, visible: false }));
+            showAlert("Berhasil", "Bukti bayar terkirim!", "success", () => {
                 router.back();
             });
 
         } catch (e) {
-            console.log("Upload Error:", e.response?.data || e.message);
-            showAlert("Gagal Upload", e.response?.data?.message || "Terjadi kesalahan server saat mengirim gambar.", "error");
+            console.log("Error Detail:", e.response?.data || e.message);
+            const errorMsg = e.response?.data?.errors?.proof_image?.[0] || "Gagal upload gambar.";
+            showAlert("Gagal", errorMsg, "error");
         } finally {
             setLoading(false);
         }

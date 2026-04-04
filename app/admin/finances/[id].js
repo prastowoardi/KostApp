@@ -52,15 +52,38 @@ export default function FinanceDetail() {
         setAlertConfig({
             visible: true,
             title: "Hapus Transaksi",
-            message: "Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak bisa dibatalkan.",
+            message: "Apakah Anda yakin ingin menghapus data ini? Tindakan ini *tidak bisa dibatalkan*.",
             type: "warning",
+            isConfirmation: true,
+            confirmText: "Ya, Hapus",
             onConfirm: async () => {
                 setAlertConfig(prev => ({ ...prev, visible: false }));
+                
                 try {
-                    await api.delete(getDetailUrl());
-                    router.replace('/admin/finance'); // Sesuaikan rute index kamu
+                    await api.delete(`/admin/finances/${id}`);
+                    
+                    setTimeout(() => {
+                        setAlertConfig({
+                            visible: true,
+                            title: "Berhasil",
+                            message: "Data keuangan telah dihapus dari sistem.",
+                            type: "success",
+                            isConfirmation: false,
+                            onConfirm: () => {
+                                setAlertConfig(prev => ({ ...prev, visible: false }));
+                                router.replace('/admin/finances');
+                            }
+                        });
+                    }, 500);
+
                 } catch (error) {
-                    Alert.alert("Error", "Gagal menghapus data");
+                    setAlertConfig({
+                        visible: true,
+                        title: "Gagal",
+                        message: "Terjadi kesalahan saat menghapus data.",
+                        type: "error",
+                        isConfirmation: false,
+                    });
                 }
             }
         });
@@ -147,15 +170,16 @@ export default function FinanceDetail() {
                 </TouchableOpacity>
             </View>
             
-            <GlobalAlert 
+            <GlobalAlert
                 visible={alertConfig.visible}
                 title={alertConfig.title}
                 message={alertConfig.message}
                 type={alertConfig.type}
+                isConfirmation={alertConfig.isConfirmation}
+                confirmText={alertConfig.confirmText}
+                cancelText={alertConfig.cancelText}
                 onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
-                onConfirm={alertConfig.onConfirm} 
-                confirmText="Ya, Hapus"
-                cancelText="Batal"
+                onConfirm={alertConfig.onConfirm}
             />
 
             <Modal

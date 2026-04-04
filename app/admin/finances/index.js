@@ -25,7 +25,7 @@ export default function FinanceIndex() {
             });
             
             setData({
-                transactions: response.data.data,
+                transactions: response.data.data.reverse(),
                 totalIncome: response.data.income,
                 totalExpense: response.data.expense
             });

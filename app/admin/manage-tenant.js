@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import {
     ActivityIndicator,
     Alert,
@@ -21,6 +23,8 @@ import GlobalAlert from '../../components/GlobalAlert';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ManageTenant() {
+    const router = useRouter();
+    const navigation = useNavigation();
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
         title: '',
@@ -143,15 +147,28 @@ export default function ManageTenant() {
             <StatusBar barStyle="light-content" />
             <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
                 <View style={styles.headerTop}>
-                    <View>
-                        <Text style={styles.headerTitle}>Manajemen Tenant</Text>
-                        <Text style={{color: '#eee', fontSize: 12}}>Total: {tenants.length} Penghuni</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                        <TouchableOpacity 
+                            onPress={() => router.back()} 
+                            style={styles.backBtn}
+                        >
+                            <Ionicons name="chevron-back" size={28} color="white" />
+                        </TouchableOpacity>
+
+                        <View style={{ marginLeft: 10 }}>
+                            <Text style={styles.headerTitle}>Manajemen Tenant</Text>
+                            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
+                                Total: {tenants.length} Penghuni
+                            </Text>
+                        </View>
                     </View>
+
+                    {/* Grup Kanan: Tombol Tambah */}
                     <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addBtn}>
-                        <Ionicons name="person-add" size={20} color="white" />
-                        <Text style={{color:'white', fontWeight:'bold', marginLeft:5}}>Tambah</Text>
+                        <Ionicons name="person-add" size={16} color="white" />
+                        <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 5 }}>Tambah</Text>
                     </TouchableOpacity>
-                </View>
+                </View> 
             </LinearGradient>
 
             {loading ? (
@@ -322,9 +339,46 @@ export default function ManageTenant() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8f9fa' },
-    header: { paddingTop: 60, paddingBottom: 25, paddingHorizontal: 20 },
-    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    headerTitle: { fontSize: 22, fontWeight: 'bold', color: 'white' },
+    header: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
+    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
+    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
+    
+    // header: { 
+    //     paddingTop: 60,
+    //     paddingBottom: 25, 
+    //     paddingHorizontal: 20, 
+    //     borderBottomLeftRadius: 30, 
+    //     borderBottomRightRadius: 30,
+    //     elevation: 10,
+    //     shadowColor: '#000',
+    //     shadowOffset: { width: 0, height: 4 },
+    //     shadowOpacity: 0.3,
+    //     shadowRadius: 5,
+    // },
+    // headerTop: { 
+    //     flexDirection: 'row', 
+    //     alignItems: 'center', 
+    //     justifyContent: 'space-between' 
+    // },
+    // headerTitle: { 
+    //     fontSize: 20, 
+    //     fontWeight: 'bold', 
+    //     color: 'white',
+    //     letterSpacing: 0.5
+    // },
+    // backBtn: { 
+    //     backgroundColor: 'rgba(255,255,255,0.2)', 
+    //     padding: 8, 
+    //     borderRadius: 12,
+    //     justifyContent: 'center',
+    //     alignItems: 'center'
+    // },
+    refreshIconBtn: {
+        padding: 8,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: 10
+    },
     addBtn: { backgroundColor: '#2ecc71', flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 12, alignItems: 'center', elevation: 3 },
     
     card: { backgroundColor: 'white', padding: 15, borderRadius: 15, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },

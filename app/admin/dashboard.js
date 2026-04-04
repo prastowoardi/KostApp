@@ -160,6 +160,7 @@ export default function AdminDashboard() {
                         <ControlBtn title="Komplain" icon="chatbubbles" color="#f6c23e" onPress={() => router.push("/admin/complaint")} />
                         <ControlBtn title="Tenant" icon="people" color="#36b9cc" onPress={() => router.push("/admin/manage-tenant")} />
                         <ControlBtn title="Kamar" icon="bed" color="#4e73df" onPress={() => {}} />
+                        <ControlBtn title="Keuangan" icon="cash-outline" color="#4e73df" onPress={() => router.push("/admin/finances")} />
                     </View>
 
                     {/* PEMBAYARAN TERBARU */}
@@ -421,13 +422,17 @@ const styles = StyleSheet.create({
     },
     menuGrid: {
         flexDirection: "row",
+        flexWrap: "wrap",
         justifyContent: "space-between",
         width: '100%',
+        gap: 15,
         paddingVertical: 10,
     },
     menuItemWrap: {
+        // width: MENU_ITEM_WIDTH,
         alignItems: "center",
         justifyContent: "center",
+        marginBottom: 15,
     },
     menuIconContainer: {
         width: 60,

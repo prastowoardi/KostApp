@@ -87,7 +87,7 @@ export default function FinanceIndex() {
 
     return (
         <View style={styles.container}>
-            <LinearGradient colors={["#4e73df", "#224abe"]} style={styles.header}>
+            <LinearGradient colors={["#1a2a6c", "#e74a3b"]} style={styles.header}>
                 <View style={styles.headerTop}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <Ionicons name="arrow-back" size={24} color="white" />

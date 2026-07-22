@@ -214,7 +214,7 @@ export default function TenantDashboard() {
               icon="wallet-outline"
               title="Riwayat Bayar"
               color="#1cc88a"
-              onPress={() => router.push("/tenant/payment/payment-history")}
+              onPress={() => router.push("/tenant/payment/history")}
             />
             <ActionMenu
               icon="chatbubble-ellipses-outline"

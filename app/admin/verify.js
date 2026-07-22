@@ -153,7 +153,7 @@ export default function VerifyPayment() {
             <View style={styles.actionButtons}>
                 <TouchableOpacity 
                     style={[styles.btn, styles.btnReject]} 
-                    onPress={() => handleAction(item.id, 'rejected')}
+                    onPress={() => handleAction(item.id || item.uuid, 'rejected')}
                 >
                     <Ionicons name="close-outline" size={20} color="#e74a3b" />
                     <Text style={styles.btnTextReject}>Tolak</Text>
@@ -161,7 +161,7 @@ export default function VerifyPayment() {
 
                 <TouchableOpacity 
                     style={[styles.btn, styles.btnApprove]} 
-                    onPress={() => handleAction(item.id, 'success')}
+                    onPress={() => handleAction(item.id || item.uuid, 'success')}
                 >
                     <Ionicons name="checkmark-outline" size={20} color="white" />
                     <Text style={styles.btnTextApprove}>Terima</Text>
@@ -188,7 +188,7 @@ export default function VerifyPayment() {
             ) : (
                 <FlatList
                     data={payments}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => (item.id || item.uuid).toString()}
                     renderItem={renderItem}
                     contentContainerStyle={styles.listContainer}
                     refreshControl={

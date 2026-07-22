@@ -51,7 +51,7 @@ export default function FinanceIndex() {
             <TouchableOpacity 
                 style={styles.transactionCard}
                 onPress={() => {
-                    const id = item.id || item.id_finance;
+                    const id = item.id || item.id_finance || item.uuid;
                     if (id) {
                         router.push(`/admin/finances/${id}`);
                     } else {
@@ -119,7 +119,7 @@ export default function FinanceIndex() {
                 <FlatList
                     data={data.transactions}
                     renderItem={renderItem}
-                    keyExtractor={(item, index) => (item.id || item.id_finance || index).toString()}
+                    keyExtractor={(item, index) => (item.id || item.id_finance || item.uuid || index).toString()}
                 />
             </View>
 

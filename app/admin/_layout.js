@@ -9,8 +9,8 @@ export default function AdminLayout() {
             <Stack.Screen name="finances/index" />
             <Stack.Screen name="finances/[id]" />
             <Stack.Screen name="finances/create" />
-            <Stack.Screen name="manage-tenant" />
-            <Stack.Screen name="verify-payment" />
+            <Stack.Screen name="tenant" />
+            <Stack.Screen name="verify" />
         </Stack>
     );
 }

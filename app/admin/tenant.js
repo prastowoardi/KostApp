@@ -178,7 +178,7 @@ export default function ManageTenant() {
             ) : (
                 <FlatList
                     data={tenants}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => (item.id || item.uuid).toString()}
                     renderItem={renderTenantItem}
                     contentContainerStyle={{ padding: 20 }}
                     ListEmptyComponent={<Text style={styles.emptyText}>Belum ada data tenant.</Text>}
@@ -302,12 +302,12 @@ export default function ManageTenant() {
                         <Text style={styles.modalTitle}>Pilih Kamar Tersedia</Text>
                         <FlatList
                             data={rooms}
-                            keyExtractor={(item) => item.id.toString()}
+                            keyExtractor={(item) => (item.id || item.uuid).toString()}
                             renderItem={({item}) => (
                                 <TouchableOpacity 
                                     style={styles.roomItem}
                                     onPress={() => {
-                                        setForm({...form, room_id: item.id});
+                                        setForm({...form, room_id: item.id || item.uuid});
                                         setRoomModalVisible(false);
                                     }}
                                 >

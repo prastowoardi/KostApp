@@ -158,7 +158,7 @@ export default function FinanceDetail() {
                 <View style={styles.divider} />
                 
                 <Text style={styles.label}>Metadata</Text>
-                <Text style={styles.noteText}>ID Transaksi: #{item.id}</Text>
+                <Text style={styles.noteText}>ID Transaksi: #{item.id || item.uuid}</Text>
                 <Text style={styles.noteText}>Dibuat pada: {new Date(item.created_at).toLocaleString('id-ID')}</Text>
             </View>
 
@@ -215,7 +215,7 @@ export default function FinanceDetail() {
 
                         {/* Footer Modal (Opsional: Info Tambahan) */}
                         <View style={styles.modalFooter}>
-                            <Text style={styles.footerText}>ID: #{item.id}</Text>
+                            <Text style={styles.footerText}>ID: #{item.id || item.uuid}</Text>
                             <Text style={styles.footerDate}>
                                 {new Date(item.transaction_date).toLocaleDateString('id-ID', { dateStyle: 'medium' })}
                             </Text>

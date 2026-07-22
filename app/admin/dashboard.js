@@ -156,9 +156,9 @@ export default function AdminDashboard() {
                     {/* MENU MANAJEMEN - SEKARANG RAPI & SEJAJAR */}
                     <Text style={styles.sectionTitle}>Manajemen</Text>
                     <View style={styles.menuGrid}>
-                        <ControlBtn title="Verifikasi" icon="shield-checkmark" color="#1cc88a" onPress={() => router.push("/admin/verify-payment")} />
+                        <ControlBtn title="Verifikasi" icon="shield-checkmark" color="#1cc88a" onPress={() => router.push("/admin/verify")} />
                         <ControlBtn title="Komplain" icon="chatbubbles" color="#f6c23e" onPress={() => router.push("/admin/complaint")} />
-                        <ControlBtn title="Tenant" icon="people" color="#36b9cc" onPress={() => router.push("/admin/manage-tenant")} />
+                        <ControlBtn title="Tenant" icon="people" color="#36b9cc" onPress={() => router.push("/admin/tenant")} />
                         <ControlBtn title="Kamar" icon="bed" color="#4e73df" onPress={() => {}} />
                         <ControlBtn title="Keuangan" icon="cash-outline" color="#4e73df" onPress={() => router.push("/admin/finances")} />
                     </View>
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                     {/* PEMBAYARAN TERBARU */}
                     <View style={styles.flexRow}>
                         <Text style={styles.sectionTitle}>Pembayaran Terbaru</Text>
-                        <TouchableOpacity onPress={() => router.push("/admin/verify-payment")}>
+                        <TouchableOpacity onPress={() => router.push("/admin/verify")}>
                             <Text style={styles.seeAll}>Lihat Semua</Text>
                         </TouchableOpacity>
                     </View>

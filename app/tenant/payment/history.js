@@ -93,8 +93,8 @@ export default function PaymentHistory() {
         ]}
         onPress={() =>
           router.push({
-            pathname: "/tenant/payment/payment-detail",
-            params: { id: item.id },
+            pathname: "/tenant/payment/detail",
+            params: { id: item.id || item.uuid },
           })
         }
       >
@@ -163,7 +163,7 @@ export default function PaymentHistory() {
 
       <FlatList
         data={payments}
-        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+        keyExtractor={(item) => item.id?.toString() || item.uuid?.toString() || Math.random().toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
         refreshControl={

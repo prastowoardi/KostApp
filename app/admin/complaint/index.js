@@ -91,7 +91,7 @@ export default function AdminComplaints() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       await axios.post(
-        `${API_URL}/admin/complaints/${selectedItem.id}/respond`,
+        `${API_URL}/admin/complaints/${selectedItem.id || selectedItem.uuid}/respond`,
         {
           status: dbStatus,
           response: reply,
@@ -273,7 +273,7 @@ export default function AdminComplaints() {
       ) : (
         <FlatList
           data={filteredComplaints}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => (item.id || item.uuid).toString()}
           renderItem={renderItem}
           refreshControl={
             <RefreshControl

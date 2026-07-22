@@ -24,7 +24,7 @@ export default function Layout() {
       console.log("Notifikasi diklik dengan data:", data);
       if (data.type === 'payment_verified' || data.type === "payment_rejected") {
         router.push({
-              pathname: '/tenant/payment/payment-detail', 
+              pathname: '/tenant/payment/detail', 
               params: { id: data.id } 
           });
       }

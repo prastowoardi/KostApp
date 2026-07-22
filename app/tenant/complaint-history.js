@@ -89,7 +89,7 @@ export default function ComplaintHistoryScreen() {
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => router.push(`/complaint/${item.id}`)}
+        onPress={() => router.push(`/complaint/${item.id || item.uuid}`)}
       >
         <View style={styles.cardHeader}>
           <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
@@ -145,7 +145,7 @@ export default function ComplaintHistoryScreen() {
       ) : (
         <FlatList
           data={complaints}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => (item.id || item.uuid).toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={

@@ -14,6 +14,8 @@ const GlobalAlert = ({
     isConfirmation = false
 }) => {
     
+    const isConfirmMode = isConfirmation || type === 'confirmation';
+
     const config = {
         success: { icon: 'checkmark-circle', color: '#2ecc71', btn: '#2ecc71' },
         error: { icon: 'close-circle', color: '#b21f1f', btn: '#b21f1f' },
@@ -53,7 +55,7 @@ const GlobalAlert = ({
                     <Text style={styles.message}>{renderMessage(message)}</Text>
 
                     {/* Button Section */}
-                    {isConfirmation ? (
+                    {isConfirmMode ? (
                         <View style={styles.buttonGroup}>
                             <TouchableOpacity 
                                 style={[styles.button, styles.cancelBtn]} 

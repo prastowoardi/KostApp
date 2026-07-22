@@ -101,7 +101,7 @@ export default function ManageTenant() {
             name: tenant.name || tenant.user?.name || '',
             email: tenant.email || tenant.user?.email || '',
             password: '',
-            room_id: tenant.room_id || tenant.room?.id || '',
+            room_id: tenant.room?.uuid || tenant.room_id || '',
             phone: tenant.phone || '',
             id_card: tenant.id_card || '',
             address: tenant.address || '',
@@ -437,7 +437,7 @@ export default function ManageTenant() {
                         >
                             <Text style={{ color: form.room_id ? '#333' : '#999' }}>
                                 {form.room_id 
-                                    ? `Kamar ${roomList.find(r => r.id === form.room_id)?.room_number}` 
+                                    ? `Kamar ${roomList.find(r => (r.id || r.uuid) === form.room_id)?.room_number}` 
                                     : "Klik untuk memilih kamar..."}
                             </Text>
                             <Ionicons name="chevron-down" size={20} color="#666" />

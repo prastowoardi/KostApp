@@ -156,11 +156,12 @@ export default function AdminDashboard() {
                     {/* MENU MANAJEMEN - SEKARANG RAPI & SEJAJAR */}
                     <Text style={styles.sectionTitle}>Manajemen</Text>
                     <View style={styles.menuGrid}>
-                        <ControlBtn title="Verifikasi" icon="shield-checkmark" color="#1cc88a" onPress={() => router.push("/admin/verify")} />
+                        <ControlBtn title="Bayar" icon="cash-outline" color="#1cc88a" onPress={() => router.push("/admin/payment/create")} />
+                        <ControlBtn title="Verifikasi" icon="shield-checkmark" color="#b21f1f" onPress={() => router.push("/admin/verify")} />
                         <ControlBtn title="Komplain" icon="chatbubbles" color="#f6c23e" onPress={() => router.push("/admin/complaint")} />
                         <ControlBtn title="Tenant" icon="people" color="#36b9cc" onPress={() => router.push("/admin/tenant")} />
                         <ControlBtn title="Kamar" icon="bed" color="#4e73df" onPress={() => router.push("/admin/room")} />
-                        <ControlBtn title="Keuangan" icon="cash-outline" color="#4e73df" onPress={() => router.push("/admin/finances")} />
+                        <ControlBtn title="Keuangan" icon="bar-chart-outline" color="#4e73df" onPress={() => router.push("/admin/finances")} />
                     </View>
 
                     {/* PEMBAYARAN TERBARU */}
@@ -423,13 +424,13 @@ const styles = StyleSheet.create({
     menuGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
         width: '100%',
         gap: 15,
         paddingVertical: 10,
     },
     menuItemWrap: {
-        // width: MENU_ITEM_WIDTH,
+        width: (width - 85) / 4,
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 15,

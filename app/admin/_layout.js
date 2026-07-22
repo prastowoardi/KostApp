@@ -12,6 +12,7 @@ export default function AdminLayout() {
             <Stack.Screen name="tenant" />
             <Stack.Screen name="verify" />
             <Stack.Screen name="room" />
+            <Stack.Screen name="payment/create" />
         </Stack>
     );
 }

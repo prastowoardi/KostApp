@@ -75,7 +75,7 @@ export default function VerifyPayment() {
         
         console.log("Payment ID:", id, "Asking for Status:", apiStatus);
 
-        showAlert("Konfirmasi", `Yakin ingin proses ini?`, 'info', async () => {
+        showAlert("Konfirmasi", `Yakin ingin proses ini?`, 'confirmation', async () => {
             setAlertConfig(prev => ({ ...prev, visible: false }));
             setProcessing(true);
 

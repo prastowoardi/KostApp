@@ -39,6 +39,10 @@ export default function ManageTenant() {
     const [selectedTenant, setSelectedTenant] = useState(null);
     const [editMode, setEditMode] = useState(false);
 
+    const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+    const [paymentHistory, setPaymentHistory] = useState([]);
+    const [paymentLoading, setPaymentLoading] = useState(false);
+
     const [form, setForm] = useState({
         name: '', email: '', password: 'password123',
         room_id: '', phone: '', id_card: '', address: '',
@@ -184,6 +188,26 @@ export default function ManageTenant() {
         });
     };
 
+    const fetchPayments = async (tenant) => {
+        if (!tenant) return;
+        setDetailVisible(false);
+        setPaymentLoading(true);
+        setPaymentModalVisible(true);
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            const tenantId = tenant.id || tenant.uuid;
+            const res = await axios.get(`${API_URL}/admin/tenants/${tenantId}/payments`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setPaymentHistory(res.data?.data || []);
+        } catch (e) {
+            console.log("Error fetch payments:", e);
+            setPaymentHistory([]);
+        } finally {
+            setPaymentLoading(false);
+        }
+    };
+
     const roomList = editMode ? (allRooms.length ? allRooms : rooms) : rooms;
 
     const renderTenantItem = ({ item }) => (
@@ -317,6 +341,13 @@ export default function ManageTenant() {
                                 <Text style={styles.detailBtnText}>Edit</Text>
                             </TouchableOpacity>
                             <TouchableOpacity 
+                                style={[styles.detailBtn, { backgroundColor: '#f6c23e' }]} 
+                                onPress={() => fetchPayments(selectedTenant)}
+                            >
+                                <Ionicons name="receipt-outline" size={18} color="white" />
+                                <Text style={styles.detailBtnText}>History</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
                                 style={[styles.detailBtn, { backgroundColor: '#95a5a6' }]} 
                                 onPress={() => setDetailVisible(false)}
                             >
@@ -324,6 +355,66 @@ export default function ManageTenant() {
                                 <Text style={styles.detailBtnText}>Tutup</Text>
                             </TouchableOpacity>
                         </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Payment History Modal */}
+            <Modal visible={paymentModalVisible} animationType="slide" transparent>
+                <View style={styles.detailOverlay}>
+                    <View style={[styles.detailContainer, { minHeight: '50%' }]}>
+                        <View style={styles.detailHeader}>
+                            <Ionicons name="receipt-outline" size={36} color="#1a2a6c" />
+                            <Text style={styles.detailName}>Riwayat Pembayaran</Text>
+                            <Text style={{ color: '#7f8c8d', fontSize: 13, marginTop: -8 }}>
+                                {selectedTenant?.name || selectedTenant?.user?.name}
+                            </Text>
+                        </View>
+
+                        {paymentLoading ? (
+                            <ActivityIndicator size="large" color="#1a2a6c" style={{ marginVertical: 40 }} />
+                        ) : paymentHistory.length === 0 ? (
+                            <View style={{ alignItems: 'center', marginVertical: 40 }}>
+                                <Ionicons name="document-text-outline" size={50} color="#d1d3e2" />
+                                <Text style={{ color: '#95a5a6', marginTop: 10 }}>Belum ada riwayat pembayaran</Text>
+                            </View>
+                        ) : (
+                            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 10 }}>
+                                {paymentHistory.map((p, i) => (
+                                    <View key={p.uuid || i} style={styles.paymentCard}>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={{ fontWeight: 'bold', fontSize: 14, color: '#2c3e50' }}>
+                                                #{p.invoice_number || 'INV-000'}
+                                            </Text>
+                                            <Text style={{ fontSize: 12, color: '#7f8c8d', marginTop: 2 }}>
+                                                {p.period_month ? new Date(p.period_month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '-'}
+                                            </Text>
+                                            <Text style={{ fontSize: 13, color: '#2c3e50', fontWeight: '600', marginTop: 4 }}>
+                                                Rp {(p.total || p.amount || 0).toLocaleString('id-ID')}
+                                            </Text>
+                                        </View>
+                                        <View style={[styles.badge, {
+                                            backgroundColor: p.status === 'paid' ? '#e8f5e9' : p.status === 'pending' ? '#fff8e1' : '#ffebee',
+                                            paddingHorizontal: 10, paddingVertical: 5
+                                        }]}>
+                                            <Text style={{
+                                                fontSize: 10, fontWeight: 'bold',
+                                                color: p.status === 'paid' ? '#2e7d32' : p.status === 'pending' ? '#f57f17' : '#c62828'
+                                            }}>
+                                                {p.status === 'paid' ? 'LUNAS' : p.status === 'pending' ? 'PENDING' : p.status === 'rejected' ? 'DITOLAK' : p.status?.toUpperCase()}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                ))}
+                            </ScrollView>
+                        )}
+
+                        <TouchableOpacity
+                            style={[styles.detailBtn, { backgroundColor: '#1a2a6c' }]}
+                            onPress={() => setPaymentModalVisible(false)}
+                        >
+                            <Text style={styles.detailBtnText}>Tutup</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
@@ -532,6 +623,12 @@ const styles = StyleSheet.create({
     detailActions: { flexDirection: 'row', gap: 10 },
     detailBtn: { flex: 1, flexDirection: 'row', paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     detailBtnText: { color: 'white', fontWeight: 'bold', marginLeft: 6, fontSize: 14 },
+
+    paymentCard: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        backgroundColor: '#f8f9fc', borderRadius: 12, padding: 14, marginBottom: 10,
+        borderWidth: 1, borderColor: '#eef0f7'
+    },
 
     /* Form Modal */
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },

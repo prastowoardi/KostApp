@@ -9,17 +9,17 @@ const GlobalAlert = ({
     type = 'success', 
     onClose, 
     onConfirm, 
-    confirmText = "Oke", 
+    confirmText = "OK", 
     cancelText = "Batal",
     isConfirmation = false
 }) => {
     
     const config = {
         success: { icon: 'checkmark-circle', color: '#2ecc71', btn: '#2ecc71' },
-        error: { icon: 'close-circle', color: '#e74c3c', btn: '#e74c3c' },
+        error: { icon: 'close-circle', color: '#b21f1f', btn: '#b21f1f' },
         warning: { icon: 'warning', color: '#f39c12', btn: '#f39c12' },
-        info: { icon: 'information-circle', color: '#3498db', btn: '#3498db' },
-        confirmation: { icon: 'help-circle-outline', color: '#3498db', btn: '#3498db' },
+        info: { icon: 'information-circle', color: '#1a2a6c', btn: '#1a2a6c' },
+        confirmation: { icon: 'help-circle-outline', color: '#1a2a6c', btn: '#1a2a6c' },
     };
 
     const theme = config[type] || config.success;

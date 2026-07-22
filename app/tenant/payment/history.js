@@ -148,7 +148,7 @@ export default function PaymentHistory() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={["#4e73df", "#224abe"]} style={styles.header}>
+      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity
             onPress={() => router.back()}

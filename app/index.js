@@ -38,13 +38,14 @@ export default function LoginScreen() {
 
     const router = useRouter();
 
-    const showAlert = (title, message, type = 'info', onConfirm = null) => {
+    const showAlert = (title, message, type = 'info', onConfirm = null, confirmText = null) => {
         setAlertConfig({ 
             visible: true, 
             title, 
             message, 
             type, 
-            onConfirm: onConfirm
+            onConfirm,
+            confirmText
         });
     };
 
@@ -53,7 +54,8 @@ export default function LoginScreen() {
             showAlert(
                 "Oops!", 
                 "Email dan password tidak boleh kosong.", 
-                "warning"
+                "warning",
+                () => setAlertConfig(prev => ({ ...prev, visible: false }))
             );
             return;
         }
@@ -82,16 +84,11 @@ export default function LoginScreen() {
 
                 await AsyncStorage.setItem('userToken', cleanToken);
                 await AsyncStorage.setItem('userData', JSON.stringify(user));
-                showAlert(
-                    "Login Berhasil", 
-                    `Silakan ganti password untuk kemanan akun, *${user.name}*!`,
-                    "info", 
-                );
                 router.replace(user.role === 'admin' ? '/admin/dashboard' : '/tenant/dashboard');
             }
         } catch (error) {
             const msg = error.response?.data?.message || "Email atau password salah.";
-            showAlert("Login Gagal", msg, "error");
+            showAlert("Login Gagal", msg, "error", () => setAlertConfig(prev => ({ ...prev, visible: false })), "Coba Lagi");
         } finally {
             setLoading(false);
         }
@@ -122,7 +119,7 @@ export default function LoginScreen() {
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
                 <StatusBar barStyle="light-content" />
                 
-                <LinearGradient colors={['#4e73df', '#224abe']} style={styles.header}>
+                <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
                     <View style={styles.logoCircle}>
                         <Image 
                             source={require('../assets/serrata.png')}
@@ -174,7 +171,7 @@ export default function LoginScreen() {
                             disabled={loading}
                         >
                             <LinearGradient 
-                                colors={['#4e73df', '#224abe']} 
+                                colors={['#1a2a6c', '#b21f1f']} 
                                 start={{ x: 0, y: 0 }} 
                                 end={{ x: 1, y: 0 }} 
                                 style={styles.gradientBtn}
@@ -198,7 +195,7 @@ export default function LoginScreen() {
                 type={alertConfig.type}
                 onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
                 onConfirm={alertConfig.onConfirm} 
-                confirmText="Ya, Lanjutkan"
+                confirmText={alertConfig.confirmText || "OK"}
                 cancelText="Batal"
             />
         </KeyboardAvoidingView>

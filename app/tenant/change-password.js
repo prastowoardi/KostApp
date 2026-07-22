@@ -107,7 +107,7 @@ export default function ChangePasswordScreen() {
     >
       <StatusBar barStyle="light-content" />
 
-      <LinearGradient colors={["#4e73df", "#224abe"]} style={styles.header}>
+      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={28} color="white" />
         </TouchableOpacity>

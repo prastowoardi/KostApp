@@ -4,6 +4,7 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import {
     ActivityIndicator,
@@ -24,6 +25,7 @@ import GlobalAlert from '../../components/GlobalAlert';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ReportScreen() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     
@@ -222,7 +224,7 @@ export default function ReportScreen() {
                             ))}
                         </ScrollView>
 
-                        <TouchableOpacity style={[styles.submitBtn, loading && { opacity: 0.7 }]} onPress={submitComplaint} disabled={loading}>
+                        <TouchableOpacity style={[styles.submitBtn, { marginBottom: insets.bottom }, loading && { opacity: 0.7 }]} onPress={submitComplaint} disabled={loading}>
                             {loading ? <ActivityIndicator color="white" /> : <Text style={styles.btnText}>KIRIM LAPORAN SEKARANG</Text>}
                         </TouchableOpacity>
                     </View>

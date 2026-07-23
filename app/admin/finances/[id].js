@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../../helpers/api';
 import GlobalAlert from '../../../components/GlobalAlert';
 
 const { width } = Dimensions.get('window');
 
 export default function FinanceDetail() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { id } = useLocalSearchParams();
     const [loading, setLoading] = useState(true);
@@ -163,7 +165,7 @@ export default function FinanceDetail() {
             </View>
 
             {/* Tombol Aksi */}
-            <View style={styles.actionContainer}>
+            <View style={[styles.actionContainer, { paddingBottom: insets.bottom + 40 }]}>
                 <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
                     <Ionicons name="trash-outline" size={20} color="#e74a3b" />
                     <Text style={styles.deleteText}>Hapus Transaksi</Text>

@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -28,6 +29,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function CreatePayment() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const [tenants, setTenants] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -303,7 +305,7 @@ export default function CreatePayment() {
                             </>
                         )}
                     </TouchableOpacity>
-                    <View style={{ height: 40 }} />
+                    <View style={{ height: insets.bottom + 40 }} />
                 </ScrollView>
             )}
 

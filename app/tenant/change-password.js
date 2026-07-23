@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState } from "react";
 import {
     ActivityIndicator,
@@ -36,6 +37,7 @@ export default function ChangePasswordScreen() {
     confirm: false,
   });
 
+  const insets = useSafeAreaInsets();
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
     title: "",
@@ -219,7 +221,7 @@ export default function ChangePasswordScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.submitBtn, loading && { opacity: 0.7 }]}
+            style={[styles.submitBtn, { marginBottom: insets.bottom }, loading && { opacity: 0.7 }]}
             onPress={handleChangePassword}
             disabled={loading}
           >

@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -24,6 +25,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function AdminComplaints() {
+  const insets = useSafeAreaInsets();
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
     title: "",
@@ -334,7 +336,7 @@ export default function AdminComplaints() {
               </View>
 
               <TouchableOpacity
-                style={styles.closeBtn}
+                style={[styles.closeBtn, { marginBottom: insets.bottom }]}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={{ color: "#858796", fontWeight: "bold" }}>

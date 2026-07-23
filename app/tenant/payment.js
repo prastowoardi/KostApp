@@ -4,6 +4,7 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -21,6 +22,7 @@ import GlobalAlert from '../../components/GlobalAlert';
 const API_URL = process.env.EXPO_PUBLIC_API_URL; 
 
 export default function PaymentScreen() {
+    const insets = useSafeAreaInsets();
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [billData, setBillData] = useState(null);
@@ -186,7 +188,7 @@ export default function PaymentScreen() {
                         <Text style={styles.btnText}>KONFIRMASI SEKARANG</Text>
                     )}
                 </TouchableOpacity>
-                <View style={{ height: 40 }} />
+                <View style={{ height: insets.bottom + 40 }} />
             </ScrollView>
 
             {/* 4. Komponen Alert Global */}

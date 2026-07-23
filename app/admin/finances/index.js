@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, 
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../../helpers/api';
 import axios from 'axios';
 
 export default function FinanceIndex() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -124,7 +126,7 @@ export default function FinanceIndex() {
             </View>
 
             <TouchableOpacity 
-                style={styles.fab} 
+                style={[styles.fab, { bottom: insets.bottom + 30 }]} 
                 onPress={() => router.push("/admin/finances/create")}
             >
                 <Ionicons name="add" size={30} color="white" />

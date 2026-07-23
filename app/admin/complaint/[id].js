@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -16,6 +17,7 @@ import {
 const { width, height } = Dimensions.get('window');
 
 export default function AdminComplaintDetail() {
+    const insets = useSafeAreaInsets();
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const [complaint, setComplaint] = useState(null);
@@ -121,7 +123,7 @@ export default function AdminComplaintDetail() {
                     />
 
                     <Text style={styles.label}>GANTI STATUS</Text>
-                    <View style={styles.actionRow}>
+                    <View style={[styles.actionRow, { marginBottom: insets.bottom }]}>
                         <TouchableOpacity style={[styles.btn, {backgroundColor: '#f1c40f'}]} onPress={() => handleUpdate('in_progress')} disabled={updating}>
                             <Text style={styles.btnText}>Proses</Text>
                         </TouchableOpacity>

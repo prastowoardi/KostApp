@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -22,6 +23,7 @@ import GlobalAlert from '../../components/GlobalAlert';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ManageTenant() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -371,50 +373,54 @@ export default function ManageTenant() {
                             </Text>
                         </View>
 
-                        {paymentLoading ? (
-                            <ActivityIndicator size="large" color="#1a2a6c" style={{ marginVertical: 40 }} />
-                        ) : paymentHistory.length === 0 ? (
-                            <View style={{ alignItems: 'center', marginVertical: 40 }}>
-                                <Ionicons name="document-text-outline" size={50} color="#d1d3e2" />
-                                <Text style={{ color: '#95a5a6', marginTop: 10 }}>Belum ada riwayat pembayaran</Text>
-                            </View>
-                        ) : (
-                            <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 10 }}>
-                                {paymentHistory.map((p, i) => (
-                                    <View key={p.uuid || i} style={styles.paymentCard}>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={{ fontWeight: 'bold', fontSize: 14, color: '#2c3e50' }}>
-                                                #{p.invoice_number || 'INV-000'}
-                                            </Text>
-                                            <Text style={{ fontSize: 12, color: '#7f8c8d', marginTop: 2 }}>
-                                                {p.period_month ? new Date(p.period_month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '-'}
-                                            </Text>
-                                            <Text style={{ fontSize: 13, color: '#2c3e50', fontWeight: '600', marginTop: 4 }}>
-                                                Rp {(p.total || p.amount || 0).toLocaleString('id-ID')}
-                                            </Text>
+                        <View style={{ flex: 1 }}>
+                            {paymentLoading ? (
+                                <ActivityIndicator size="large" color="#1a2a6c" style={{ marginVertical: 40 }} />
+                            ) : paymentHistory.length === 0 ? (
+                                <View style={{ alignItems: 'center', marginVertical: 40 }}>
+                                    <Ionicons name="document-text-outline" size={50} color="#d1d3e2" />
+                                    <Text style={{ color: '#95a5a6', marginTop: 10 }}>Belum ada riwayat pembayaran</Text>
+                                </View>
+                            ) : (
+                                <ScrollView showsVerticalScrollIndicator={false}>
+                                    {paymentHistory.map((p, i) => (
+                                        <View key={p.uuid || i} style={styles.paymentCard}>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={{ fontWeight: 'bold', fontSize: 14, color: '#2c3e50' }}>
+                                                    #{p.invoice_number || 'INV-000'}
+                                                </Text>
+                                                <Text style={{ fontSize: 12, color: '#7f8c8d', marginTop: 2 }}>
+                                                    {p.period_month ? new Date(p.period_month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '-'}
+                                                </Text>
+                                                <Text style={{ fontSize: 13, color: '#2c3e50', fontWeight: '600', marginTop: 4 }}>
+                                                    Rp {(p.total || p.amount || 0).toLocaleString('id-ID')}
+                                                </Text>
+                                            </View>
+                                            <View style={[styles.badge, {
+                                                backgroundColor: p.status === 'paid' ? '#e8f5e9' : p.status === 'pending' ? '#fff8e1' : '#ffebee',
+                                                paddingHorizontal: 10, paddingVertical: 5
+                                            }]}>
+                                                <Text style={{
+                                                    fontSize: 10, fontWeight: 'bold',
+                                                    color: p.status === 'paid' ? '#2e7d32' : p.status === 'pending' ? '#f57f17' : '#c62828'
+                                                }}>
+                                                    {p.status === 'paid' ? 'LUNAS' : p.status === 'pending' ? 'PENDING' : p.status === 'rejected' ? 'DITOLAK' : p.status?.toUpperCase()}
+                                                </Text>
+                                            </View>
                                         </View>
-                                        <View style={[styles.badge, {
-                                            backgroundColor: p.status === 'paid' ? '#e8f5e9' : p.status === 'pending' ? '#fff8e1' : '#ffebee',
-                                            paddingHorizontal: 10, paddingVertical: 5
-                                        }]}>
-                                            <Text style={{
-                                                fontSize: 10, fontWeight: 'bold',
-                                                color: p.status === 'paid' ? '#2e7d32' : p.status === 'pending' ? '#f57f17' : '#c62828'
-                                            }}>
-                                                {p.status === 'paid' ? 'LUNAS' : p.status === 'pending' ? 'PENDING' : p.status === 'rejected' ? 'DITOLAK' : p.status?.toUpperCase()}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                ))}
-                            </ScrollView>
-                        )}
+                                    ))}
+                                </ScrollView>
+                            )}
+                        </View>
 
-                        <TouchableOpacity
-                            style={[styles.detailBtn, { backgroundColor: '#1a2a6c' }]}
-                            onPress={() => setPaymentModalVisible(false)}
-                        >
-                            <Text style={styles.detailBtnText}>Tutup</Text>
-                        </TouchableOpacity>
+                        <View style={[styles.detailActions, { justifyContent: 'center', paddingBottom: insets.bottom }]}>
+                            <TouchableOpacity
+                                style={[styles.detailBtn, { backgroundColor: '#1a2a6c', flex: 0, paddingHorizontal: 40 }]}
+                                onPress={() => setPaymentModalVisible(false)}
+                            >
+                                <Text style={styles.detailBtnText}>Tutup</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </Modal>
@@ -539,7 +545,7 @@ export default function ManageTenant() {
                                 {editMode ? 'SIMPAN PERUBAHAN' : 'SIMPAN DATA'}
                             </Text>
                         </TouchableOpacity>
-                        <View style={{height: 50}} />
+                        <View style={{height: insets.bottom + 50}} />
                     </ScrollView>
                 </View>
             </Modal>

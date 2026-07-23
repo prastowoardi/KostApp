@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalAlert from '../../../components/GlobalAlert';
@@ -24,6 +25,7 @@ import { Platform } from 'react-native';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function CreateTransaction() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [image, setImage] = useState(null);
@@ -254,7 +256,7 @@ export default function CreateTransaction() {
                     />
                 </View>
 
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
+                <TouchableOpacity style={[styles.saveBtn, { marginBottom: insets.bottom }]} onPress={handleSave} disabled={loading}>
                     {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveBtnText}>Simpan Sekarang</Text>}
                 </TouchableOpacity>
             </ScrollView>

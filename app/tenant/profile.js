@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -19,6 +20,7 @@ import GlobalAlert from "../../components/GlobalAlert";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -206,7 +208,7 @@ export default function ProfileScreen() {
           />
           <Text style={styles.logoutText}>Keluar Akun</Text>
         </TouchableOpacity>
-        <View style={{ height: 50 }} />
+        <View style={{ height: insets.bottom + 50 }} />
       </ScrollView>
 
       <GlobalAlert

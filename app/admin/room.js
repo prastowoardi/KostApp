@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -35,6 +36,7 @@ const TYPE_LABELS = {
 };
 
 export default function RoomManagement() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -256,7 +258,7 @@ export default function RoomManagement() {
                             </View>
                         </ScrollView>
 
-                        <View style={styles.detailActions}>
+                        <View style={[styles.detailActions, { paddingBottom: insets.bottom }]}>
                             <TouchableOpacity style={[styles.detailBtn, { backgroundColor: '#95a5a6' }]}
                                 onPress={() => setDetailVisible(false)}>
                                 <Text style={styles.detailBtnText}>Tutup</Text>
@@ -359,7 +361,7 @@ export default function RoomManagement() {
                         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
                             <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>SIMPAN PERUBAHAN</Text>
                         </TouchableOpacity>
-                        <View style={{ height: 50 }} />
+                        <View style={{ height: insets.bottom + 50 }} />
                     </ScrollView>
                 </View>
             </Modal>

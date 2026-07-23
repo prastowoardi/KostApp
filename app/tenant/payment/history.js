@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -14,11 +15,11 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PaymentHistory() {
+  const insets = useSafeAreaInsets();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -147,7 +148,7 @@ export default function PaymentHistory() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity
@@ -165,7 +166,7 @@ export default function PaymentHistory() {
         data={payments}
         keyExtractor={(item) => item.id?.toString() || item.uuid?.toString() || Math.random().toString()}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 40 }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -181,7 +182,7 @@ export default function PaymentHistory() {
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -189,9 +190,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F9FC" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
-    paddingHorizontal: 25,
-    paddingTop: 50,
-    paddingBottom: 25,
+    paddingTop: 60,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },

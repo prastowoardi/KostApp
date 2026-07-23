@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Linking,
     RefreshControl,
     ScrollView,
     StatusBar,
@@ -191,9 +192,10 @@ export default function ProfileScreen() {
             label="Pusat Bantuan"
             onPress={() =>
               showAlert(
-                "Bantuan",
-                "Hubungi pengelola di *085111203521*",
-                "info",
+                "Hubungi Pengelola",
+                "Apakah Anda ingin menghubungi pengelola via WhatsApp?",
+                "confirmation",
+                () => Linking.openURL("https://wa.me/6285111203521"),
               )
             }
           />

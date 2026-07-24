@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
+import { API_URL } from '../../../helpers/api';
 
 export default function AdminComplaintDetail() {
     const insets = useSafeAreaInsets();
@@ -28,8 +29,7 @@ export default function AdminComplaintDetail() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImg, setSelectedImg] = useState(null);
 
-    const API_URL = process.env.EXPO_PUBLIC_API_URL;
-    const STORAGE_URL = API_URL.replace('/api', '');
+    const STORAGE_URL = process.env.EXPO_PUBLIC_API_URL;
 
     useEffect(() => { fetchDetail(); }, [id]);
 

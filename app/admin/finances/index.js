@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import api from '../../../helpers/api';
+import api, { API_URL } from '../../../helpers/api';
 import axios from 'axios';
 
 export default function FinanceIndex() {
@@ -14,12 +14,12 @@ export default function FinanceIndex() {
     const [refreshing, setRefreshing] = useState(false);
     const [data, setData] = useState({ transactions: [], totalIncome: 0, totalExpense: 0 });
 
-    const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/admin/finances`;
+    const FINANCES_URL = `${API_URL}/admin/finances`;
 
     const fetchData = async () => {
         try {
 
-            const response = await api.get(API_URL, {
+            const response = await api.get(FINANCES_URL, {
                 params: {
                     limit: 100,
                     sort: 'asc'

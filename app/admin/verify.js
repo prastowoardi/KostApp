@@ -21,9 +21,8 @@ import GlobalAlert from '../../components/GlobalAlert';
 
 
 const { width } = Dimensions.get('window');
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-const BASE_URL = API_URL.replace('/api', ''); 
-const STORAGE_URL = `${BASE_URL}/storage/`;
+import { API_URL } from '../../helpers/api';
+const STORAGE_URL = process.env.EXPO_PUBLIC_API_URL + '/storage/';
 
 export default function VerifyPayment() {
     const [payments, setPayments] = useState([]);

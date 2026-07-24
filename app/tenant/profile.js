@@ -17,8 +17,7 @@ import {
     View,
 } from "react-native";
 import GlobalAlert from "../../components/GlobalAlert";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "../../helpers/api";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();

@@ -16,9 +16,9 @@ import {
     View,
 } from "react-native";
 import GlobalAlert from "../../components/GlobalAlert";
+import { API_URL } from "../../helpers/api";
 
 const { width } = Dimensions.get("window");
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 // Hitung lebar item menu (Layar dikurangi padding, dibagi 4)
 const CONTENT_PADDING = 20;

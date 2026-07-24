@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import GlobalAlert from '../../components/GlobalAlert';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from '../../helpers/api';
 
 const STATUS_COLORS = {
     available: { bg: '#e8f5e9', text: '#2e7d32', label: 'TERSEDIA' },

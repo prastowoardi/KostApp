@@ -19,8 +19,7 @@ import {
     View
 } from 'react-native';
 import GlobalAlert from '../../../components/GlobalAlert';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from '../../../helpers/api';
 
 const PAYMENT_METHODS = [
     { key: 'cash', label: 'Tunai', icon: 'cash-outline' },

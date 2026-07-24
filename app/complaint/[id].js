@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
+import { API_URL } from '../../helpers/api';
 
 export default function ComplaintDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -28,8 +29,7 @@ export default function ComplaintDetailScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImg, setSelectedImg] = useState(null);
 
-    const API_URL = process.env.EXPO_PUBLIC_API_URL;
-    const STORAGE_URL = API_URL.replace('/api', '');
+    const STORAGE_URL = process.env.EXPO_PUBLIC_API_URL;
 
     useEffect(() => {
         const fetchDetail = async () => {

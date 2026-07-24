@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import api from '../../../helpers/api';
+import api, { API_URL } from '../../../helpers/api';
 import GlobalAlert from '../../../components/GlobalAlert';
 
 const { width } = Dimensions.get('window');
@@ -25,8 +25,7 @@ export default function FinanceDetail() {
         onConfirm: () => {}
     });
 
-    const API_URL = process.env.EXPO_PUBLIC_API_URL;
-    const STORAGE_URL = API_URL.replace('/api', '/storage');
+    const STORAGE_URL = process.env.EXPO_PUBLIC_API_URL + '/storage';
 
     const getDetailUrl = () => `${API_URL}/admin/finances/${id}`;
 

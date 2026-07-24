@@ -19,10 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalAlert from '../../../components/GlobalAlert';
-import api from '../../../helpers/api';
+import api, { API_URL } from '../../../helpers/api';
 import { Platform } from 'react-native';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function CreateTransaction() {
     const insets = useSafeAreaInsets();

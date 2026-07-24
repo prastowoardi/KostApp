@@ -19,7 +19,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://serrata.xyz/api"
+        "EXPO_PUBLIC_API_URL": "https://serrata.xyz"
       }
     }
   }

@@ -153,7 +153,7 @@ export default function PaymentScreen() {
                     <View style={styles.row}>
                         <Text style={styles.label}>Total Bayar</Text>
                         <Text style={[styles.value, {color: '#1cc88a', fontWeight: 'bold'}]}>
-                            Rp {(billData?.bill_amount || 0).toLocaleString('id-ID')}
+                            Rp {Number(billData?.bill_amount || 0).toLocaleString('id-ID')}
                         </Text>
                     </View>
 

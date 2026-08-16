@@ -171,7 +171,7 @@ export default function TenantDashboard() {
                 Tagihan: {data?.payment_status || "Belum Bayar"}
               </Text>
               <Text style={styles.billAmount}>
-                Rp {(data?.bill_amount || 0).toLocaleString("id-ID")}
+                Rp {Number(data?.bill_amount || 0).toLocaleString("id-ID")}
               </Text>
               {/* MENAMPILKAN SISA HARI / TELAT */}
               {data?.days_left_msg ? (

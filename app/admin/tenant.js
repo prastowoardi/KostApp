@@ -393,7 +393,7 @@ export default function ManageTenant() {
                                                     {p.period_month ? new Date(p.period_month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '-'}
                                                 </Text>
                                                 <Text style={{ fontSize: 13, color: '#2c3e50', fontWeight: '600', marginTop: 4 }}>
-                                                    Rp {(p.total || p.amount || 0).toLocaleString('id-ID')}
+                                                    Rp {Number(p.total || p.amount || 0).toLocaleString('id-ID')}
                                                 </Text>
                                             </View>
                                             <View style={[styles.badge, {
@@ -571,7 +571,7 @@ export default function ManageTenant() {
                                     <Ionicons name="business" size={24} color="#1a2a6c" />
                                     <View style={{marginLeft: 15}}>
                                         <Text style={{fontWeight: 'bold', fontSize: 16}}>Kamar {item.room_number}</Text>
-                                        <Text style={{color: '#666', fontSize: 12}}>Rp {item.price?.toLocaleString()} • {item.status || item.room_status}</Text>
+                                        <Text style={{color: '#666', fontSize: 12}}>Rp {Number(item.price || 0).toLocaleString('id-ID')} • {item.status || item.room_status}</Text>
                                     </View>
                                 </TouchableOpacity>
                             )}

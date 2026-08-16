@@ -1,5 +1,4 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -7,16 +6,18 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
     FlatList,
     RefreshControl,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 
 import { API_URL } from '../../../helpers/api';
+import { Skeleton } from '../../../components/ui/skeleton';
+import ScreenHeader from '../../../components/ScreenHeader';
+import { Badge } from '../../../components/ui/badge';
+import { Card } from '../../../components/ui/card';
 
 export default function PaymentHistory() {
   const insets = useSafeAreaInsets();
@@ -87,86 +88,66 @@ export default function PaymentHistory() {
       : "-";
 
     return (
-      <TouchableOpacity
-        style={[
-          styles.card,
-          { borderLeftColor: isPaid ? "#1cc88a" : "#e74a3b" },
-        ]}
-        onPress={() =>
-          router.push({
-            pathname: "/tenant/payment/detail",
-            params: { id: item.id || item.uuid },
-          })
-        }
-      >
-        <View style={styles.cardContent}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.invoiceText}>
-              #{item.invoice_number || "INV-000"}
-            </Text>
-            <Text style={styles.dateText}>Periode: {formattedDate}</Text>
-            <Text style={styles.amountText}>
-              Rp{" "}
-              {Math.round(item.total || item.amount || 0).toLocaleString(
-                "id-ID",
-              )}
-            </Text>
-          </View>
-
-          <View style={styles.rightInfo}>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: isPaid ? "#f0fdf4" : "#fff1f2" },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  { color: isPaid ? "#16a34a" : "#e11d48" },
-                ]}
-              >
-                {isPaid ? "Lunas" : "Ditolak"}
+      <Card className="mb-4 rounded-[20px] border-l-[5px] p-0 shadow-sm" style={{ borderLeftColor: isPaid ? "#1cc88a" : "#e74a3b" }}>
+        <TouchableOpacity
+          className="flex-1 flex-row overflow-hidden"
+          onPress={() =>
+            router.push({
+              pathname: "/tenant/payment/detail",
+              params: { id: item.id || item.uuid },
+            })
+          }
+        >
+          <View className="flex-1 flex-row items-center justify-between p-5">
+            <View className="flex-1">
+              <Text className="text-[11px] font-bold text-muted-foreground">
+                #{item.invoice_number || "INV-000"}
+              </Text>
+              <Text className="my-1 text-sm font-medium text-foreground">Periode: {formattedDate}</Text>
+              <Text className="text-base font-bold text-primary">
+                Rp{" "}
+                {Math.round(item.total || item.amount || 0).toLocaleString(
+                  "id-ID",
+                )}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#d1d3e2" />
+
+            <View className="ml-2.5 items-end">
+              <Badge variant={isPaid ? "success" : "destructive"} className="mb-1.5 px-2.5 py-1">
+                <Text className="text-[10px] font-bold text-white">
+                  {isPaid ? "Lunas" : "Ditolak"}
+                </Text>
+              </Badge>
+              <Ionicons name="chevron-forward" size={20} color="#d1d3e2" />
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Card>
     );
   };
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4e73df" />
-        <Text style={{ marginTop: 10, color: "#858796" }}>
-          Memuat Riwayat...
-        </Text>
+      <View className="flex-1 bg-background">
+        <Skeleton className="h-28 w-full rounded-b-[30px]" />
+        <View className="px-6 pt-7">
+          <Skeleton className="h-24 w-full rounded-[20px]" />
+          <Skeleton className="mt-4 h-24 w-full rounded-[20px]" />
+          <Skeleton className="mt-4 h-24 w-full rounded-[20px]" />
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Ionicons name="chevron-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Riwayat Bayar</Text>
-          <View style={{ width: 44 }} />
-        </View>
-      </LinearGradient>
+    <View className="flex-1 bg-background">
+      <ScreenHeader title="Riwayat Bayar" />
 
       <FlatList
         data={payments}
         keyExtractor={(item) => item.id?.toString() || item.uuid?.toString() || Math.random().toString()}
         renderItem={renderItem}
-        contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={{ paddingHorizontal: 25, paddingTop: 30, paddingBottom: insets.bottom + 40 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -176,78 +157,12 @@ export default function PaymentHistory() {
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyBox}>
+          <View className="mt-24 items-center">
             <MaterialCommunityIcons name="receipt" size={80} color="#eaecf4" />
-            <Text style={styles.emptyText}>Belum ada riwayat pembayaran</Text>
+            <Text className="mt-2.5 text-sm font-medium text-muted-foreground">Belum ada riwayat pembayaran</Text>
           </View>
         }
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FC" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  headerTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerTitle: { color: "white", fontSize: 20, fontWeight: "bold" },
-  backBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: 8,
-    borderRadius: 12,
-  },
-  listContainer: { paddingHorizontal: 25, paddingTop: 30, paddingBottom: 40 },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    marginBottom: 15,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    borderLeftWidth: 5,
-    flexDirection: "row", // Tambahkan ini agar konten sejajar
-    overflow: "hidden",
-  },
-  cardContent: {
-    flex: 1,
-    padding: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  invoiceText: { fontSize: 11, color: "#858796", fontWeight: "bold" },
-  dateText: {
-    fontSize: 14,
-    color: "#2c3e50",
-    marginVertical: 4,
-    fontWeight: "500",
-  },
-  amountText: { fontSize: 16, fontWeight: "bold", color: "#4e73df" },
-  rightInfo: { alignItems: "flex-end", marginLeft: 10 },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    marginBottom: 5,
-  },
-  statusText: { fontSize: 10, fontWeight: "bold" },
-  emptyBox: { alignItems: "center", marginTop: 100 },
-  emptyText: {
-    color: "#b7b9cc",
-    marginTop: 10,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-});

@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
@@ -12,19 +10,21 @@ import {
     Modal,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
 import GlobalAlert from '../../components/GlobalAlert';
-
+import ScreenHeader from '../../components/ScreenHeader';
 import { API_URL } from '../../helpers/api';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Label } from '../../components/ui/label';
+import { Input } from '../../components/ui/input';
 
 export default function ManageTenant() {
     const insets = useSafeAreaInsets();
-    const router = useRouter();
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
         title: '',
@@ -60,7 +60,7 @@ export default function ManageTenant() {
         try {
             setLoading(true);
             const token = await AsyncStorage.getItem('userToken');
-            const headers = { 
+            const headers = {
                 Authorization: `Bearer ${token}`,
                 "ngrok-skip-browser-warning": "69420"
             };
@@ -137,7 +137,7 @@ export default function ManageTenant() {
         try {
             setLoading(true);
             const token = await AsyncStorage.getItem('userToken');
-            const headers = { 
+            const headers = {
                 Authorization: `Bearer ${token}`,
                 "ngrok-skip-browser-warning": "69420"
             };
@@ -213,70 +213,55 @@ export default function ManageTenant() {
     const roomList = editMode ? (allRooms.length ? allRooms : rooms) : rooms;
 
     const renderTenantItem = ({ item }) => (
-        <TouchableOpacity
-            style={styles.card}
-            onPress={() => {
-                setSelectedTenant(item);
-                setDetailVisible(true);
-            }}
-        >
-            <View style={styles.cardInfo}>
-                <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{(item.name || item.user?.name || "U").charAt(0)}</Text>
+        <Card className="mb-3 flex-row items-center justify-between p-4 shadow-sm" asChild>
+            <TouchableOpacity
+                onPress={() => {
+                    setSelectedTenant(item);
+                    setDetailVisible(true);
+                }}
+            >
+                <View className="flex-row items-center">
+                    <View className="h-11 w-11 items-center justify-center rounded-full bg-primary">
+                        <Text className="text-lg font-bold text-white">{(item.name || item.user?.name || "U").charAt(0)}</Text>
+                    </View>
+                    <View className="ml-4">
+                        <Text className="text-base font-bold text-foreground">{item.name || item.user?.name}</Text>
+                        <Text className="mt-0.5 text-[13px] text-muted-foreground">
+                            Kamar {item.room?.room_number || '??'} • {item.phone}
+                        </Text>
+                    </View>
                 </View>
-                <View style={{ marginLeft: 15 }}>
-                    <Text style={styles.name}>{item.name || item.user?.name}</Text>
-                    <Text style={styles.sub}>
-                        Kamar {item.room?.room_number || '??'} • {item.phone}
-                    </Text>
-                </View>
-            </View>
-            <View style={[styles.badge, { backgroundColor: item.status === 'active' ? '#e8f5e9' : '#ffebee' }]}>
-                <Text style={{ color: item.status === 'active' ? '#2e7d32' : '#c62828', fontSize: 10, fontWeight: 'bold' }}>
-                    {item.status?.toUpperCase()}
-                </Text>
-            </View>
-        </TouchableOpacity>
+                <Badge variant={item.status === 'active' ? 'success' : 'destructive'}>
+                    <Text className="text-[10px] font-bold text-white">{item.status?.toUpperCase()}</Text>
+                </Badge>
+            </TouchableOpacity>
+        </Card>
     );
 
     const renderDetailValue = (label, value) => (
-        <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>{label}</Text>
-            <Text style={styles.detailValue}>{value || '-'}</Text>
+        <View className="flex-row justify-between border-b border-border py-3">
+            <Text className="flex-1 text-sm text-muted-foreground">{label}</Text>
+            <Text className="flex-[1.5] text-right text-sm font-semibold text-foreground">{value || '-'}</Text>
         </View>
     );
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background">
             <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                        <TouchableOpacity 
-                            onPress={() => router.back()} 
-                            style={styles.backBtn}
-                        >
-                            <Ionicons name="chevron-back" size={28} color="white" />
-                        </TouchableOpacity>
-
-                        <View style={{ marginLeft: 10 }}>
-                            <Text style={styles.headerTitle}>Manajemen Tenant</Text>
-                            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
-                                Total: {tenants.length} Penghuni
-                            </Text>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity onPress={openAddModal} style={styles.addBtn}>
+            <ScreenHeader
+                title="Manajemen Tenant"
+                subtitle={`Total: ${tenants.length} Penghuni`}
+                right={
+                    <TouchableOpacity onPress={openAddModal} className="flex-row items-center rounded-xl bg-success px-3.5 py-2.5 shadow-lg shadow-black/10">
                         <Ionicons name="person-add" size={16} color="white" />
-                        <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 5 }}>Tambah</Text>
+                        <Text className="ml-1.5 font-bold text-white">Tambah</Text>
                     </TouchableOpacity>
-                </View> 
-            </LinearGradient>
+                }
+            />
 
             {loading ? (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#b21f1f" />
+                <View className="flex-1 items-center justify-center">
+                    <ActivityIndicator size="large" color="hsl(var(--primary))" />
                 </View>
             ) : (
                 <FlatList
@@ -284,7 +269,7 @@ export default function ManageTenant() {
                     keyExtractor={(item) => (item.id || item.uuid).toString()}
                     renderItem={renderTenantItem}
                     contentContainerStyle={{ padding: 20 }}
-                    ListEmptyComponent={<Text style={styles.emptyText}>Belum ada data tenant.</Text>}
+                    ListEmptyComponent={<Text className="mt-12 text-center text-muted-foreground">Belum ada data tenant.</Text>}
                     onRefresh={fetchData}
                     refreshing={loading}
                 />
@@ -292,30 +277,22 @@ export default function ManageTenant() {
 
             {/* Detail Modal */}
             <Modal visible={detailVisible} animationType="slide" transparent>
-                <View style={styles.detailOverlay}>
-                    <View style={styles.detailContainer}>
+                <View className="flex-1 justify-end bg-black/60">
+                    <View className="max-h-[90%] rounded-t-[30px] bg-card p-6">
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            <View style={styles.detailHeader}>
-                                <View style={[styles.avatar, { width: 60, height: 60, borderRadius: 30 }]}>
-                                    <Text style={[styles.avatarText, { fontSize: 24 }]}>
+                            <View className="mb-5 items-center">
+                                <View className="h-[60px] w-[60px] items-center justify-center rounded-full bg-primary">
+                                    <Text className="text-2xl font-bold text-white">
                                         {(selectedTenant?.name || selectedTenant?.user?.name || "U").charAt(0)}
                                     </Text>
                                 </View>
-                                <Text style={styles.detailName}>{selectedTenant?.name || selectedTenant?.user?.name}</Text>
-                                <View style={[styles.badge, { 
-                                    backgroundColor: selectedTenant?.status === 'active' ? '#e8f5e9' : '#ffebee',
-                                    paddingHorizontal: 16, paddingVertical: 6
-                                }]}>
-                                    <Text style={{ 
-                                        color: selectedTenant?.status === 'active' ? '#2e7d32' : '#c62828',
-                                        fontWeight: 'bold', fontSize: 12
-                                    }}>
-                                        {selectedTenant?.status?.toUpperCase()}
-                                    </Text>
-                                </View>
+                                <Text className="mt-3 text-[22px] font-bold text-foreground">{selectedTenant?.name || selectedTenant?.user?.name}</Text>
+                                <Badge variant={selectedTenant?.status === 'active' ? 'success' : 'destructive'} className="mt-2 px-4 py-1.5">
+                                    <Text className="text-xs font-bold text-white">{selectedTenant?.status?.toUpperCase()}</Text>
+                                </Badge>
                             </View>
 
-                            <View style={styles.detailBody}>
+                            <View className="mb-5">
                                 {renderDetailValue('Email', selectedTenant?.email || selectedTenant?.user?.email)}
                                 {renderDetailValue('No. Telepon', selectedTenant?.phone)}
                                 {renderDetailValue('Kamar', selectedTenant?.room?.room_number ? `Kamar ${selectedTenant.room.room_number}` : '-')}
@@ -327,35 +304,23 @@ export default function ManageTenant() {
                             </View>
                         </ScrollView>
 
-                        <View style={styles.detailActions}>
-                            <TouchableOpacity 
-                                style={[styles.detailBtn, { backgroundColor: '#e74a3b' }]} 
-                                onPress={() => handleDelete(selectedTenant)}
-                            >
+                        <View className="flex-row gap-2.5">
+                            <Button variant="destructive" className="flex-1" onPress={() => handleDelete(selectedTenant)}>
                                 <Ionicons name="trash-outline" size={18} color="white" />
-                                <Text style={styles.detailBtnText}>Hapus</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.detailBtn, { backgroundColor: '#1a2a6c' }]} 
-                                onPress={() => openEditModal(selectedTenant)}
-                            >
+                                <Text className="ml-1.5 font-bold text-white">Hapus</Text>
+                            </Button>
+                            <Button className="flex-1" onPress={() => openEditModal(selectedTenant)}>
                                 <Ionicons name="create-outline" size={18} color="white" />
-                                <Text style={styles.detailBtnText}>Edit</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.detailBtn, { backgroundColor: '#f6c23e' }]} 
-                                onPress={() => fetchPayments(selectedTenant)}
-                            >
-                                <Ionicons name="receipt-outline" size={18} color="white" />
-                                <Text style={styles.detailBtnText}>History</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.detailBtn, { backgroundColor: '#95a5a6' }]} 
-                                onPress={() => setDetailVisible(false)}
-                            >
-                                <Ionicons name="close-outline" size={18} color="white" />
-                                <Text style={styles.detailBtnText}>Tutup</Text>
-                            </TouchableOpacity>
+                                <Text className="ml-1.5 font-bold text-white">Edit</Text>
+                            </Button>
+                            <Button variant="warning" className="flex-1" onPress={() => fetchPayments(selectedTenant)}>
+                                <Ionicons name="receipt-outline" size={18} color="hsl(var(--warning-foreground))" />
+                                <Text className="ml-1.5 font-bold text-warning-foreground">History</Text>
+                            </Button>
+                            <Button variant="secondary" className="flex-1" onPress={() => setDetailVisible(false)}>
+                                <Ionicons name="close-outline" size={18} color="hsl(var(--secondary-foreground))" />
+                                <Text className="ml-1.5 font-bold text-secondary-foreground">Tutup</Text>
+                            </Button>
                         </View>
                     </View>
                 </View>
@@ -363,63 +328,55 @@ export default function ManageTenant() {
 
             {/* Payment History Modal */}
             <Modal visible={paymentModalVisible} animationType="slide" transparent>
-                <View style={styles.detailOverlay}>
-                    <View style={[styles.detailContainer, { minHeight: '50%' }]}>
-                        <View style={styles.detailHeader}>
-                            <Ionicons name="receipt-outline" size={36} color="#1a2a6c" />
-                            <Text style={styles.detailName}>Riwayat Pembayaran</Text>
-                            <Text style={{ color: '#7f8c8d', fontSize: 13, marginTop: -8 }}>
+                <View className="flex-1 justify-end bg-black/60">
+                    <View className="min-h-[50%] rounded-t-[30px] bg-card p-6">
+                        <View className="mb-5 items-center">
+                            <Ionicons name="receipt-outline" size={36} color="hsl(var(--primary))" />
+                            <Text className="mt-2 text-[22px] font-bold text-foreground">Riwayat Pembayaran</Text>
+                            <Text className="-mt-1 text-[13px] text-muted-foreground">
                                 {selectedTenant?.name || selectedTenant?.user?.name}
                             </Text>
                         </View>
 
-                        <View style={{ flex: 1 }}>
+                        <View className="flex-1">
                             {paymentLoading ? (
-                                <ActivityIndicator size="large" color="#1a2a6c" style={{ marginVertical: 40 }} />
+                                <ActivityIndicator size="large" color="hsl(var(--primary))" style={{ marginVertical: 40 }} />
                             ) : paymentHistory.length === 0 ? (
-                                <View style={{ alignItems: 'center', marginVertical: 40 }}>
-                                    <Ionicons name="document-text-outline" size={50} color="#d1d3e2" />
-                                    <Text style={{ color: '#95a5a6', marginTop: 10 }}>Belum ada riwayat pembayaran</Text>
+                                <View className="my-10 items-center">
+                                    <Ionicons name="document-text-outline" size={50} color="hsl(var(--border))" />
+                                    <Text className="mt-2.5 text-muted-foreground">Belum ada riwayat pembayaran</Text>
                                 </View>
                             ) : (
                                 <ScrollView showsVerticalScrollIndicator={false}>
                                     {paymentHistory.map((p, i) => (
-                                        <View key={p.uuid || i} style={styles.paymentCard}>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={{ fontWeight: 'bold', fontSize: 14, color: '#2c3e50' }}>
-                                                    #{p.invoice_number || 'INV-000'}
-                                                </Text>
-                                                <Text style={{ fontSize: 12, color: '#7f8c8d', marginTop: 2 }}>
+                                        <View key={p.uuid || i} className="mb-2.5 flex-row items-center justify-between rounded-xl border border-border bg-muted/40 p-3.5">
+                                            <View className="flex-1">
+                                                <Text className="text-sm font-bold text-foreground">#{p.invoice_number || 'INV-000'}</Text>
+                                                <Text className="mt-0.5 text-xs text-muted-foreground">
                                                     {p.period_month ? new Date(p.period_month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '-'}
                                                 </Text>
-                                                <Text style={{ fontSize: 13, color: '#2c3e50', fontWeight: '600', marginTop: 4 }}>
+                                                <Text className="mt-1 text-[13px] font-semibold text-foreground">
                                                     Rp {(p.total || p.amount || 0).toLocaleString('id-ID')}
                                                 </Text>
                                             </View>
-                                            <View style={[styles.badge, {
-                                                backgroundColor: p.status === 'paid' ? '#e8f5e9' : p.status === 'pending' ? '#fff8e1' : '#ffebee',
-                                                paddingHorizontal: 10, paddingVertical: 5
-                                            }]}>
-                                                <Text style={{
-                                                    fontSize: 10, fontWeight: 'bold',
-                                                    color: p.status === 'paid' ? '#2e7d32' : p.status === 'pending' ? '#f57f17' : '#c62828'
-                                                }}>
+                                            <Badge variant={p.status === 'paid' ? 'success' : p.status === 'pending' ? 'warning' : 'destructive'} className="px-2.5 py-1.5">
+                                                <Text className="text-[10px] font-bold text-white">
                                                     {p.status === 'paid' ? 'LUNAS' : p.status === 'pending' ? 'PENDING' : p.status === 'rejected' ? 'DITOLAK' : p.status?.toUpperCase()}
                                                 </Text>
-                                            </View>
+                                            </Badge>
                                         </View>
                                     ))}
                                 </ScrollView>
                             )}
                         </View>
 
-                        <View style={[styles.detailActions, { justifyContent: 'center', paddingBottom: insets.bottom }]}>
-                            <TouchableOpacity
-                                style={[styles.detailBtn, { backgroundColor: '#1a2a6c', flex: 0, paddingHorizontal: 40 }]}
+                        <View style={{ paddingBottom: insets.bottom }} className="flex-row justify-center">
+                            <Button
+                                className="px-10"
                                 onPress={() => setPaymentModalVisible(false)}
                             >
-                                <Text style={styles.detailBtnText}>Tutup</Text>
-                            </TouchableOpacity>
+                                <Text className="font-bold text-white">Tutup</Text>
+                            </Button>
                         </View>
                     </View>
                 </View>
@@ -427,164 +384,155 @@ export default function ManageTenant() {
 
             {/* Modal Tambah / Edit Tenant */}
             <Modal visible={modalVisible} animationType="slide">
-                <View style={{flex: 1, backgroundColor: '#fff'}}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>{editMode ? 'Edit Penghuni' : 'Tambah Penghuni'}</Text>
+                <View className="flex-1 bg-background">
+                    <View className="flex-row items-center justify-between border-b border-border p-6">
+                        <Text className="text-xl font-bold text-foreground">{editMode ? 'Edit Penghuni' : 'Tambah Penghuni'}</Text>
                         <TouchableOpacity onPress={() => setModalVisible(false)}>
-                            <Ionicons name="close" size={28} color="#333" />
+                            <Ionicons name="close" size={28} color="hsl(var(--muted-foreground))" />
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView style={{padding: 20}}>
-                        <Text style={styles.label}>Pilih Kamar</Text>
-                        <TouchableOpacity 
-                            style={styles.customPickerTrigger} 
+                    <ScrollView className="p-5">
+                        <Label className="mb-2 mt-4 text-foreground">Pilih Kamar</Label>
+                        <TouchableOpacity
+                            className="flex-row items-center justify-between rounded-xl border border-border bg-background p-3.5"
                             onPress={() => setRoomModalVisible(true)}
                         >
-                            <Text style={{ color: form.room_id ? '#333' : '#999' }}>
-                                {form.room_id 
-                                    ? `Kamar ${roomList.find(r => (r.id || r.uuid) === form.room_id)?.room_number}` 
+                            <Text className={form.room_id ? 'text-foreground' : 'text-muted-foreground'}>
+                                {form.room_id
+                                    ? `Kamar ${roomList.find(r => (r.id || r.uuid) === form.room_id)?.room_number}`
                                     : "Klik untuk memilih kamar..."}
                             </Text>
-                            <Ionicons name="chevron-down" size={20} color="#666" />
+                            <Ionicons name="chevron-down" size={20} color="hsl(var(--muted-foreground))" />
                         </TouchableOpacity>
 
-                        <Text style={styles.label}>Nama Lengkap</Text>
-                        <TextInput style={[styles.input, { color: 'black' }]} 
-                            placeholder="Contoh: Budi Santoso" 
-                            placeholderTextColor="black"
+                        <Label className="mb-2 mt-4 text-foreground">Nama Lengkap</Label>
+                        <Input
+                            placeholder="Contoh: Budi Santoso"
                             value={form.name}
-                            onChangeText={(v) => setForm({...form, name: v})} 
+                            onChangeText={(v) => setForm({ ...form, name: v })}
                         />
 
-                        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                            <View style={{width: '48%'}}>
-                                <Text style={styles.label}>Email</Text>
-                                <TextInput style={[styles.input, { color: 'black' }]}
+                        <View className="flex-row justify-between">
+                            <View className="w-[48%]">
+                                <Label className="mb-2 mt-4 text-foreground">Email</Label>
+                                <Input
                                     placeholder="budi@mail.com"
-                                    placeholderTextColor="black"
                                     autoCapitalize="none"
                                     value={form.email}
-                                    onChangeText={(v) => setForm({...form, email: v})} 
+                                    onChangeText={(v) => setForm({ ...form, email: v })}
                                 />
                             </View>
-                            <View style={{width: '48%'}}>
-                                <Text style={styles.label}>No. Telepon</Text>
-                                <TextInput style={[styles.input, { color: 'black' }]}
+                            <View className="w-[48%]">
+                                <Label className="mb-2 mt-4 text-foreground">No. Telepon</Label>
+                                <Input
                                     placeholder="0812..."
-                                    placeholderTextColor="black"
                                     keyboardType="phone-pad"
                                     value={form.phone}
-                                    onChangeText={(v) => setForm({...form, phone: v})} 
+                                    onChangeText={(v) => setForm({ ...form, phone: v })}
                                 />
                             </View>
                         </View>
 
-                        <Text style={styles.label}>No. KTP</Text>
-                        <TextInput style={[styles.input, { color: 'black' }]}
+                        <Label className="mb-2 mt-4 text-foreground">No. KTP</Label>
+                        <Input
                             placeholder="3201..."
-                            placeholderTextColor="black"
                             keyboardType="numeric"
                             value={form.id_card}
-                            onChangeText={(v) => setForm({...form, id_card: v})} 
+                            onChangeText={(v) => setForm({ ...form, id_card: v })}
                         />
 
-                        <Text style={styles.label}>Alamat Asal</Text>
-                        <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top', color: 'black' }]}
+                        <Label className="mb-2 mt-4 text-foreground">Alamat Asal</Label>
+                        <Input
+                            className="h-20 items-start text-align-top"
                             multiline
                             placeholder="Alamat lengkap sesuai KTP"
-                            placeholderTextColor="black"
                             value={form.address}
-                            onChangeText={(v) => setForm({...form, address: v})} 
+                            onChangeText={(v) => setForm({ ...form, address: v })}
                         />
 
-                        <Text style={styles.label}>Tanggal Masuk</Text>
-                        <TextInput style={[styles.input, { color: 'black' }]} 
-                            value={form.entry_date} 
-                            onChangeText={(v) => setForm({...form, entry_date: v})} 
+                        <Label className="mb-2 mt-4 text-foreground">Tanggal Masuk</Label>
+                        <Input
+                            value={form.entry_date}
+                            onChangeText={(v) => setForm({ ...form, entry_date: v })}
                         />
 
                         {editMode && (
                             <>
-                                <Text style={styles.label}>Password Baru (kosongkan jika tidak diubah)</Text>
-                                <TextInput style={[styles.input, { color: 'black' }]}
+                                <Label className="mb-2 mt-4 text-foreground">Password Baru (kosongkan jika tidak diubah)</Label>
+                                <Input
                                     placeholder="Biarkan kosong jika tidak ingin ganti"
-                                    placeholderTextColor="#999"
                                     secureTextEntry
                                     value={form.password}
-                                    onChangeText={(v) => setForm({...form, password: v})} 
+                                    onChangeText={(v) => setForm({ ...form, password: v })}
                                 />
                             </>
                         )}
 
-                        <View style={styles.divider} />
-                        <Text style={styles.sectionSub}>Kontak Darurat</Text>
-                        <View style={{ marginBottom: 15 }}>
-                            <Text style={styles.label}>Nama Hubungan</Text>
-                            <TextInput 
-                                style={styles.input} 
+                        <View className="my-6 h-px bg-border" />
+                        <Text className="text-sm font-bold text-muted-foreground">Kontak Darurat</Text>
+                        <View className="mb-4">
+                            <Label className="mb-2 mt-4 text-foreground">Nama Hubungan</Label>
+                            <Input
                                 placeholder="Contoh: Ibu Kandung / Ayah"
-                                placeholderTextColor="black"
                                 value={form.emergency_contact_name}
-                                onChangeText={(v) => setForm({...form, emergency_contact_name: v})} 
+                                onChangeText={(v) => setForm({ ...form, emergency_contact_name: v })}
                             />
                         </View>
-                        <View style={{ marginBottom: 15 }}>
-                            <Text style={styles.label}>No. HP Darurat</Text>
-                            <TextInput 
-                                style={styles.input} 
+                        <View className="mb-4">
+                            <Label className="mb-2 mt-4 text-foreground">No. HP Darurat</Label>
+                            <Input
                                 placeholder="0813..."
-                                placeholderTextColor="black"
-                                keyboardType="phone-pad" 
+                                keyboardType="phone-pad"
                                 value={form.emergency_contact_phone}
-                                onChangeText={(v) => setForm({...form, emergency_contact_phone: v})} 
+                                onChangeText={(v) => setForm({ ...form, emergency_contact_phone: v })}
                             />
                         </View>
-                        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                            <Text style={{color:'white', fontWeight:'bold', fontSize: 16}}>
+                        <Button className="mt-8" onPress={handleSave}>
+                            <Text className="text-base font-bold text-white">
                                 {editMode ? 'SIMPAN PERUBAHAN' : 'SIMPAN DATA'}
                             </Text>
-                        </TouchableOpacity>
-                        <View style={{height: insets.bottom + 50}} />
+                        </Button>
+                        <View style={{ height: insets.bottom + 50 }} />
                     </ScrollView>
                 </View>
             </Modal>
 
             {/* Modal Pilihan Kamar */}
             <Modal visible={roomModalVisible} transparent animationType="fade">
-                <View style={styles.overlay}>
-                    <View style={styles.roomListContainer}>
-                        <Text style={styles.modalTitle}>
+                <View className="flex-1 justify-center bg-black/60 p-5">
+                    <View className="max-h-[80%] rounded-2xl bg-card p-5">
+                        <Text className="mb-4 text-center text-xl font-bold text-foreground">
                             {editMode ? 'Pilih Kamar' : 'Pilih Kamar Tersedia'}
                         </Text>
                         <FlatList
                             data={roomList}
                             keyExtractor={(item) => (item.id || item.uuid).toString()}
-                            renderItem={({item}) => (
-                                <TouchableOpacity 
-                                    style={styles.roomItem}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    className="flex-row items-center border-b border-border p-3.5"
                                     onPress={() => {
-                                        setForm({...form, room_id: item.id || item.uuid});
+                                        setForm({ ...form, room_id: item.id || item.uuid });
                                         setRoomModalVisible(false);
                                     }}
                                 >
-                                    <Ionicons name="business" size={24} color="#1a2a6c" />
-                                    <View style={{marginLeft: 15}}>
-                                        <Text style={{fontWeight: 'bold', fontSize: 16}}>Kamar {item.room_number}</Text>
-                                        <Text style={{color: '#666', fontSize: 12}}>Rp {item.price?.toLocaleString()} • {item.status || item.room_status}</Text>
+                                    <Ionicons name="business" size={24} color="hsl(var(--primary))" />
+                                    <View className="ml-4">
+                                        <Text className="text-base font-bold text-foreground">Kamar {item.room_number}</Text>
+                                        <Text className="text-xs text-muted-foreground">Rp {item.price?.toLocaleString()} • {item.status || item.room_status}</Text>
                                     </View>
                                 </TouchableOpacity>
                             )}
-                            ListEmptyComponent={<Text style={{textAlign:'center', padding: 20}}>Tidak ada kamar tersedia.</Text>}
+                            ListEmptyComponent={<Text className="p-5 text-center text-muted-foreground">Tidak ada kamar tersedia.</Text>}
                         />
-                        <TouchableOpacity style={styles.closeModalBtn} onPress={() => setRoomModalVisible(false)}>
-                            <Text style={{color: '#b21f1f', fontWeight: 'bold'}}>Tutup</Text>
+                        <TouchableOpacity className="mt-4 p-2.5 items-center" onPress={() => setRoomModalVisible(false)}>
+                            <Text className="font-bold text-destructive">Tutup</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
 
-            <GlobalAlert 
+            <GlobalAlert
                 visible={alertConfig.visible}
                 title={alertConfig.title}
                 message={alertConfig.message}
@@ -598,57 +546,3 @@ export default function ManageTenant() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    header: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
-    addBtn: { backgroundColor: '#2ecc71', flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 12, alignItems: 'center', elevation: 3 },
-
-    card: { backgroundColor: 'white', padding: 15, borderRadius: 15, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
-    cardInfo: { flexDirection: 'row', alignItems: 'center' },
-    avatar: { width: 45, height: 45, borderRadius: 22.5, backgroundColor: '#1a2a6c', justifyContent: 'center', alignItems: 'center' },
-    avatarText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-    name: { fontWeight: 'bold', fontSize: 16, color: '#2c3e50' },
-    sub: { color: '#7f8c8d', fontSize: 13, marginTop: 2 },
-    badge: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6 },
-
-    emptyText: { textAlign: 'center', marginTop: 50, color: '#95a5a6' },
-
-    /* Detail Modal */
-    detailOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-    detailContainer: { backgroundColor: 'white', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, maxHeight: '90%' },
-    detailHeader: { alignItems: 'center', marginBottom: 20 },
-    detailName: { fontSize: 22, fontWeight: 'bold', color: '#2c3e50', marginTop: 12, marginBottom: 8 },
-    detailBody: { marginBottom: 20 },
-    detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f3f9' },
-    detailLabel: { fontSize: 14, color: '#7f8c8d', flex: 1 },
-    detailValue: { fontSize: 14, color: '#2c3e50', fontWeight: '600', flex: 1.5, textAlign: 'right' },
-    detailActions: { flexDirection: 'row', gap: 10 },
-    detailBtn: { flex: 1, flexDirection: 'row', paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    detailBtnText: { color: 'white', fontWeight: 'bold', marginLeft: 6, fontSize: 14 },
-
-    paymentCard: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        backgroundColor: '#f8f9fc', borderRadius: 12, padding: 14, marginBottom: 10,
-        borderWidth: 1, borderColor: '#eef0f7'
-    },
-
-    /* Form Modal */
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 25, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
-    modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#1a2a6c' },
-    label: { fontSize: 13, fontWeight: 'bold', marginTop: 18, marginBottom: 8, color: '#34495e' },
-    input: { backgroundColor: '#f1f3f9', borderRadius: 12, padding: 14, color: 'black', fontSize: 15, borderWidth: 1, borderColor: '#e1e8ef' },
-    customPickerTrigger: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f1f3f9', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#e1e8ef' },
-    saveBtn: { backgroundColor: '#1a2a6c', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 30, elevation: 3 },
-    divider: { height: 1, backgroundColor: '#eee', marginVertical: 25 },
-    sectionSub: { fontSize: 14, fontWeight: 'bold', color: '#7f8c8d', marginBottom: 10 },
-
-    /* Room Picker */
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
-    roomListContainer: { backgroundColor: 'white', borderRadius: 20, padding: 20, maxHeight: '80%' },
-    roomItem: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: '#f1f1f1' },
-    closeModalBtn: { marginTop: 15, padding: 10, alignItems: 'center' }
-});

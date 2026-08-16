@@ -1,24 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState } from "react";
 import {
-    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
 import GlobalAlert from "../../components/GlobalAlert";
+import ScreenHeader from "../../components/ScreenHeader";
 import { API_URL } from "../../helpers/api";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
@@ -73,8 +73,7 @@ export default function ChangePasswordScreen() {
       setLoading(true);
       const token = await AsyncStorage.getItem("userToken");
 
-      const response = await axios.post(`${API_URL}/change-password`, form, {
-        headers: {
+      await axios.post(`${API_URL}/change-password`, form, {        headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
@@ -104,41 +103,36 @@ export default function ChangePasswordScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
       <StatusBar barStyle="light-content" />
 
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={28} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ganti Password</Text>
-        <View style={{ width: 40 }} />
-      </LinearGradient>
+      <ScreenHeader title="Ganti Password" />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ padding: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.card}>
-          <Text style={styles.instruction}>
+        <Card className="p-6 shadow-sm">
+          <Text className="mb-6 text-sm leading-5 text-muted-foreground">
             Demi keamanan, silakan masukkan password lama Anda sebelum membuat
             password baru.
           </Text>
 
           {/* Password Lama */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password Saat Ini</Text>
-            <View style={styles.inputWrapper}>
+          <View className="mb-5">
+            <Text className="mb-2 text-[13px] font-bold uppercase text-primary">Password Saat Ini</Text>
+            <View className="flex-row items-center rounded-[15px] border border-border bg-muted/50 px-3.5">
               <Ionicons
                 name="lock-open-outline"
                 size={20}
                 color="#858796"
-                style={styles.inputIcon}
+                style={{ marginRight: 10 }}
               />
               <TextInput
-                style={styles.input}
+                className="flex-1 py-3.5 text-[15px] text-foreground"
                 placeholder="Masukkan password lama"
+                placeholderTextColor="hsl(var(--muted-foreground))"
                 secureTextEntry={!showPass.old}
                 value={form.current_password}
                 onChangeText={(val) =>
@@ -158,18 +152,19 @@ export default function ChangePasswordScreen() {
           </View>
 
           {/* Password Baru */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password Baru</Text>
-            <View style={styles.inputWrapper}>
+          <View className="mb-5">
+            <Text className="mb-2 text-[13px] font-bold uppercase text-primary">Password Baru</Text>
+            <View className="flex-row items-center rounded-[15px] border border-border bg-muted/50 px-3.5">
               <Ionicons
                 name="key-outline"
                 size={20}
                 color="#858796"
-                style={styles.inputIcon}
+                style={{ marginRight: 10 }}
               />
               <TextInput
-                style={styles.input}
+                className="flex-1 py-3.5 text-[15px] text-foreground"
                 placeholder="Minimal 8 karakter"
+                placeholderTextColor="hsl(var(--muted-foreground))"
                 secureTextEntry={!showPass.new}
                 value={form.new_password}
                 onChangeText={(val) => setForm({ ...form, new_password: val })}
@@ -187,18 +182,19 @@ export default function ChangePasswordScreen() {
           </View>
 
           {/* Konfirmasi Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Ulangi Password Baru</Text>
-            <View style={styles.inputWrapper}>
+          <View className="mb-5">
+            <Text className="mb-2 text-[13px] font-bold uppercase text-primary">Ulangi Password Baru</Text>
+            <View className="flex-row items-center rounded-[15px] border border-border bg-muted/50 px-3.5">
               <Ionicons
                 name="checkmark-circle-outline"
                 size={20}
                 color="#858796"
-                style={styles.inputIcon}
+                style={{ marginRight: 10 }}
               />
               <TextInput
-                style={styles.input}
+                className="flex-1 py-3.5 text-[15px] text-foreground"
                 placeholder="Ketik ulang password baru"
+                placeholderTextColor="hsl(var(--muted-foreground))"
                 secureTextEntry={!showPass.confirm}
                 value={form.new_password_confirmation}
                 onChangeText={(val) =>
@@ -219,16 +215,16 @@ export default function ChangePasswordScreen() {
             </View>
           </View>
 
-          <TouchableOpacity
-            style={[styles.submitBtn, { marginBottom: insets.bottom }, loading && { opacity: 0.7 }]}
+          <Button
+            className="mt-2.5 h-[58px] rounded-[15px]"
+            style={{ marginBottom: insets.bottom }}
             onPress={handleChangePassword}
             disabled={loading}
+            loading={loading}
           >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
+            {!loading && (
               <>
-                <Text style={styles.submitText}>Simpan Perubahan</Text>
+                <Text className="text-base font-bold text-white">Simpan Perubahan</Text>
                 <Ionicons
                   name="save-outline"
                   size={20}
@@ -237,8 +233,8 @@ export default function ChangePasswordScreen() {
                 />
               </>
             )}
-          </TouchableOpacity>
-        </View>
+          </Button>
+        </Card>
       </ScrollView>
 
       <GlobalAlert
@@ -251,68 +247,3 @@ export default function ChangePasswordScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fc" },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 25,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "white" },
-  backBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: 8,
-    borderRadius: 12,
-  },
-  content: { padding: 20 },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 25,
-    padding: 25,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-  },
-  instruction: {
-    fontSize: 14,
-    color: "#858796",
-    marginBottom: 25,
-    lineHeight: 20,
-  },
-  inputGroup: { marginBottom: 20 },
-  label: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#4e73df",
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f9fc",
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: "#e3e6f0",
-  },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, paddingVertical: 15, fontSize: 15, color: "#2c3e50" },
-  submitBtn: {
-    backgroundColor: "#4e73df",
-    padding: 18,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    marginTop: 10,
-  },
-  submitText: { color: "white", fontWeight: "bold", fontSize: 16 },
-});

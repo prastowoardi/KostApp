@@ -1,21 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
     FlatList,
     RefreshControl,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 import GlobalAlert from "../../components/GlobalAlert";
+import ScreenHeader from "../../components/ScreenHeader";
 import { API_URL } from "../../helpers/api";
+import { Skeleton } from "../../components/ui/skeleton";
+import { Badge } from "../../components/ui/badge";
+import { Card } from "../../components/ui/card";
 
 export default function ComplaintHistoryScreen() {
   const router = useRouter();
@@ -66,87 +67,82 @@ export default function ComplaintHistoryScreen() {
     fetchComplaints();
   }, []);
 
-  // Helper untuk warna status
-  const getStatusStyle = (status) => {
+  // Helper untuk variant status
+  const getStatusVariant = (status) => {
     switch (status.toLowerCase()) {
       case "open":
-        return { color: "#4e73df", bg: "#eef2ff" };
-      case "in_progress":
-        return { color: "#f6c23e", bg: "#fffbe6" };
-      case "resolved":
-        return { color: "#1cc88a", bg: "#e6fffa" };
       case "closed":
-        return { color: "#858796", bg: "#f8f9fc" };
+        return "destructive";
+      case "in_progress":
+        return "warning";
+      case "resolved":
+        return "success";
       default:
-        return { color: "#4e73df", bg: "#f1f3f9" };
+        return "muted";
     }
   };
 
   const renderItem = ({ item }) => {
-    const statusStyle = getStatusStyle(item.status);
+    const variant = getStatusVariant(item.status);
 
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push(`/complaint/${item.id || item.uuid}`)}
-      >
-        <View style={styles.cardHeader}>
-          <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
-          <View
-            style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}
-          >
-            <Text style={[styles.statusText, { color: statusStyle.color }]}>
-              {item.status.replace("_", " ")}
-            </Text>
+      <Card className="mb-4 rounded-[18px] p-4 shadow-sm" asChild>
+        <TouchableOpacity
+          onPress={() => router.push(`/complaint/${item.id || item.uuid}`)}
+        >
+          <View className="mb-2.5 flex-row items-center justify-between">
+            <Text className="text-[11px] font-bold tracking-wider text-primary">{item.category.toUpperCase()}</Text>
+            <Badge variant={variant} className="px-2.5 py-1">
+              <Text className="text-[10px] font-bold capitalize text-white">
+                {item.status.replace("_", " ")}
+              </Text>
+            </Badge>
           </View>
-        </View>
 
-        <Text style={styles.titleText} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.descText} numberOfLines={2}>
-          {item.description}
-        </Text>
+          <Text className="mb-1 text-base font-bold text-foreground" numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text className="mb-3 text-sm leading-5 text-muted-foreground" numberOfLines={2}>
+            {item.description}
+          </Text>
 
-        <View style={styles.cardFooter}>
-          <View style={styles.dateInfo}>
-            <Ionicons name="calendar-outline" size={14} color="#95a5a6" />
-            <Text style={styles.dateText}>
-              {new Date(item.created_at).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </Text>
+          <View className="flex-row items-center justify-between border-t border-muted pt-3">
+            <View className="flex-row items-center">
+              <Ionicons name="calendar-outline" size={14} color="#95a5a6" />
+              <Text className="ml-1.5 text-xs text-muted-foreground">
+                {new Date(item.created_at).toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#bdc3c7" />
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#bdc3c7" />
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Card>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       <StatusBar barStyle="light-content" />
       <GlobalAlert {...alertConfig} />
 
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Riwayat Laporan</Text>
-      </LinearGradient>
+      <ScreenHeader title="Riwayat Laporan" />
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#4e73df" />
+        <View className="p-5 pt-2.5">
+          <Skeleton className="h-28 w-full rounded-[18px]" />
+          <Skeleton className="mt-4 h-28 w-full rounded-[18px]" />
+          <Skeleton className="mt-4 h-28 w-full rounded-[18px]" />
         </View>
       ) : (
         <FlatList
           data={complaints}
           keyExtractor={(item) => (item.id || item.uuid).toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={{ padding: 20, paddingTop: 10 }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -156,14 +152,14 @@ export default function ComplaintHistoryScreen() {
             />
           }
           ListEmptyComponent={
-            <View style={styles.emptyState}>
+            <View className="mt-24 items-center">
               <Ionicons
                 name="document-text-outline"
                 size={80}
                 color="#d1d8e0"
               />
-              <Text style={styles.emptyTitle}>Belum Ada Laporan</Text>
-              <Text style={styles.emptySub}>
+              <Text className="mt-5 text-lg font-bold text-foreground">Belum Ada Laporan</Text>
+              <Text className="mt-2 px-10 text-center text-sm text-muted-foreground">
                 Semua komplain yang Anda buat akan muncul di sini.
               </Text>
             </View>
@@ -173,86 +169,3 @@ export default function ComplaintHistoryScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fc" },
-  header: {
-    paddingTop: 50,
-    paddingBottom: 25,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-  },
-  backBtn: {
-    padding: 5,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 10,
-    marginRight: 15,
-  },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "white" },
-  listContent: { padding: 20, paddingTop: 10 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  categoryText: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#4e73df",
-    letterSpacing: 1,
-  },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  statusText: { fontSize: 10, fontWeight: "bold", textTransform: "capitalize" },
-  titleText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginBottom: 4,
-  },
-  descText: {
-    fontSize: 14,
-    color: "#7f8c8d",
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#f1f3f9",
-    paddingTop: 12,
-  },
-  dateInfo: { flexDirection: "row", alignItems: "center" },
-  dateText: { fontSize: 12, color: "#95a5a6", marginLeft: 5 },
-  emptyState: { alignItems: "center", marginTop: 100 },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginTop: 20,
-  },
-  emptySub: {
-    fontSize: 14,
-    color: "#95a5a6",
-    textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 40,
-  },
-});

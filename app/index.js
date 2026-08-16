@@ -11,7 +11,6 @@ import {
     Platform,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
@@ -20,6 +19,7 @@ import {
 import GlobalAlert from '../components/GlobalAlert';
 import { registerForPushNotificationsAsync } from '../helpers/notificationHelper';
 import { API_URL } from '../helpers/api';
+import { Button } from '../components/ui/button';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -31,18 +31,18 @@ export default function LoginScreen() {
         visible: false,
         title: '',
         message: '',
-        type: 'info', 
+        type: 'info',
         onConfirm: null
     });
 
     const router = useRouter();
 
     const showAlert = (title, message, type = 'info', onConfirm = null, confirmText = null) => {
-        setAlertConfig({ 
-            visible: true, 
-            title, 
-            message, 
-            type, 
+        setAlertConfig({
+            visible: true,
+            title,
+            message,
+            type,
             onConfirm,
             confirmText
         });
@@ -51,8 +51,8 @@ export default function LoginScreen() {
     const handleLogin = async () => {
         if (!email || !password) {
             showAlert(
-                "Oops!", 
-                "Email dan password tidak boleh kosong.", 
+                "Oops!",
+                "Email dan password tidak boleh kosong.",
                 "warning",
                 () => setAlertConfig(prev => ({ ...prev, visible: false }))
             );
@@ -71,7 +71,7 @@ export default function LoginScreen() {
             const response = await axios.post(`${API_URL}/login`, {
                 email: email,
                 password: password,
-                push_token: pushToken 
+                push_token: pushToken
             }, {
                 headers: { 'Accept': 'application/json' },
                 timeout: 10000
@@ -93,128 +93,94 @@ export default function LoginScreen() {
         }
     };
 
-    const handleLogout = () => {
-        setAlertConfig({
-            visible: true,
-            title: "Konfirmasi Keluar",
-            message: "Apakah Anda yakin ingin keluar dari aplikasi?",
-            type: "confirmation",
-            onConfirm: async () => {
-                await AsyncStorage.multiRemove(['userToken', 'userData']);
-                setAlertConfig(prev => ({ ...prev, visible: false }));
-                router.replace('/');
-            },
-            onCancel: () => {
-                setAlertConfig(prev => ({ ...prev, visible: false }));
-            }
-        });
-    };
-
     return (
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
+            className="flex-1 bg-background"
         >
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
                 <StatusBar barStyle="light-content" />
-                
-                <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
-                    <View style={styles.logoCircle}>
-                        <Image 
+
+                <LinearGradient colors={['#1a2a6c', '#b21f1f']} className="h-[320px] items-center justify-center rounded-b-[60px] px-8">
+                    <View className="mb-4 h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-white/40 bg-white shadow-lg">
+                        <Image
                             source={require('../assets/serrata.png')}
-                            style={styles.logoImage}
+                            className="h-full w-full p-2"
                             resizeMode="contain"
                         />
                     </View>
-                    <Text style={styles.logoText}>Serrata Kost</Text>
-                    <Text style={styles.tagline}>Chill & Comfort Living.</Text>
+                    <Text className="text-3xl font-bold text-white">Serrata Kost</Text>
+                    <Text className="mt-1 text-sm text-white/80">Chill & Comfort Living.</Text>
                 </LinearGradient>
 
-                <View style={styles.formContainer}>
-                    <View style={styles.card}>
-                        <Text style={styles.title}>Silakan Masuk</Text>
-                        
-                        <View style={styles.inputGroup}>
-                            <Ionicons name="mail-outline" size={20} color="#4e73df" style={styles.inputIcon} />
-                            <TextInput 
-                                style={styles.input} 
-                                placeholder="Email" 
+                <View className="-mt-12 flex-1 bg-background px-7">
+                    <View className="mt-24 rounded-3xl border border-border bg-card p-6 shadow-xl shadow-black/5">
+                        <Text className="mb-6 text-center text-xl font-bold text-foreground">Silakan Masuk</Text>
+
+                        <View className="mb-4 flex-row items-center rounded-xl border border-border bg-muted/50 px-4">
+                            <Ionicons name="mail-outline" size={20} color="hsl(var(--primary))" className="mr-2.5" />
+                            <TextInput
+                                className="flex-1 py-3.5 text-base text-foreground"
+                                placeholder="Email"
+                                placeholderTextColor="hsl(var(--muted-foreground))"
                                 value={email}
                                 onChangeText={setEmail}
                                 autoCapitalize="none"
                                 keyboardType="email-address"
                                 editable={!loading}
-                                placeholderTextColor={"#858796"}
                             />
                         </View>
 
-                        <View style={styles.inputGroup}>
-                            <Ionicons name="lock-closed-outline" size={20} color="#4e73df" style={styles.inputIcon} />
-                            <TextInput 
-                                style={styles.input} 
-                                placeholder="Password" 
+                        <View className="mb-4 flex-row items-center rounded-xl border border-border bg-muted/50 px-4">
+                            <Ionicons name="lock-closed-outline" size={20} color="hsl(var(--primary))" className="mr-2.5" />
+                            <TextInput
+                                className="flex-1 py-3.5 text-base text-foreground"
+                                placeholder="Password"
+                                placeholderTextColor="hsl(var(--muted-foreground))"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry={secureText}
                                 editable={!loading}
-                                placeholderTextColor={"#858796"}
                             />
                             <TouchableOpacity onPress={() => setSecureText(!secureText)}>
-                                <Ionicons name={secureText ? "eye-off-outline" : "eye-outline"} size={20} color="#858796" />
+                                <Ionicons name={secureText ? "eye-off-outline" : "eye-outline"} size={20} color="hsl(var(--muted-foreground))" />
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity 
-                            style={[styles.button, loading && { opacity: 0.8 }]} 
+                        <Button
+                            className="mt-3 h-14 rounded-xl"
                             onPress={handleLogin}
+                            loading={loading}
                             disabled={loading}
                         >
-                            <LinearGradient 
-                                colors={['#1a2a6c', '#b21f1f']} 
-                                start={{ x: 0, y: 0 }} 
-                                end={{ x: 1, y: 0 }} 
-                                style={styles.gradientBtn}
+                            <LinearGradient
+                                colors={['#1a2a6c', '#b21f1f']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                className="h-full w-full items-center justify-center rounded-xl"
                             >
                                 {loading ? (
                                     <ActivityIndicator color="#fff" />
                                 ) : (
-                                    <Text style={styles.buttonText}>LOGIN SEKARANG</Text>
+                                    <Text className="text-base font-bold tracking-wider text-white">LOGIN SEKARANG</Text>
                                 )}
                             </LinearGradient>
-                        </TouchableOpacity>
+                        </Button>
                     </View>
-                    <Text style={styles.footerText}>© 2026 Serrata Kost Management System</Text>
+                    <Text className="mt-10 pb-5 text-center text-xs text-muted-foreground">© 2026 Serrata Kost Management System</Text>
                 </View>
             </ScrollView>
 
-            <GlobalAlert 
+            <GlobalAlert
                 visible={alertConfig.visible}
                 title={alertConfig.title}
                 message={alertConfig.message}
                 type={alertConfig.type}
                 onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
-                onConfirm={alertConfig.onConfirm} 
+                onConfirm={alertConfig.onConfirm}
                 confirmText={alertConfig.confirmText || "OK"}
                 cancelText="Batal"
             />
         </KeyboardAvoidingView>
     );
 }
-
-const styles = StyleSheet.create({
-    header: { height: 300, justifyContent: 'center', alignItems: 'center', borderBottomLeftRadius: 60 },
-    logoCircle: { width: 100, height: 100, backgroundColor: 'white', borderRadius: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 15, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5, overflow: 'hidden' },
-    logoImage: { width: '100%', height: '100%' },
-    logoText: { color: 'white', fontSize: 32, fontWeight: 'bold' },
-    tagline: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
-    formContainer: { flex: 1, backgroundColor: '#F8F9FC', marginTop: -50, paddingHorizontal: 30 },
-    card: { marginTop:100, backgroundColor: 'white', borderRadius: 25, padding: 25, elevation: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#2c3e50', marginBottom: 25, textAlign: 'center' },
-    inputGroup: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f3f9', borderRadius: 15, paddingHorizontal: 15, marginBottom: 15, borderWidth: 1, borderColor: '#e1e8ef' },
-    inputIcon: { marginRight: 10 },
-    input: { flex: 1, paddingVertical: 15, fontSize: 16, color: '#2c3e50' },
-    button: { marginTop: 10, borderRadius: 15, overflow: 'hidden' },
-    gradientBtn: { paddingVertical: 18, alignItems: 'center', justifyContent: 'center' },
-    buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
-    footerText: { textAlign: 'center', marginTop: 40, color: '#bdc3c7', fontSize: 12, paddingBottom: 20 }
-});

@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
@@ -11,13 +10,14 @@ import {
     RefreshControl,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 import GlobalAlert from "../../components/GlobalAlert";
+import ScreenHeader from "../../components/ScreenHeader";
 import { API_URL } from "../../helpers/api";
+import { Card } from "../../components/ui/card";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -99,50 +99,39 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4e73df" />
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color="hsl(var(--primary))" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       <StatusBar barStyle="light-content" />
 
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Ionicons name="chevron-back" size={28} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profil Saya</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <View style={styles.profileInfo}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>
+      <ScreenHeader title="Profil Saya">
+        <View className="mt-5 items-center">
+          <View className="relative mb-4">
+            <View className="h-24 w-24 items-center justify-center rounded-full border-[3px] border-white bg-white/30">
+              <Text className="text-[40px] font-bold text-white">
                 {(user?.name || "U").charAt(0).toUpperCase()}
               </Text>
             </View>
-            <TouchableOpacity style={styles.editBadge}>
+            <TouchableOpacity className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full bg-success">
               <Ionicons name="camera" size={16} color="white" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>{user?.name || "User"}</Text>
-          <Text style={styles.userRole}>
+          <Text className="text-[22px] font-bold text-white">{user?.name || "User"}</Text>
+          <Text className="mt-1 text-sm text-white/80">
             {user?.role === "admin"
               ? "Administrator"
               : `Penghuni Kamar ${user?.room_number || "-"}`}
           </Text>
         </View>
-      </LinearGradient>
+      </ScreenHeader>
 
       <ScrollView
-        style={styles.content}
+        className="p-5"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -153,8 +142,10 @@ export default function ProfileScreen() {
           />
         }
       >
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionLabel}>Informasi Pribadi</Text>
+        <Card className="mb-5 p-5 shadow-sm">
+          <Text className="mb-5 text-[13px] font-bold uppercase tracking-wider text-primary">
+            Informasi Pribadi
+          </Text>
 
           <InfoItem
             icon="mail-outline"
@@ -176,10 +167,12 @@ export default function ProfileScreen() {
             label="Alamat Asal"
             value={user?.address || "-"}
           />
-        </View>
+        </Card>
 
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionLabel}>Pengaturan</Text>
+        <Card className="mb-5 p-5 shadow-sm">
+          <Text className="mb-5 text-[13px] font-bold uppercase tracking-wider text-primary">
+            Pengaturan
+          </Text>
 
           <MenuButton
             icon="lock-closed-outline"
@@ -198,16 +191,19 @@ export default function ProfileScreen() {
               )
             }
           />
-        </View>
+        </Card>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <TouchableOpacity
+          className="mt-2.5 flex-row items-center justify-center rounded-[20px] border-[1.5px] border-destructive/20 bg-card p-4"
+          onPress={handleLogout}
+        >
           <Ionicons
             name="log-out-outline"
             size={20}
-            color="#e74a3b"
+            color="hsl(var(--destructive))"
             style={{ marginRight: 10 }}
           />
-          <Text style={styles.logoutText}>Keluar Akun</Text>
+          <Text className="text-base font-bold text-destructive">Keluar Akun</Text>
         </TouchableOpacity>
         <View style={{ height: insets.bottom + 50 }} />
       </ScrollView>
@@ -227,127 +223,26 @@ export default function ProfileScreen() {
 }
 
 const InfoItem = ({ icon, label, value }) => (
-  <View style={styles.infoItem}>
-    <View style={styles.iconBg}>
+  <View className="mb-5 flex-row items-center">
+    <View className="h-10 w-10 items-center justify-center rounded-xl bg-accent">
       <Ionicons name={icon} size={20} color="#4e73df" />
     </View>
-    <View style={{ marginLeft: 15, flex: 1 }}>
-      <Text style={styles.itemLabel}>{label}</Text>
-      <Text style={styles.itemValue}>{value}</Text>
+    <View className="ml-3.5 flex-1">
+      <Text className="text-[11px] text-muted-foreground">{label}</Text>
+      <Text className="mt-0.5 text-[15px] font-semibold text-foreground">{value}</Text>
     </View>
   </View>
 );
 
 const MenuButton = ({ icon, label, onPress }) => (
-  <TouchableOpacity style={styles.menuButton} onPress={onPress}>
-    <View style={{ flexDirection: "row", alignItems: "center" }}>
+  <TouchableOpacity
+    className="flex-row items-center justify-between border-b border-muted py-3.5"
+    onPress={onPress}
+  >
+    <View className="flex-row items-center">
       <Ionicons name={icon} size={22} color="#858796" />
-      <Text style={styles.menuLabel}>{label}</Text>
+      <Text className="ml-3.5 text-[15px] text-foreground">{label}</Text>
     </View>
     <Ionicons name="chevron-forward" size={20} color="#ccc" />
   </TouchableOpacity>
 );
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fc" },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-    alignItems: "center",
-  },
-  headerTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 15,
-  },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "white" },
-  backBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: 8,
-    borderRadius: 12,
-  },
-  profileInfo: { alignItems: "center" },
-  avatarContainer: { position: "relative", marginBottom: 15 },
-  avatarCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: "white",
-  },
-  avatarInitial: { fontSize: 40, fontWeight: "bold", color: "white" },
-  editBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    backgroundColor: "#1cc88a",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWeight: 2,
-    borderColor: "white",
-  },
-  userName: { fontSize: 22, fontWeight: "bold", color: "white" },
-  userRole: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginTop: 4 },
-  content: { padding: 20 },
-  infoSection: {
-    backgroundColor: "white",
-    borderRadius: 25,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#4e73df",
-    marginBottom: 20,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  infoItem: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  iconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#f0f4ff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  itemLabel: { fontSize: 11, color: "#858796", marginBottom: 2 },
-  itemValue: { fontSize: 15, fontWeight: "600", color: "#2c3e50" },
-  menuButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f8f9fc",
-  },
-  menuLabel: { marginLeft: 15, fontSize: 15, color: "#2c3e50" },
-  logoutBtn: {
-    backgroundColor: "#fff",
-    padding: 18,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "#ffeaea",
-    flexDirection: "row",
-    marginTop: 10,
-  },
-  logoutText: { color: "#e74a3b", fontWeight: "bold", fontSize: 16 },
-});

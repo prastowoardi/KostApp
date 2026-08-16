@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Image, Dimensions, Modal, Pressable } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Image, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api, { API_URL } from '../../../helpers/api';
 import GlobalAlert from '../../../components/GlobalAlert';
-
-const { width } = Dimensions.get('window');
+import { Button } from '../../../components/ui/button';
+import { Separator } from '../../../components/ui/separator';
 
 export default function FinanceDetail() {
     const insets = useSafeAreaInsets();
@@ -27,7 +27,7 @@ export default function FinanceDetail() {
 
     const STORAGE_URL = process.env.EXPO_PUBLIC_API_URL + '/storage';
 
-    const getDetailUrl = () => `${API_URL}/admin/finances/${id}`;
+    const getDetailUrl = useCallback(() => `${API_URL}/admin/finances/${id}`, [id]);
 
     useEffect(() => {
         if (!id || id === 'undefined') return;
@@ -47,7 +47,7 @@ export default function FinanceDetail() {
         };
 
         fetchDetail();
-    }, [id]);
+    }, [id, getDetailUrl, router]);
 
     const handleDelete = () => {
         setAlertConfig({
@@ -77,7 +77,7 @@ export default function FinanceDetail() {
                         });
                     }, 500);
 
-                } catch (error) {
+                } catch {
                     setAlertConfig({
                         visible: true,
                         title: "Gagal",
@@ -90,23 +90,23 @@ export default function FinanceDetail() {
         });
     };
 
-    if (loading) return <View style={styles.centered}><ActivityIndicator size="large" color="#4e73df" /></View>;
+    if (loading) return <View className="flex-1 items-center justify-center bg-background"><ActivityIndicator size="large" color="#4e73df" /></View>;
     if (!item) return null;
 
     const isIncome = item.type === 'income';
 
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1 bg-background" showsVerticalScrollIndicator={false}>
             {/* Header Header dengan Gradient */}
             <LinearGradient 
                 colors={isIncome ? ["#1cc88a", "#13855c"] : ["#e74a3b", "#be2617"]} 
-                style={styles.header}
+                className="items-center rounded-b-[30px] p-10 pt-16"
             >
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <TouchableOpacity onPress={() => router.back()} className="absolute left-5 top-12 p-2">
                     <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
                 
-                <View style={styles.iconCircle}>
+                <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
                     <Ionicons 
                         name={isIncome ? "trending-up" : "trending-down"} 
                         size={40} 
@@ -114,14 +114,14 @@ export default function FinanceDetail() {
                     />
                 </View>
                 
-                <Text style={styles.headerAmount}>
+                <Text className="text-[30px] font-bold text-white">
                     Rp {new Intl.NumberFormat('id-ID').format(item.amount)}
                 </Text>
-                <Text style={styles.headerType}>{isIncome ? 'Pemasukan' : 'Pengeluaran'}</Text>
+                <Text className="mt-1.5 text-base font-semibold text-white/80">{isIncome ? 'Pemasukan' : 'Pengeluaran'}</Text>
             </LinearGradient>
 
             {/* Informasi Detail */}
-            <View style={styles.detailCard}>
+            <View className="mx-5 -mt-7 rounded-[20px] bg-card p-6 shadow-md">
                 <DetailRow label="Deskripsi" value={item.description || item.title} />
                 <DetailRow label="Kategori" value={item.category || 'Umum'} />
                 <DetailRow 
@@ -129,46 +129,50 @@ export default function FinanceDetail() {
                     value={item.transaction_date ? new Date(item.transaction_date).toLocaleDateString('id-ID', { dateStyle: 'long' }) : '-'} 
                 />
                 
-                <View style={styles.divider} />
+                <Separator className="my-5" />
                 
                 {/* Bagian Gambar Bukti */}
-                <Text style={styles.label}>Bukti Transaksi</Text>
+                <Text className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Bukti Transaksi</Text>
                 {item.receipt_file ? (
                     <TouchableOpacity 
                         activeOpacity={0.9} 
                         onPress={() => setImageModalVisible(true)} // Buka Modal
-                        style={styles.imageWrapper}
+                        className="mt-2.5 h-[220px] overflow-hidden rounded-[15px] bg-muted/60"
                     >
                         <Image 
                             source={{ uri: `${STORAGE_URL}/${item.receipt_file}` }} 
-                            style={styles.evidenceImage}
-                            resizeMode="cover"
+                            className="h-full w-full"
+                            style={{ resizeMode: 'cover' }}
                         />
                         {/* Tambahkan Overlay Icon agar user tahu bisa diklik */}
-                        <View style={styles.zoomOverlay}>
+                        <View className="absolute inset-0 items-center justify-center bg-black/25">
                             <Ionicons name="expand-outline" size={24} color="white" />
                         </View>
                     </TouchableOpacity>
                 ) : (
-                    <View style={styles.noImage}>
+                    <View className="mt-2.5 h-24 items-center justify-center rounded-[15px] border border-dashed border-border bg-muted/40">
                         <Ionicons name="image-outline" size={24} color="#d1d3e2" />
-                        <Text style={styles.noImageText}>Tidak ada lampiran gambar</Text>
+                        <Text className="mt-1.5 text-xs text-muted-foreground">Tidak ada lampiran gambar</Text>
                     </View>
                 )}
 
-                <View style={styles.divider} />
+                <Separator className="my-5" />
                 
-                <Text style={styles.label}>Metadata</Text>
-                <Text style={styles.noteText}>ID Transaksi: #{item.id || item.uuid}</Text>
-                <Text style={styles.noteText}>Dibuat pada: {new Date(item.created_at).toLocaleString('id-ID')}</Text>
+                <Text className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Metadata</Text>
+                <Text className="mb-1 text-[13px] text-muted-foreground">ID Transaksi: #{item.id || item.uuid}</Text>
+                <Text className="text-[13px] text-muted-foreground">Dibuat pada: {new Date(item.created_at).toLocaleString('id-ID')}</Text>
             </View>
 
             {/* Tombol Aksi */}
-            <View style={[styles.actionContainer, { paddingBottom: insets.bottom + 40 }]}>
-                <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-                    <Ionicons name="trash-outline" size={20} color="#e74a3b" />
-                    <Text style={styles.deleteText}>Hapus Transaksi</Text>
-                </TouchableOpacity>
+            <View style={{ paddingBottom: insets.bottom + 40 }}>
+<Button 
+                variant="outline"
+                className="mx-5 mt-5 rounded-[15px] border-destructive/20 bg-card p-4" 
+                onPress={handleDelete}
+            >
+                <Ionicons name="trash-outline" size={20} color="hsl(var(--destructive))" />
+                <Text className="ml-2.5 font-bold text-destructive">Hapus Transaksi</Text>
+            </Button>
             </View>
             
             <GlobalAlert
@@ -190,34 +194,34 @@ export default function FinanceDetail() {
                 onRequestClose={() => setImageModalVisible(false)}
             >
                 <Pressable 
-                    style={styles.modalOverlay} 
+                    className="flex-1 items-center justify-center bg-black/70 p-5" 
                     onPress={() => setImageModalVisible(false)}
                 >
-                    <View style={styles.modalContent}>
+                    <View className="w-full overflow-hidden rounded-[25px] bg-card shadow-lg">
                         {/* Header Modal dengan Judul & Tombol Close */}
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Bukti Transaksi</Text>
+                        <View className="flex-row items-center justify-between border-b border-border px-5 py-3.5">
+                            <Text className="text-base font-bold text-foreground">Bukti Transaksi</Text>
                             <TouchableOpacity 
                                 onPress={() => setImageModalVisible(false)}
-                                style={styles.closeIcon}
+                                className="p-1"
                             >
                                 <Ionicons name="close" size={28} color="#333" />
                             </TouchableOpacity>
                         </View>
 
                         {/* Area Gambar */}
-                        <View style={styles.imageContainer}>
+                        <View className="h-[400px] w-full justify-center bg-muted/50">
                             <Image 
                                 source={{ uri: `${STORAGE_URL}/${item.receipt_file}` }} 
-                                style={styles.fullImage}
-                                resizeMode="contain"
+                                className="h-full w-full"
+                                style={{ resizeMode: 'contain' }}
                             />
                         </View>
 
                         {/* Footer Modal (Opsional: Info Tambahan) */}
-                        <View style={styles.modalFooter}>
-                            <Text style={styles.footerText}>ID: #{item.id || item.uuid}</Text>
-                            <Text style={styles.footerDate}>
+                        <View className="flex-row items-center justify-between bg-card px-3.5 py-3.5">
+                            <Text className="text-xs font-medium text-muted-foreground">ID: #{item.id || item.uuid}</Text>
+                            <Text className="text-xs text-muted-foreground">
                                 {new Date(item.transaction_date).toLocaleDateString('id-ID', { dateStyle: 'medium' })}
                             </Text>
                         </View>
@@ -230,150 +234,8 @@ export default function FinanceDetail() {
 
 // Komponen Kecil untuk Baris Detail
 const DetailRow = ({ label, value }) => (
-    <View style={styles.infoGroup}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>{value}</Text>
+    <View className="mb-[18px]">
+        <Text className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{label}</Text>
+        <Text className="text-[17px] font-semibold text-foreground">{value}</Text>
     </View>
 );
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fc' },
-    centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { 
-        padding: 40, 
-        paddingTop: 60, 
-        alignItems: 'center', 
-        borderBottomLeftRadius: 30, 
-        borderBottomRightRadius: 30,
-        elevation: 5
-    },
-    backBtn: { position: 'absolute', left: 20, top: 50, padding: 8 },
-    iconCircle: { 
-        width: 80, 
-        height: 80, 
-        backgroundColor: 'white', 
-        borderRadius: 40, 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        marginBottom: 15,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    headerAmount: { color: 'white', fontSize: 30, fontWeight: 'bold' },
-    headerType: { color: 'rgba(255,255,255,0.8)', fontSize: 16, marginTop: 5, fontWeight: '600' },
-    detailCard: { 
-        backgroundColor: 'white', 
-        marginHorizontal: 20, 
-        marginTop: -30, 
-        borderRadius: 20, 
-        padding: 25, 
-        elevation: 4,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    infoGroup: { marginBottom: 18 },
-    label: { color: '#b7b9cc', fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 6, letterSpacing: 1 },
-    value: { color: '#5a5c69', fontSize: 17, fontWeight: '600' },
-    divider: { height: 1, backgroundColor: '#eaecf4', marginVertical: 20 },
-    imageWrapper: {
-        width: '100%',
-        height: 220,
-        borderRadius: 15,
-        overflow: 'hidden',
-        marginTop: 10,
-        backgroundColor: '#f1f3f9'
-    },
-    evidenceImage: { width: '100%', height: '100%' },
-    noImage: {
-        height: 100,
-        backgroundColor: '#f8f9fc',
-        borderRadius: 15,
-        borderStyle: 'dashed',
-        borderWidth: 1,
-        borderColor: '#d1d3e2',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 10
-    },
-    noImageText: { color: '#b7b9cc', fontSize: 12, marginTop: 5 },
-    noteText: { color: '#858796', fontSize: 13, marginBottom: 4 },
-    actionContainer: { paddingBottom: 40 },
-    deleteBtn: { 
-        flexDirection: 'row', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        margin: 20, 
-        padding: 16, 
-        borderRadius: 15, 
-        borderWidth: 1, 
-        borderColor: '#fadbd8',
-        backgroundColor: '#fff'
-    },
-    deleteText: { color: '#e74a3b', fontWeight: 'bold', marginLeft: 10 },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Gelap transparan untuk fokus
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20
-    },
-    modalContent: {
-        width: '100%',
-        backgroundColor: 'white',
-        borderRadius: 25,
-        overflow: 'hidden',
-        elevation: 10, // Shadow untuk Android
-        shadowColor: '#000', // Shadow untuk iOS
-        shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-    },
-    modalTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    closeIcon: {
-        padding: 4,
-    },
-    imageContainer: {
-        width: '100%',
-        height: 400, // Tinggi area gambar
-        backgroundColor: '#f9f9f9',
-        justifyContent: 'center',
-    },
-    fullImage: {
-        width: '100%',
-        height: '100%',
-    },
-    modalFooter: {
-        padding: 15,
-        backgroundColor: '#fff',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    footerText: {
-        color: '#888',
-        fontSize: 12,
-        fontWeight: '500'
-    },
-    footerDate: {
-        color: '#888',
-        fontSize: 12,
-    }
-});

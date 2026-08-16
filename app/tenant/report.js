@@ -2,25 +2,25 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
 import GlobalAlert from '../../components/GlobalAlert';
+import ScreenHeader from '../../components/ScreenHeader';
+import { Button } from '../../components/ui/button';
+import { Label } from '../../components/ui/label';
+import { Input } from '../../components/ui/input';
 
 import { API_URL } from '../../helpers/api';
 
@@ -160,100 +160,74 @@ export default function ReportScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background">
             <StatusBar barStyle="light-content" />
             <GlobalAlert {...alertConfig} />
 
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={28} color="white" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Buat Komplain</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-            </LinearGradient>
+            <ScreenHeader title="Buat Komplain" />
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 10 }} showsVerticalScrollIndicator={false}>
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-                    <View style={styles.formCard}>
-                        <Text style={styles.label}>Judul Keluhan</Text>
-                        <TextInput style={styles.input} placeholder="Contoh: Lampu Kamar Mati" value={title} onChangeText={setTitle} placeholderTextColor="#95a5a6" />
+                    <View className="rounded-[25px] bg-card p-5 shadow-md">
+                        <Label className="mb-2 mt-4 text-foreground">Judul Keluhan</Label>
+                        <Input className="rounded-[15px] border-border bg-muted/50 text-sm" placeholder="Contoh: Lampu Kamar Mati" value={title} onChangeText={setTitle} />
 
-                        <Text style={styles.label}>Kategori</Text>
-                        <View style={styles.chipGroup}>
+                        <Text className="mb-2 mt-4 text-[13px] font-bold text-primary">Kategori</Text>
+                        <View className="mb-1 flex-row flex-wrap gap-2">
                             {categories.map((cat) => (
-                                <TouchableOpacity key={cat.id} style={[styles.chip, category === cat.id && styles.chipActive]} onPress={() => setCategory(cat.id)}>
-                                    <Text style={[styles.chipText, category === cat.id && styles.chipTextActive]}>{cat.label}</Text>
+                                <TouchableOpacity key={cat.id} className={`rounded-full border px-3.5 py-2.5 ${category === cat.id ? 'border-primary bg-primary' : 'border-border bg-muted/50'}`} onPress={() => setCategory(cat.id)}>
+                                    <Text className={`text-xs ${category === cat.id ? 'font-bold text-white' : 'text-muted-foreground'}`}>{cat.label}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
-                        <Text style={styles.label}>Prioritas</Text>
-                        <View style={styles.chipGroup}>
+                        <Text className="mb-2 mt-4 text-[13px] font-bold text-primary">Prioritas</Text>
+                        <View className="mb-1 flex-row flex-wrap gap-2">
                             {priorities.map((prio) => (
-                                <TouchableOpacity key={prio.id} style={[styles.chip, priority === prio.id && { backgroundColor: prio.color, borderColor: prio.color }]} onPress={() => setPriority(prio.id)}>
-                                    <Text style={[styles.chipText, priority === prio.id && { color: 'white', fontWeight: 'bold' }]}>{prio.label}</Text>
+                                <TouchableOpacity key={prio.id} className={`rounded-full border px-3.5 py-2.5 ${priority === prio.id ? '' : 'border-border bg-muted/50'}`} style={priority === prio.id ? { backgroundColor: prio.color, borderColor: prio.color } : {}} onPress={() => setPriority(prio.id)}>
+                                    <Text className={`text-xs ${priority === prio.id ? 'font-bold text-white' : 'text-muted-foreground'}`}>{prio.label}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
-                        <Text style={styles.label}>Deskripsi Kendala</Text>
-                        <TextInput 
-                            style={[styles.input, { height: Math.max(100, inputHeight), textAlignVertical: 'top' }]} 
-                            multiline 
-                            placeholder="Jelaskan detail masalahnya..." 
-                            value={description} 
-                            onChangeText={setDescription} 
-                            onContentSizeChange={(e) => setInputHeight(e.nativeEvent.contentSize.height)} 
-                            placeholderTextColor="#95a5a6" 
+<Label className="mb-2 mt-4 text-foreground">Deskripsi Kendala</Label>
+                        <Input
+                            className="rounded-[15px] border-border bg-muted/50 pt-3.5 text-sm"
+                            style={{ height: Math.max(100, inputHeight) }}
+                            multiline
+                            placeholder="Jelaskan detail masalahnya..."
+                            value={description}
+                            onChangeText={setDescription}
+                            onContentSizeChange={(e) => setInputHeight(e.nativeEvent.contentSize.height)}
                         />
 
-                        <Text style={styles.label}>Lampiran Foto ({images.length}/5)</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageList}>
-                            <TouchableOpacity style={styles.addBtn} onPress={handlePickImage}>
+                        <Text className="mb-2 mt-4 text-[13px] font-bold text-primary">Lampiran Foto ({images.length}/5)</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-5 mt-2.5 flex-row">
+                            <TouchableOpacity className="mr-3 h-20 w-20 items-center justify-center rounded-[15px] border border-dashed border-primary bg-muted/50" onPress={handlePickImage}>
                                 <Ionicons name="camera-outline" size={30} color="#4e73df" />
                             </TouchableOpacity>
                             {images.map((uri, index) => (
-                                <View key={index} style={styles.imageWrapper}>
-                                    <Image source={{ uri }} style={styles.thumbnail} />
-                                    <TouchableOpacity style={styles.deleteBadge} onPress={() => setImages(images.filter((_, i) => i !== index))}>
-                                        <Ionicons name="close-circle" size={22} color="#e74a3b" />
+                                <View key={index} className="relative mr-3">
+                                    <Image source={{ uri }} className="h-20 w-20 rounded-[15px]" />
+                                    <TouchableOpacity className="absolute -right-2 -top-2 rounded-full bg-card" onPress={() => setImages(images.filter((_, i) => i !== index))}>
+                                        <Ionicons name="close-circle" size={22} color="hsl(var(--destructive))" />
                                     </TouchableOpacity>
                                 </View>
                             ))}
                         </ScrollView>
 
-                        <TouchableOpacity style={[styles.submitBtn, { marginBottom: insets.bottom }, loading && { opacity: 0.7 }]} onPress={submitComplaint} disabled={loading}>
-                            {loading ? <ActivityIndicator color="white" /> : <Text style={styles.btnText}>KIRIM LAPORAN SEKARANG</Text>}
-                        </TouchableOpacity>
+                        <Button
+                            className="mt-3.5 h-[58px] rounded-[15px]"
+                            style={{ marginBottom: insets.bottom }}
+                            onPress={submitComplaint}
+                            disabled={loading}
+                            loading={loading}
+                        >
+                            {!loading && <Text className="text-base font-bold text-white">KIRIM LAPORAN SEKARANG</Text>}
+                        </Button>
                     </View>
                 </KeyboardAvoidingView>
             </ScrollView>
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fc' },
-    header: { paddingTop: 60, paddingBottom: 60, paddingHorizontal: 20, borderBottomLeftRadius: 35, borderBottomRightRadius: 35 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 5, borderRadius: 10 },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 40, marginTop: -40, paddingTop: 10 },
-    formCard: { backgroundColor: 'white', borderRadius: 25, padding: 22, elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 15 },
-    label: { fontSize: 13, fontWeight: 'bold', color: '#4e73df', marginBottom: 8, marginTop: 15 },
-    input: { backgroundColor: '#f8f9fc', borderRadius: 15, padding: 15, fontSize: 14, color: '#2c3e50', borderWidth: 1, borderColor: '#eaecf4' },
-    chipGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 5 },
-    chip: { paddingHorizontal: 15, paddingVertical: 10, borderRadius: 20, backgroundColor: '#f1f3f9', borderWidth: 1, borderColor: '#d1d8e0' },
-    chipActive: { backgroundColor: '#4e73df', borderColor: '#4e73df' },
-    chipText: { fontSize: 12, color: '#7f8c8d' },
-    chipTextActive: { color: 'white', fontWeight: 'bold' },
-    imageList: { flexDirection: 'row', marginTop: 10, marginBottom: 20 },
-    addBtn: { width: 80, height: 80, backgroundColor: '#f8f9fc', borderRadius: 15, justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: '#4e73df', marginRight: 12 },
-    imageWrapper: { position: 'relative', marginRight: 12 },
-    thumbnail: { width: 80, height: 80, borderRadius: 15 },
-    deleteBadge: { position: 'absolute', top: -8, right: -8, backgroundColor: 'white', borderRadius: 12 },
-    submitBtn: { backgroundColor: '#4e73df', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 15, elevation: 5 },
-    btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
-});

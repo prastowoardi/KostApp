@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ScreenHeader from '../../../components/ScreenHeader';
 import api, { API_URL } from '../../../helpers/api';
-import axios from 'axios';
+import { Card } from '../../../components/ui/card';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 export default function FinanceIndex() {
     const insets = useSafeAreaInsets();
@@ -14,12 +15,10 @@ export default function FinanceIndex() {
     const [refreshing, setRefreshing] = useState(false);
     const [data, setData] = useState({ transactions: [], totalIncome: 0, totalExpense: 0 });
 
-    const FINANCES_URL = `${API_URL}/admin/finances`;
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
 
-            const response = await api.get(FINANCES_URL, {
+            const response = await api.get(`${API_URL}/admin/finances`, {
                 params: {
                     limit: 100,
                     sort: 'asc'
@@ -37,11 +36,11 @@ export default function FinanceIndex() {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -50,8 +49,8 @@ export default function FinanceIndex() {
 
     const renderItem = ({ item }) => {
         return (
+            <Card className="mb-3 flex-row items-center rounded-[15px] p-4 shadow-sm" asChild>
             <TouchableOpacity 
-                style={styles.transactionCard}
                 onPress={() => {
                     const id = item.id || item.id_finance || item.uuid;
                     if (id) {
@@ -62,57 +61,54 @@ export default function FinanceIndex() {
                     }
                 }}
             >
-                <View style={[styles.typeIndicator, { backgroundColor: item.type === 'income' ? '#1cc88a' : '#e74a3b' }]} />
-                <View style={styles.cardContent}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.transTitle} numberOfLines={1}>{item.description || item.title}</Text>
-                        <Text style={styles.transSub}>
+                <View style={{ backgroundColor: item.type === 'income' ? '#1cc88a' : '#e74a3b' }} className="mr-3 h-8 w-1 rounded" />
+                <View className="flex-1 flex-row items-center justify-between">
+                    <View className="flex-1">
+                        <Text className="text-sm font-bold text-foreground" numberOfLines={1}>{item.description || item.title}</Text>
+                        <Text className="mt-0.5 text-[11px] text-muted-foreground">
                             {item.category || 'Umum'} • {item.transaction_date ? new Date(item.transaction_date).toLocaleDateString('id-ID') : '-'}
                         </Text>
                     </View>
-                    <Text style={[styles.transAmount, { color: item.type === 'income' ? '#1cc88a' : '#e74a3b' }]}>
+                    <Text style={{ color: item.type === 'income' ? '#1cc88a' : '#e74a3b' }} className="text-sm font-bold">
                         {item.type === 'income' ? '+' : '-'} {new Intl.NumberFormat('id-ID').format(item.amount)}
                     </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#d1d3e2" />
             </TouchableOpacity>
+        </Card>
         );
     };
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#4e73df" />
+            <View className="flex-1 justify-center bg-background px-5">
+                <Skeleton className="h-40 w-full rounded-[30px]" />
+                <Skeleton className="mt-4 h-16 w-full rounded-[15px]" />
+                <Skeleton className="mt-4 h-16 w-full rounded-[15px]" />
+                <Skeleton className="mt-4 h-16 w-full rounded-[15px]" />
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="arrow-back" size={24} color="white" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Laporan Keuangan</Text>
-                </View>
-
-                <View style={styles.balanceRow}>
-                    <View style={styles.balanceItem}>
-                        <Text style={styles.balanceLabel}>Pemasukan</Text>
-                        <Text style={styles.balanceValue}>Rp {new Intl.NumberFormat('id-ID').format(data.totalIncome)}</Text>
+        <View className="flex-1 bg-background">
+            <ScreenHeader title="Laporan Keuangan">
+                <View className="mt-5 flex-row items-center justify-around rounded-[20px] bg-white/15 p-4">
+                    <View className="items-center">
+                        <Text className="mb-1 text-[11px] text-white/80">Pemasukan</Text>
+                        <Text className="text-base font-bold text-white">Rp {new Intl.NumberFormat('id-ID').format(data.totalIncome)}</Text>
                     </View>
-                    <View style={styles.balanceDivider} />
-                    <View style={styles.balanceItem}>
-                        <Text style={styles.balanceLabel}>Pengeluaran</Text>
-                        <Text style={styles.balanceValue}>Rp {new Intl.NumberFormat('id-ID').format(data.totalExpense)}</Text>
+                    <View className="h-8 w-px bg-white/30" />
+                    <View className="items-center">
+                        <Text className="mb-1 text-[11px] text-white/80">Pengeluaran</Text>
+                        <Text className="text-base font-bold text-white">Rp {new Intl.NumberFormat('id-ID').format(data.totalExpense)}</Text>
                     </View>
                 </View>
-            </LinearGradient>
+            </ScreenHeader>
 
-            <View style={styles.content}>
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Transaksi Terbaru</Text>
+            <View className="flex-1 px-5 pt-5">
+                <View className="mb-3.5 flex-row items-center justify-between">
+                    <Text className="text-xs font-bold uppercase text-primary">Transaksi Terbaru</Text>
                     <TouchableOpacity onPress={() => fetchData()}>
                         <Ionicons name="refresh" size={18} color="#4e73df" />
                     </TouchableOpacity>
@@ -122,11 +118,15 @@ export default function FinanceIndex() {
                     data={data.transactions}
                     renderItem={renderItem}
                     keyExtractor={(item, index) => (item.id || item.id_finance || item.uuid || index).toString()}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#b21f1f']} />
+                    }
                 />
             </View>
 
             <TouchableOpacity 
-                style={[styles.fab, { bottom: insets.bottom + 30 }]} 
+                className="absolute right-6 h-15 w-15 items-center justify-center rounded-full bg-primary shadow-lg"
+                style={{ bottom: insets.bottom + 30, height: 60, width: 60 }}
                 onPress={() => router.push("/admin/finances/create")}
             >
                 <Ionicons name="add" size={30} color="white" />
@@ -134,28 +134,3 @@ export default function FinanceIndex() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fc' },
-    centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { paddingHorizontal: 20, paddingTop: 50, paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-    backBtn: { marginRight: 15 },
-    headerTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
-    balanceRow: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: 15 },
-    balanceItem: { alignItems: 'center' },
-    balanceLabel: { color: '#e0e0e0', fontSize: 11, marginBottom: 4 },
-    balanceValue: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-    balanceDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.3)' },
-    content: { flex: 1, paddingHorizontal: 20, marginTop: 20 },
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-    sectionTitle: { fontSize: 12, fontWeight: 'bold', color: '#4e73df', textTransform: 'uppercase' },
-    transactionCard: { backgroundColor: 'white', borderRadius: 15, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 12, elevation: 2 },
-    typeIndicator: { width: 4, height: 35, borderRadius: 2, marginRight: 12 },
-    cardContent: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginRight: 5 },
-    transTitle: { fontSize: 14, fontWeight: 'bold', color: '#5a5c69' },
-    transSub: { fontSize: 11, color: '#b7b9cc' },
-    transAmount: { fontSize: 14, fontWeight: 'bold' },
-    emptyText: { textAlign: 'center', color: '#b7b9cc', marginTop: 50 },
-    fab: { position: 'absolute', bottom: 30, right: 25, backgroundColor: '#4e73df', width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 5 }
-});

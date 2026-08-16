@@ -2,22 +2,22 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Image,
     Platform,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
 import GlobalAlert from '../../components/GlobalAlert';
+import ScreenHeader from '../../components/ScreenHeader';
+import { Button } from '../../components/ui/button';
+import { Card } from '../../components/ui/card';
 
 import { API_URL } from '../../helpers/api';
 
@@ -104,7 +104,7 @@ export default function PaymentScreen() {
                 });
             }
 
-            const res = await axios.post(`${API_URL}/payments/upload`, formData, {
+            await axios.post(`${API_URL}/payments/upload`, formData, {
                 headers: { 
                     'Authorization': `Bearer ${cleanToken}`,
                     'Content-Type': 'multipart/form-data',
@@ -126,68 +126,57 @@ export default function PaymentScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background">
             <StatusBar barStyle="light-content" />
             
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={28} color="white" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Konfirmasi Bayar</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-            </LinearGradient>
+            <ScreenHeader title="Konfirmasi Bayar" />
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.infoCard}>
-                    <Text style={styles.infoTitle}>Detail Tagihan</Text>
+            <ScrollView contentContainerStyle={{ padding: 25 }} showsVerticalScrollIndicator={false}>
+                <Card className="mb-6 p-5 shadow-md">
+                    <Text className="mb-4 text-base font-bold text-foreground">Detail Tagihan</Text>
                     
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Bulan</Text>
-                        <Text style={styles.value}>
+                    <View className="mb-2.5 flex-row justify-between">
+                        <Text className="text-muted-foreground">Bulan</Text>
+                        <Text className="font-medium text-foreground">
                             {new Date().toLocaleString('id-ID', { month: 'long', year: 'numeric' })}
                         </Text>
                     </View>
 
-                    <View style={styles.row}>
-                        <Text style={styles.label}>Total Bayar</Text>
-                        <Text style={[styles.value, {color: '#1cc88a', fontWeight: 'bold'}]}>
+                    <View className="mb-2.5 flex-row justify-between">
+                        <Text className="text-muted-foreground">Total Bayar</Text>
+                        <Text className="font-bold text-success">
                             Rp {(billData?.bill_amount || 0).toLocaleString('id-ID')}
                         </Text>
                     </View>
 
-                    <View style={styles.divider} />
-                    <Text style={styles.bankTitle}>Transfer Ke:</Text>
-                    <Text style={styles.bankInfo}>Bank Mandiri</Text>
-                    <Text style={styles.bankInfo}>No. Rek: 136-001-440-6059</Text>
-                    <Text style={styles.bankInfo}>A/N Prastowo Ardi Widigdo</Text>
-                </View>
+                    <View className="my-3.5 h-px bg-border" />
+                    <Text className="mb-1.5 text-sm font-bold text-primary">Transfer Ke:</Text>
+                    <Text className="text-[15px] text-foreground">Bank Mandiri</Text>
+                    <Text className="text-[15px] text-foreground">No. Rek: 136-001-440-6059</Text>
+                    <Text className="text-[15px] text-foreground">A/N Prastowo Ardi Widigdo</Text>
+                </Card>
 
-                <Text style={styles.sectionTitle}>Upload Bukti Transfer</Text>
+                <Text className="mb-4 text-base font-bold text-foreground">Upload Bukti Transfer</Text>
                 
-                <TouchableOpacity style={styles.uploadBox} onPress={pickImage} disabled={loading}>
+                <TouchableOpacity className="h-[250px] items-center justify-center overflow-hidden rounded-[20px] border-2 border-dashed border-primary bg-card shadow-sm" onPress={pickImage} disabled={loading}>
                     {image ? (
-                        <Image source={{ uri: image }} style={styles.preview} />
+                        <Image source={{ uri: image }} className="h-full w-full" />
                     ) : (
-                        <View style={{ alignItems: 'center' }}>
+                        <View className="items-center">
                             <Ionicons name="cloud-upload-outline" size={50} color="#4e73df" />
-                            <Text style={styles.uploadText}>Klik untuk pilih foto dari galeri</Text>
+                            <Text className="mt-2.5 font-semibold text-primary">Klik untuk pilih foto dari galeri</Text>
                         </View>
                     )}
                 </TouchableOpacity>
 
-                <TouchableOpacity 
-                    style={[styles.submitBtn, loading && { backgroundColor: '#bdc3c7' }]} 
+                <Button 
+                    className="mt-8 h-[58px] rounded-[15px] bg-success"
                     onPress={submitPayment}
                     disabled={loading}
+                    loading={loading}
                 >
-                    {loading ? (
-                        <ActivityIndicator color="white" />
-                    ) : (
-                        <Text style={styles.btnText}>KONFIRMASI SEKARANG</Text>
-                    )}
-                </TouchableOpacity>
+                    {!loading && <Text className="text-base font-bold text-white">KONFIRMASI SEKARANG</Text>}
+                </Button>
                 <View style={{ height: insets.bottom + 40 }} />
             </ScrollView>
 
@@ -202,35 +191,3 @@ export default function PaymentScreen() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fc' },
-    header: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
-    scrollContent: { padding: 25 },
-    infoCard: { 
-        backgroundColor: 'white', 
-        borderRadius: 20, 
-        padding: 20, 
-        elevation: 10, 
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        marginBottom: 25 
-    },
-    infoTitle: { fontSize: 16, fontWeight: 'bold', color: '#2c3e50', marginBottom: 15 },
-    row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    label: { color: '#858796' },
-    value: { color: '#2c3e50', fontWeight: '500' },
-    divider: { height: 1, backgroundColor: '#eee', marginVertical: 15 },
-    bankTitle: { fontSize: 14, fontWeight: 'bold', color: '#4e73df', marginBottom: 5 },
-    bankInfo: { fontSize: 15, color: '#2c3e50' },
-    sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#2c3e50', marginBottom: 15 },
-    uploadBox: { height: 250, backgroundColor: 'white', borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed', borderWidth: 2, borderColor: '#4e73df', overflow: 'hidden', elevation: 2 },
-    preview: { width: '100%', height: '100%' },
-    uploadText: { color: '#4e73df', marginTop: 10, fontWeight: '600' },
-    submitBtn: { backgroundColor: '#1cc88a', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 30, elevation: 5 },
-    btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
-});

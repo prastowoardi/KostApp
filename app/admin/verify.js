@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -12,16 +10,18 @@ import {
     Modal,
     RefreshControl,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
 import GlobalAlert from '../../components/GlobalAlert';
-
+import ScreenHeader from '../../components/ScreenHeader';
+import { Skeleton } from '../../components/ui/skeleton';
+import { API_URL } from '../../helpers/api';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
 
 const { width } = Dimensions.get('window');
-import { API_URL } from '../../helpers/api';
 const STORAGE_URL = process.env.EXPO_PUBLIC_API_URL + '/storage/';
 
 export default function VerifyPayment() {
@@ -30,7 +30,6 @@ export default function VerifyPayment() {
     const [selectedImg, setSelectedImg] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-    const router = useRouter();
 
     const fetchPendingPayments = async () => {
         try {
@@ -100,32 +99,28 @@ export default function VerifyPayment() {
                     "error"
                 );
             } finally {
-                setProcessing(true);
                 setProcessing(false);
             }
         });
     };
 
     const renderItem = ({ item }) => (
-        <View style={styles.card}>
-            <View style={styles.cardInfo}>
-                <View style={styles.tenantInitial}>
-                    <Text style={styles.initialText}>{item.tenant?.user?.name?.charAt(0) || '?'}</Text>
+        <Card className="mb-4 rounded-[20px] p-[18px] shadow-sm">
+            <View className="flex-row items-center">
+                <View className="h-[50px] w-[50px] items-center justify-center rounded-full bg-accent">
+                    <Text className="text-xl font-bold text-primary">{item.tenant?.user?.name?.charAt(0) || '?'}</Text>
                 </View>
-                <View style={{ flex: 1, marginLeft: 15 }}>
-                    <Text style={styles.tenantName}>{item.tenant?.user?.name || 'Tenant'}</Text>
-                    <Text style={styles.invoiceText}>{item.invoice_number}</Text>
-                    <Text style={styles.roomText}>Kamar: {item.room?.room_number || '-'}</Text>
+                <View className="ml-4 flex-1">
+                    <Text className="text-base font-bold text-foreground">{item.tenant?.user?.name || 'Tenant'}</Text>
+                    <Text className="text-[11px] font-semibold text-primary">{item.invoice_number}</Text>
+                    <Text className="text-xs text-muted-foreground">Kamar: {item.room?.room_number || '-'}</Text>
                 </View>
-                <Text style={styles.amountText}>Rp {parseInt(item.total).toLocaleString('id-ID')}</Text>
+                <Text className="text-base font-bold text-success">Rp {parseInt(item.total).toLocaleString('id-ID')}</Text>
             </View>
 
             {/* Tombol Preview Bukti */}
             <TouchableOpacity 
-                style={[
-                    styles.proofPreview, 
-                    (!item.receipt_file && !item.proof_of_payment) && { opacity: 0.5 } // Kasih efek pudar kalau ga ada gambar
-                ]} 
+                className={`mt-4 flex-row items-center justify-center rounded-xl bg-accent p-3 ${(!item.receipt_file && !item.proof_of_payment) ? 'opacity-50' : ''}`}
                 onPress={() => {
                     const file = item.receipt_file || item.proof_of_payment;
                     if (file) {
@@ -144,52 +139,45 @@ export default function VerifyPayment() {
                     size={20} 
                     color="#4e73df" 
                 />
-                <Text style={styles.proofText}>
+                <Text className="ml-2 text-[13px] font-bold text-primary">
                     { (item.receipt_file || item.proof_of_payment) ? "Lihat Bukti Transfer" : "Tidak Ada Bukti" }
                 </Text>
             </TouchableOpacity>
 
-            <View style={styles.actionButtons}>
+            <View className="mt-4 flex-row justify-between">
                 <TouchableOpacity 
-                    style={[styles.btn, styles.btnReject]} 
+                    className="flex-[0.48] flex-row items-center justify-center rounded-xl border-[1.5px] border-destructive py-3.5" 
                     onPress={() => handleAction(item.id || item.uuid, 'rejected')}
                 >
-                    <Ionicons name="close-outline" size={20} color="#e74a3b" />
-                    <Text style={styles.btnTextReject}>Tolak</Text>
+                    <Ionicons name="close-outline" size={20} color="hsl(var(--destructive))" />
+                    <Text className="ml-1.5 font-bold text-destructive">Tolak</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
-                    style={[styles.btn, styles.btnApprove]} 
-                    onPress={() => handleAction(item.id || item.uuid, 'success')}
-                >
+                <Button variant="success" className="flex-[0.48] rounded-xl py-3.5" onPress={() => handleAction(item.id || item.uuid, 'success')}>
                     <Ionicons name="checkmark-outline" size={20} color="white" />
-                    <Text style={styles.btnTextApprove}>Terima</Text>
-                </TouchableOpacity>
+                    <Text className="ml-1.5 font-bold text-success-foreground">Terima</Text>
+                </Button>
             </View>
-        </View>
+        </Card>
     );
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background">
             <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={28} color="white" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Verifikasi Bayar</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-            </LinearGradient>
+            <ScreenHeader title="Verifikasi Bayar" />
 
             {loading ? (
-                <ActivityIndicator size="large" color="#b21f1f" style={{ marginTop: 50 }} />
+                <View className="px-5 pt-6">
+                    <Skeleton className="h-40 w-full rounded-[20px]" />
+                    <Skeleton className="mt-4 h-40 w-full rounded-[20px]" />
+                    <Skeleton className="mt-4 h-40 w-full rounded-[20px]" />
+                </View>
             ) : (
                 <FlatList
                     data={payments}
                     keyExtractor={(item) => (item.id || item.uuid).toString()}
                     renderItem={renderItem}
-                    contentContainerStyle={styles.listContainer}
+                    contentContainerStyle={{ padding: 20 }}
                     refreshControl={
                         <RefreshControl 
                             refreshing={refreshing} 
@@ -199,9 +187,9 @@ export default function VerifyPayment() {
                         />
                     }
                     ListEmptyComponent={
-                        <View style={styles.emptyContainer}>
+                        <View className="mt-24 items-center">
                             <Ionicons name="checkmark-done-circle-outline" size={80} color="#ccc" />
-                            <Text style={styles.emptyText}>Semua tagihan sudah terverifikasi!</Text>
+                            <Text className="mt-4 text-sm text-muted-foreground">Semua tagihan sudah terverifikasi!</Text>
                         </View>
                     }
                 />
@@ -209,8 +197,8 @@ export default function VerifyPayment() {
 
             {/* MODAL ZOOM GAMBAR */}
             <Modal visible={!!selectedImg} transparent={true} animationType="fade">
-                <View style={styles.modalContainer}>
-                    <TouchableOpacity style={styles.closeModal} onPress={() => setSelectedImg(null)}>
+                <View className="flex-1 items-center justify-center bg-black/95">
+                    <TouchableOpacity className="absolute right-6 top-12 z-10" onPress={() => setSelectedImg(null)}>
                         <Ionicons name="close-circle" size={45} color="white" />
                     </TouchableOpacity>
                     <Image 
@@ -220,7 +208,7 @@ export default function VerifyPayment() {
                                 'ngrok-skip-browser-warning': '69420'
                             }
                         }} 
-                        style={styles.fullImage} 
+                        style={{ width: width, height: width * 1.5 }} 
                         resizeMode="contain" 
                         onLoadStart={() => console.log("Get image:", selectedImg)}
                         onError={(e) => console.log("Failed load image. Error:", e.nativeEvent.error)}
@@ -229,7 +217,7 @@ export default function VerifyPayment() {
             </Modal>
 
             {processing && (
-                <View style={styles.overlayLoader}>
+                <View className="absolute inset-0 z-20 items-center justify-center bg-black/50">
                     <ActivityIndicator size="large" color="white" />
                 </View>
             )}
@@ -247,34 +235,3 @@ export default function VerifyPayment() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f4f6f9' },
-    header: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
-    listContainer: { padding: 20 },
-    card: { backgroundColor: 'white', borderRadius: 20, padding: 18, marginBottom: 15, elevation: 4 },
-    cardInfo: { flexDirection: 'row', alignItems: 'center' },
-    tenantInitial: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#f1f3f9', justifyContent: 'center', alignItems: 'center' },
-    initialText: { fontSize: 20, fontWeight: 'bold', color: '#4e73df' },
-    tenantName: { fontSize: 16, fontWeight: 'bold', color: '#2c3e50' },
-    invoiceText: { fontSize: 11, color: '#4e73df', fontWeight: '600' },
-    roomText: { fontSize: 12, color: '#858796' },
-    amountText: { fontSize: 16, fontWeight: 'bold', color: '#1cc88a' },
-    proofPreview: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef2ff', padding: 12, borderRadius: 12, marginVertical: 15, justifyContent: 'center' },
-    proofText: { marginLeft: 8, color: '#4e73df', fontWeight: 'bold', fontSize: 13 },
-    actionButtons: { flexDirection: 'row', justifyContent: 'space-between' },
-    btn: { flex: 0.48, flexDirection: 'row', padding: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    btnApprove: { backgroundColor: '#1cc88a' },
-    btnReject: { borderWidth: 1.5, borderColor: '#e74a3b' },
-    btnTextApprove: { color: 'white', fontWeight: 'bold', marginLeft: 5 },
-    btnTextReject: { color: '#e74a3b', fontWeight: 'bold', marginLeft: 5 },
-    emptyContainer: { alignItems: 'center', marginTop: 100 },
-    emptyText: { marginTop: 15, color: '#858796', fontSize: 14 },
-    modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
-    fullImage: { width: width, height: width * 1.5 },
-    closeModal: { position: 'absolute', top: 50, right: 25, zIndex: 10 },
-    overlayLoader: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }
-});

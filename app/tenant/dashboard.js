@@ -9,7 +9,6 @@ import {
     RefreshControl,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View,
@@ -83,8 +82,8 @@ export default function TenantDashboard() {
 
   if (loading)
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4e73df" />
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color="hsl(var(--primary))" />
       </View>
     );
 
@@ -110,7 +109,7 @@ export default function TenantDashboard() {
     data?.payment_status?.toLowerCase() === "waiting";
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       <StatusBar barStyle="light-content" />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -124,86 +123,83 @@ export default function TenantDashboard() {
         }
       >
         {/* HEADER BERGRADASI */}
-        <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-          <View style={styles.headerTop}>
+        <LinearGradient colors={["#1a2a6c", "#b21f1f"]} className="rounded-b-[30px] px-6 pb-24 pt-14">
+          <View className="mb-6 flex-row items-center justify-between">
             <View>
-              <Text style={styles.greeting}>Selamat Datang,</Text>
-              <Text style={styles.userName}>{data?.name || "User"}</Text>
+              <Text className="text-base text-white/80">Selamat Datang,</Text>
+              <Text className="text-2xl font-bold text-white">{data?.name || "User"}</Text>
             </View>
-            <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <TouchableOpacity onPress={handleLogout} className="rounded-xl bg-white/20 p-2.5">
               <Ionicons name="log-out-outline" size={24} color="white" />
             </TouchableOpacity>
           </View>
-
-          {/* CARD INFO KAMAR */}
-          <View style={styles.roomCard}>
-            <View style={styles.roomInfo}>
-              <Ionicons name="business" size={20} color="#4e73df" />
-              <Text style={styles.roomText}>
-                Kamar {data?.room_number || "-"}
-              </Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.roomInfo}>
-              <Ionicons
-                name="calendar"
-                size={20}
-                color={isLunas ? "#1cc88a" : "#e74a3b"}
-              />
-              <Text style={styles.roomText}>
-                Tempo: {data?.due_date || "-"}
-              </Text>
-            </View>
-          </View>
         </LinearGradient>
 
-        <View style={styles.content}>
+        {/* CARD INFO KAMAR */}
+        <View className="-mt-14 mx-6 flex-row items-center justify-around rounded-2xl bg-card p-5 shadow-xl shadow-black/5">
+          <View className="flex-row items-center">
+            <Ionicons name="business" size={20} color="hsl(var(--primary))" />
+            <Text className="ml-2.5 font-semibold text-primary">
+              Kamar {data?.room_number || "-"}
+            </Text>
+          </View>
+          <View className="h-full w-px bg-border" />
+          <View className="flex-row items-center">
+            <Ionicons
+              name="calendar"
+              size={20}
+              color={isLunas ? "#1cc88a" : "#e74a3b"}
+            />
+            <Text className="ml-2.5 font-semibold text-primary">
+              Tempo: {data?.due_date || "-"}
+            </Text>
+          </View>
+        </View>
+
+        <View className="mt-14 px-6">
           {/* SECTION TAGIHAN DINAMIS */}
-          <Text style={styles.sectionTitle}>Status Tagihan</Text>
+          <Text className="mb-3.5 mt-2.5 text-lg font-bold text-foreground">Status Tagihan</Text>
           <View
-            style={[
-              styles.billCard,
-              { borderLeftWidth: 5, borderLeftColor: getStatusColor() },
-            ]}
+            className="mb-6 flex-row items-center justify-between rounded-2xl border-l-4 border-primary bg-card p-5 shadow-sm"
+            style={{ borderLeftColor: getStatusColor() }}
           >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.billLabel}>
+            <View className="flex-1">
+              <Text className="text-xs text-muted-foreground">
                 Tagihan: {data?.payment_status || "Belum Bayar"}
               </Text>
-              <Text style={styles.billAmount}>
+              <Text className="mt-1 text-xl font-bold text-foreground">
                 Rp {(data?.bill_amount || 0).toLocaleString("id-ID")}
               </Text>
-              {/* MENAMPILKAN SISA HARI / TELAT */}
               {data?.days_left_msg ? (
-                <Text style={[styles.daysText, { color: getStatusColor() }]}>
+                <Text className="mt-1 text-xs font-bold" style={{ color: getStatusColor() }}>
                   {data?.days_left_msg}
                 </Text>
               ) : null}
             </View>
 
             {isLunas ? (
-              <View style={{ alignItems: "center" }}>
+              <View className="items-center">
                 <Ionicons name="checkmark-circle" size={32} color="#1cc88a" />
-                <Text style={styles.statusLabelSmall}>LUNAS</Text>
+                <Text className="mt-0.5 text-[10px] font-bold text-muted-foreground">LUNAS</Text>
               </View>
             ) : isPending ? (
-              <View style={{ alignItems: "center" }}>
+              <View className="items-center">
                 <Ionicons name="time" size={32} color="#f6c23e" />
-                <Text style={styles.statusLabelSmall}>PENDING</Text>
+                <Text className="mt-0.5 text-[10px] font-bold text-muted-foreground">PENDING</Text>
               </View>
             ) : (
               <TouchableOpacity
-                style={styles.payButton}
+                className="rounded-xl bg-success px-5 py-2.5"
                 onPress={() => router.push("/tenant/payment")}
               >
-                <Text style={styles.payButtonText}>Bayar</Text>
+                <Text className="text-sm font-bold text-white">Bayar</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {/* QUICK ACTIONS */}
-          <Text style={styles.sectionTitle}>Layanan Penghuni</Text>
-          <View style={styles.menuGrid}>
+          <Text className="mb-3.5 mt-2.5 text-lg font-bold text-foreground">Layanan Penghuni</Text>
+          <View className="flex-row flex-wrap justify-between">
             <ActionMenu
               icon="shield-checkmark-outline"
               title="Peraturan"
@@ -236,13 +232,11 @@ export default function TenantDashboard() {
           </View>
 
           {/* BANNER INFO */}
-          <View style={styles.infoBanner}>
-            <Ionicons name="megaphone" size={24} color="#4e73df" />
-            <View style={{ marginLeft: 15, flex: 1 }}>
-              <Text style={{ fontWeight: "bold", color: "#2c3e50" }}>
-                Pengumuman
-              </Text>
-              <Text style={{ fontSize: 12, color: "#7f8c8d" }}>
+          <View className="mb-8 flex-row items-center rounded-2xl bg-accent p-5">
+            <Ionicons name="megaphone" size={24} color="hsl(var(--primary))" />
+            <View className="ml-4 flex-1">
+              <Text className="font-bold text-foreground">Pengumuman</Text>
+              <Text className="text-xs text-muted-foreground">
                 Gunakan aplikasi untuk mempermudah pelaporan kendala kamar.
               </Text>
             </View>
@@ -264,115 +258,10 @@ export default function TenantDashboard() {
 }
 
 const ActionMenu = ({ icon, title, color, onPress }) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
-    <View style={[styles.iconCircle, { backgroundColor: color + "20" }]}>
+  <TouchableOpacity className="mb-4 w-[47%] items-center rounded-2xl bg-card p-5 shadow-sm" onPress={onPress}>
+    <View style={{ backgroundColor: color + "20" }} className="mb-2.5 rounded-full p-3.5">
       <Ionicons name={icon} size={26} color={color} />
     </View>
-    <Text style={styles.menuLabel}>{title}</Text>
+    <Text className="text-center text-[13px] font-semibold text-primary">{title}</Text>
   </TouchableOpacity>
 );
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FC" },
-  header: {
-    paddingHorizontal: 25,
-    paddingTop: 60,
-    paddingBottom: 100,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  headerTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 25,
-  },
-  greeting: { color: "rgba(255,255,255,0.8)", fontSize: 16 },
-  userName: { color: "white", fontSize: 24, fontWeight: "bold" },
-  logoutBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: 10,
-    borderRadius: 12,
-  },
-  roomCard: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    position: "absolute",
-    bottom: -40,
-    left: 25,
-    right: 25,
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  roomInfo: { flexDirection: "row", alignItems: "center" },
-  roomText: { marginLeft: 10, fontWeight: "600", color: "#4e73df" },
-  divider: { width: 1, height: "100%", backgroundColor: "#eee" },
-  content: { paddingHorizontal: 25, marginTop: 60 },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#2c3e50",
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  billCard: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 25,
-    elevation: 3,
-  },
-  billLabel: { color: "#858796", fontSize: 12 },
-  billAmount: { fontSize: 20, fontWeight: "bold", color: "#2c3e50" },
-  daysText: { fontSize: 12, fontWeight: "bold", marginTop: 4 },
-  statusLabelSmall: {
-    fontSize: 10,
-    color: "#858796",
-    fontWeight: "bold",
-    marginTop: 2,
-  },
-  payButton: {
-    backgroundColor: "#1cc88a",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  payButtonText: { color: "white", fontWeight: "bold", fontSize: 14 },
-  menuGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  menuItem: {
-    width: "47%",
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 20,
-    alignItems: "center",
-    marginBottom: 15,
-    elevation: 2,
-  },
-  iconCircle: { padding: 15, borderRadius: 50, marginBottom: 10 },
-  menuLabel: {
-    fontWeight: "600",
-    color: "#4e73df",
-    fontSize: 13,
-    textAlign: "center",
-  },
-  infoBanner: {
-    backgroundColor: "#eef2ff",
-    padding: 20,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-});

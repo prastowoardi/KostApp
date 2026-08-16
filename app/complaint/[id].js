@@ -5,21 +5,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Dimensions,
     Image,
     Modal,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
 import { API_URL } from '../../helpers/api';
+import { Skeleton } from '../../components/ui/skeleton';
 
+const { width, height } = Dimensions.get('window');
 export default function ComplaintDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
@@ -62,16 +61,16 @@ export default function ComplaintDetailScreen() {
     };
 
     if (loading) return (
-        <View style={styles.center}>
-            <ActivityIndicator size="large" color="#4e73df" />
+        <View className="flex-1 items-center justify-center bg-background">
+            <Skeleton className="h-64 w-72 rounded-[25px]" />
         </View>
     );
 
     if (!complaint) return (
-        <View style={styles.center}>
-            <Text>Data tidak ditemukan.</Text>
-            <TouchableOpacity onPress={() => router.back()} style={styles.retryBtn}>
-                <Text style={{color: 'white'}}>Kembali</Text>
+        <View className="flex-1 items-center justify-center bg-background">
+            <Text className="text-foreground">Data tidak ditemukan.</Text>
+            <TouchableOpacity onPress={() => router.back()} className="mt-5 rounded-lg bg-primary p-2.5">
+                <Text className="text-white">Kembali</Text>
             </TouchableOpacity>
         </View>
     );
@@ -79,83 +78,84 @@ export default function ComplaintDetailScreen() {
     const statusStyle = getStatusStyle(complaint.status);
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background">
             <StatusBar barStyle="light-content" />
 
             {/* --- MODAL PREVIEW MULAI --- */}
             <Modal visible={modalVisible} transparent={true} animationType="fade">
-                <View style={styles.modalBg}>
-                    <TouchableOpacity style={styles.closeBtn} onPress={() => setModalVisible(false)}>
+                <View className="flex-1 items-center justify-center bg-black/95">
+                    <TouchableOpacity className="absolute right-5 top-12 z-[11]" onPress={() => setModalVisible(false)}>
                         <Ionicons name="close-circle" size={45} color="white" />
                     </TouchableOpacity>
                     <Image 
                         source={{ uri: selectedImg }} 
-                        style={styles.fullImg} 
+                        style={{ width: width, height: height * 0.8 }} 
                         resizeMode="contain" 
                     />
                 </View>
             </Modal>
             {/* --- MODAL PREVIEW SELESAI --- */}
             
-            <LinearGradient colors={['#4e73df', '#224abe']} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <LinearGradient colors={['#4e73df', '#224abe']} className="rounded-b-[35px] px-5 pb-14 pt-14">
+                <View className="flex-row items-center justify-between">
+                    <TouchableOpacity onPress={() => router.back()} className="rounded-lg bg-white/20 p-1.5">
                         <Ionicons name="chevron-back" size={28} color="white" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Detail Laporan</Text>
-                    <View style={{ width: 40 }} />
+                    <Text className="text-xl font-bold text-white">Detail Laporan</Text>
+                    <View className="w-10" />
                 </View>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.mainCard}>
-                    <View style={styles.statusRow}>
-                        <Text style={styles.categoryBadge}>{complaint.category.toUpperCase()}</Text>
-                        <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-                            <Text style={[styles.statusText, { color: statusStyle.color }]}>
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, marginTop: 25 }} showsVerticalScrollIndicator={false}>
+                <View className="rounded-[25px] bg-card p-5 shadow-md">
+                    <View className="mb-4 flex-row items-center justify-between">
+                        <Text className="text-xs font-bold tracking-wider text-primary">{complaint.category.toUpperCase()}</Text>
+                        <View className="rounded-xl px-3 py-1.5" style={{ backgroundColor: statusStyle.bg }}>
+                            <Text className="text-[11px] font-bold capitalize" style={{ color: statusStyle.color }}>
                                 {complaint.status.replace('_', ' ')}
                             </Text>
                         </View>
                     </View>
 
-                    <Text style={styles.title}>{complaint.title}</Text>
+                    <Text className="mb-2 text-[22px] font-bold text-foreground">{complaint.title}</Text>
                     
-                    <View style={styles.infoRow}>
+                    <View className="mb-1.5 flex-row items-center">
                         <Ionicons name="time-outline" size={14} color="#95a5a6" />
-                        <Text style={styles.dateText}>
+                        <Text className="ml-1.5 text-[13px] text-muted-foreground">
                             {new Date(complaint.created_at).toLocaleString('id-ID', {
                                 day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
                             })}
                         </Text>
                     </View>
 
-                    <View style={styles.divider} />
-                    <Text style={styles.label}>Deskripsi Keluhan</Text>
-                    <Text style={styles.description}>{complaint.description}</Text>
-                    <View style={styles.divider} />
+                    <View className="my-5 h-px bg-border" />
+                    <Text className="mb-2.5 text-sm font-bold text-primary">Deskripsi Keluhan</Text>
+                    <Text className="text-[15px] leading-6 text-foreground/80">{complaint.description}</Text>
+                    <View className="my-5 h-px bg-border" />
 
-                    <Text style={styles.label}>Foto Lampiran</Text>
-                    <View style={styles.imageGrid}>
+                    <Text className="mb-2.5 text-sm font-bold text-primary">Foto Lampiran</Text>
+                    <View className="mt-1.5 flex-row flex-wrap gap-3">
                         {complaint.images && complaint.images.length > 0 ? (
                             complaint.images.map((img, index) => {
                                 const finalUrl = `${STORAGE_URL}/storage/${img.image_path}`;
                                 return (
                                     <TouchableOpacity 
                                         key={index} 
-                                        style={styles.imageWrapper}
+                                        className="h-[120px] overflow-hidden rounded-[15px] bg-muted/50"
+                                        style={{ width: (width - 100) / 2 }}
                                         onPress={() => {
                                             setSelectedImg(finalUrl);
                                             setModalVisible(true);
                                         }}
                                     >
-                                        <Image source={{ uri: finalUrl }} style={styles.img} />
+                                        <Image source={{ uri: finalUrl }} className="h-full w-full" />
                                     </TouchableOpacity>
                                 );
                             })
                         ) : (
-                            <View style={styles.noImage}>
+                            <View className="h-24 w-full items-center justify-center rounded-[15px] border border-dashed border-border bg-muted/40">
                                 <Ionicons name="image-outline" size={40} color="#d1d8e0" />
-                                <Text style={{color: '#95a5a6', marginTop: 5}}>Tidak ada foto</Text>
+                                <Text className="mt-1.5 text-muted-foreground">Tidak ada foto</Text>
                             </View>
                         )}
                     </View>
@@ -164,33 +164,3 @@ export default function ComplaintDetailScreen() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fc' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { paddingTop: 60, paddingBottom: 60, paddingHorizontal: 20, borderBottomLeftRadius: 35, borderBottomRightRadius: 35 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 5, borderRadius: 10 },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 40, marginTop: 25 },
-    mainCard: { backgroundColor: 'white', borderRadius: 25, padding: 22, elevation: 10 },
-    statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-    categoryBadge: { fontSize: 12, fontWeight: 'bold', color: '#4e73df', letterSpacing: 1 },
-    statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-    statusText: { fontSize: 11, fontWeight: 'bold', textTransform: 'capitalize' },
-    title: { fontSize: 22, fontWeight: 'bold', color: '#2c3e50', marginBottom: 8 },
-    infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
-    dateText: { fontSize: 13, color: '#95a5a6', marginLeft: 5 },
-    divider: { height: 1, backgroundColor: '#f1f3f9', marginVertical: 20 },
-    label: { fontSize: 14, fontWeight: 'bold', color: '#4e73df', marginBottom: 10 },
-    description: { fontSize: 15, color: '#34495e', lineHeight: 24 },
-    imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 5 },
-    imageWrapper: { width: (width - 100) / 2, height: 120, borderRadius: 15, overflow: 'hidden', backgroundColor: '#f8f9fc' },
-    img: { width: '100%', height: '100%' },
-    noImage: { width: '100%', height: 100, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8f9fc', borderRadius: 15, borderStyle: 'dashed', borderWidth: 1, borderColor: '#d1d8e0' },
-    retryBtn: { marginTop: 20, backgroundColor: '#4e73df', padding: 10, borderRadius: 10 },
-    
-    modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
-    fullImg: { width: width, height: height * 0.8 },
-    closeBtn: { position: 'absolute', top: 50, right: 20, zIndex: 11 }
-});

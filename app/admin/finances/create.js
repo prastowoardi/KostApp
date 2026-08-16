@@ -1,26 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import {
-    StyleSheet,
     View,
     Text,
     TouchableOpacity,
     TextInput,
     ScrollView,
     Image,
-    ActivityIndicator,
     StatusBar,
     Modal,
-    FlatList
+    FlatList,
+    Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalAlert from '../../../components/GlobalAlert';
+import ScreenHeader from '../../../components/ScreenHeader';
 import api, { API_URL } from '../../../helpers/api';
-import { Platform } from 'react-native';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Button } from '../../../components/ui/button';
 
 export default function CreateTransaction() {
     const insets = useSafeAreaInsets();
@@ -155,71 +156,62 @@ export default function CreateTransaction() {
 
     const renderCategoryItem = ({ item }) => (
         <TouchableOpacity
-            style={styles.categoryItem}
+            className="flex-row items-center justify-between border-b border-muted py-3.5"
             onPress={() => {
                 setForm({ ...form, category: item });
                 setShowCategoryModal(false);
             }}
         >
-            <Text style={styles.categoryItemText}>{item}</Text>
+            <Text className="text-base text-foreground/80">{item}</Text>
             {form.category === item && <Ionicons name="checkmark-circle" size={20} color="#1a2a6c" />}
         </TouchableOpacity>
     );
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background">
             <StatusBar barStyle="light-content" />
             
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={24} color="white" />
-                    </TouchableOpacity>
-                    <View style={{ marginLeft: 12 }}>
-                        <Text style={styles.headerTitle}>Catat Keuangan</Text>
-                        <Text style={styles.headerSub}>Input data secara akurat</Text>
-                    </View>
-                </View>
-            </LinearGradient>
+            <ScreenHeader title="Catat Keuangan" subtitle="Input data secara akurat" />
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.typeContainer}>
+            <ScrollView contentContainerStyle={{ padding: 20 }} showsVerticalScrollIndicator={false}>
+                <View className="mb-6 flex-row justify-between rounded-[15px] bg-muted p-1">
                     <TouchableOpacity 
-                        style={[styles.typeBtn, form.type === 'income' && styles.activeIncome]}
+                        className={`flex-1 items-center rounded-xl p-3 ${form.type === 'income' ? 'bg-success' : ''}`}
                         onPress={() => setForm({ ...form, type: 'income', category: '' })}
                     >
-                        <Text style={[styles.typeText, form.type === 'income' && styles.textWhite]}>Pemasukan</Text>
+                        <Text className={`font-bold ${form.type === 'income' ? 'text-white' : 'text-muted-foreground'}`}>Pemasukan</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
-                        style={[styles.typeBtn, form.type === 'expense' && styles.activeExpense]}
+                        className={`flex-1 items-center rounded-xl p-3 ${form.type === 'expense' ? 'bg-destructive' : ''}`}
                         onPress={() => setForm({ ...form, type: 'expense', category: '' })}
                     >
-                        <Text style={[styles.typeText, form.type === 'expense' && styles.textWhite]}>Pengeluaran</Text>
+                        <Text className={`font-bold ${form.type === 'expense' ? 'text-white' : 'text-muted-foreground'}`}>Pengeluaran</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Dropdown Custom Style */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Kategori</Text>
+                <View className="mb-5">
+                    <Label className="mb-2 mt-4 text-foreground">Kategori</Label>
                     <TouchableOpacity 
-                        style={styles.customDropdown} 
+                        className="flex-row items-center justify-between rounded-xl border border-border bg-card p-3.5" 
                         onPress={() => setShowCategoryModal(true)}
                     >
-                        <Text style={[styles.dropdownValue, !form.category && { color: '#aaa' }]}>
+                        <Text className={`text-base ${form.category ? 'text-foreground' : 'text-muted-foreground'}`}>
                             {form.category || "Pilih kategori transaksi..."}
                         </Text>
-                        <Ionicons name="chevron-down" size={20} color="#666" />
+                        <Ionicons name="chevron-down" size={20} color="hsl(var(--muted-foreground))" />
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Nominal (Rp)</Text>
-                    <View style={styles.inputWrapper}>
-                        <Text style={styles.currencyPrefix}>Rp</Text>
+                <View className="mb-5">
+                    <Label className="mb-2 mt-4 text-foreground">Nominal (Rp)</Label>
+                    <View className="flex-row items-center rounded-xl border border-border bg-card px-4">
+                        <Text className="mr-1.5 text-base font-bold text-secondary-foreground">Rp</Text>
                         <TextInput 
-                            style={styles.flexInput}
+                            className="h-[50px] flex-1 text-base text-foreground"
                             placeholder="0"
                             keyboardType="numeric"
+                            placeholderTextColor="hsl(var(--muted-foreground))"
                             value={form.amount} 
                             onChangeText={(txt) => {
                                 const formatted = formatCurrency(txt);
@@ -229,24 +221,24 @@ export default function CreateTransaction() {
                     </View>
                 </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Bukti Foto</Text>
-                    <TouchableOpacity style={styles.imageBox} onPress={pickImage}>
+                <View className="mb-5">
+                    <Label className="mb-2 mt-4 text-foreground">Bukti Foto</Label>
+                    <TouchableOpacity className="h-[150px] overflow-hidden rounded-[15px] border-2 border-dashed border-border bg-card" onPress={pickImage}>
                         {image ? (
-                            <Image source={{ uri: image }} style={styles.previewImg} />
+                            <Image source={{ uri: image }} className="h-full w-full" style={{ resizeMode: 'cover' }} />
                         ) : (
-                            <View style={styles.imagePlaceholder}>
+                            <View className="flex-1 items-center justify-center">
                                 <Ionicons name="images-outline" size={40} color="#ccc" />
-                                <Text style={{ color: '#aaa', marginTop: 5 }}>Klik untuk upload</Text>
+                                <Text className="mt-1.5 text-muted-foreground">Klik untuk upload</Text>
                             </View>
                         )}
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Keterangan</Text>
-                    <TextInput 
-                        style={[styles.input, styles.textArea]}
+                <View className="mb-5">
+                    <Label className="mb-2 mt-4 text-foreground">Keterangan</Label>
+                    <Input 
+                        className="h-24 items-start rounded-xl border-border bg-card p-3.5 text-align-top"
                         placeholder="Detail transaksi..."
                         multiline
                         value={form.description}
@@ -254,17 +246,18 @@ export default function CreateTransaction() {
                     />
                 </View>
 
-                <TouchableOpacity style={[styles.saveBtn, { marginBottom: insets.bottom }]} onPress={handleSave} disabled={loading}>
-                    {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveBtnText}>Simpan Sekarang</Text>}
-                </TouchableOpacity>
+                <Button className="mt-2.5 h-[58px] rounded-[15px]" onPress={handleSave} loading={loading} disabled={loading}>
+                    <Text className="text-[17px] font-bold text-white">Simpan Sekarang</Text>
+                </Button>
+                <View style={{ height: insets.bottom }} />
             </ScrollView>
 
             {/* Modal untuk Dropdown yang Lebih Cantik */}
             <Modal visible={showCategoryModal} animationType="slide" transparent={true}>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Pilih Kategori</Text>
+                <View className="flex-1 justify-end bg-black/50">
+                    <View className="max-h-[70%] rounded-t-[25px] bg-card p-5">
+                        <View className="mb-5 flex-row items-center justify-between border-b border-border pb-3.5">
+                            <Text className="text-lg font-bold text-foreground">Pilih Kategori</Text>
                             <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
                                 <Ionicons name="close" size={24} color="#333" />
                             </TouchableOpacity>
@@ -280,58 +273,16 @@ export default function CreateTransaction() {
             </Modal>
 
             <GlobalAlert
-                            visible={alertConfig.visible}
-                            title={alertConfig.title}
-                            message={alertConfig.message}
-                            type={alertConfig.type}
-                            isConfirmation={alertConfig.isConfirmation}
-                            confirmText={alertConfig.confirmText}
-                            cancelText={alertConfig.cancelText}
-                            onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
-                            onConfirm={alertConfig.onConfirm}
-                        />
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                isConfirmation={alertConfig.isConfirmation}
+                confirmText={alertConfig.confirmText}
+                cancelText={alertConfig.cancelText}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+                onConfirm={alertConfig.onConfirm}
+            />
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f4f6f9' },
-    header: { paddingTop: 60, paddingBottom: 25, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerTop: { flexDirection: 'row', alignItems: 'center' },
-    headerTitle: { fontSize: 22, fontWeight: 'bold', color: 'white' },
-    headerSub: { color: 'rgba(255,255,255,0.7)', fontSize: 13 },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
-    
-    scrollContent: { padding: 20 },
-    typeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25, backgroundColor: '#eee', padding: 5, borderRadius: 15 },
-    typeBtn: { flex: 1, padding: 12, borderRadius: 12, alignItems: 'center' },
-    activeIncome: { backgroundColor: '#1cc88a' },
-    activeExpense: { backgroundColor: '#e74a3b' },
-    typeText: { fontWeight: 'bold', color: '#888' },
-    textWhite: { color: 'white' },
-
-    inputGroup: { marginBottom: 20 },
-    label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8, marginLeft: 5 },
-    inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e0e0e0', paddingHorizontal: 15 },
-    currencyPrefix: { fontSize: 16, fontWeight: 'bold', color: '#555', marginRight: 5 },
-    flexInput: { flex: 1, height: 50, fontSize: 16, color: '#333' },
-    input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0', padding: 15, borderRadius: 12, fontSize: 16 },
-    customDropdown: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0', padding: 15, borderRadius: 12 },
-    dropdownValue: { fontSize: 16, color: '#333' },
-    textArea: { height: 100, textAlignVertical: 'top' },
-    
-    imageBox: { height: 150, backgroundColor: '#fff', borderRadius: 15, borderStyle: 'dashed', borderWidth: 2, borderColor: '#ccc', overflow: 'hidden' },
-    imagePlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    previewImg: { width: '100%', height: '100%', resizeMode: 'cover' },
-    
-    saveBtn: { backgroundColor: '#1a2a6c', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 10, elevation: 4, shadowColor: '#1a2a6c', shadowOpacity: 0.3, shadowRadius: 10 },
-    saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 17 },
-
-    // Modal Styles
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: { backgroundColor: 'white', borderTopLeftRadius: 25, borderTopRightRadius: 25, maxHeight: '70%', padding: 20 },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 15 },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    categoryItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
-    categoryItemText: { fontSize: 16, color: '#444' }
-});

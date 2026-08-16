@@ -1,27 +1,36 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
     Dimensions,
     FlatList,
     Modal,
     RefreshControl,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
 import GlobalAlert from "../../../components/GlobalAlert";
+import ScreenHeader from "../../../components/ScreenHeader";
 import { API_URL } from "../../../helpers/api";
+import { Button } from "../../../components/ui/button";
+import { Badge } from "../../../components/ui/badge";
+import { Card } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Skeleton } from "../../../components/ui/skeleton";
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+const STATUS_COLORS = {
+  open: { border: "#e74a3b", bg: "#ffeaea", text: "#e74a3b", label: "OPEN" },
+  in_progress: { border: "#f6c23e", bg: "#fff4e5", text: "#d39e00", label: "PROSES" },
+  resolved: { border: "#1cc88a", bg: "#eafaf1", text: "#1cc88a", label: "SELESAI" },
+};
 
 export default function AdminComplaints() {
   const insets = useSafeAreaInsets();
@@ -45,7 +54,7 @@ export default function AdminComplaints() {
   const [reply, setReply] = useState("");
   const router = useRouter();
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       const response = await axios.get(`${API_URL}/admin/complaints`, {
@@ -66,11 +75,11 @@ export default function AdminComplaints() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchComplaints();
-  }, []);
+  }, [fetchComplaints]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -131,73 +140,39 @@ export default function AdminComplaints() {
     resolved: complaints.filter((c) => c.status === "resolved").length,
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          borderLeftColor:
-            item.status === "open"
-              ? "#e74a3b"
-              : item.status === "in_progress"
-                ? "#f6c23e"
-                : "#1cc88a",
-        },
-      ]}
-      onPress={() => {
-        setSelectedItem(item);
-        setReply(item.response || "");
-        setModalVisible(true);
-      }}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.roomText}>
-          Kamar {item.room?.room_number || "-"} • {item.tenant?.name || "User"}
-        </Text>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor:
-                item.status === "open"
-                  ? "#ffeaea"
-                  : item.status === "in_progress"
-                    ? "#fff4e5"
-                    : "#eafaf1",
-            },
-          ]}
+  const renderItem = ({ item }) => {
+    const st = STATUS_COLORS[item.status] || STATUS_COLORS.open;
+    return (
+      <Card className="mb-3.5 rounded-[15px] border-l-[6px] p-[18px] shadow-sm" asChild style={{ borderLeftColor: st.border }}>
+        <TouchableOpacity
+          onPress={() => {
+            setSelectedItem(item);
+            setReply(item.response || "");
+            setModalVisible(true);
+          }}
         >
-          <Text
-            style={[
-              styles.statusText,
-              {
-                color:
-                  item.status === "open"
-                    ? "#e74a3b"
-                    : item.status === "in_progress"
-                      ? "#d39e00"
-                      : "#1cc88a",
-              },
-            ]}
-          >
-            {item.status === "in_progress"
-              ? "PROSES"
-              : item.status.toUpperCase()}
+          <View className="mb-2 flex-row items-center justify-between">
+            <Text className="text-[13px] font-bold text-primary">
+              Kamar {item.room?.room_number || "-"} • {item.tenant?.name || "User"}
+            </Text>
+            <Badge className="px-2.5 py-1" variant={item.status === "open" ? "destructive" : item.status === "in_progress" ? "warning" : "success"}>
+              <Text className="text-[10px] font-bold text-white">{st.label}</Text>
+            </Badge>
+          </View>
+          <Text className="text-base font-bold text-foreground">{item.title}</Text>
+          <Text className="mt-1.5 text-[13px] text-muted-foreground" numberOfLines={2}>
+            {item.description}
           </Text>
-        </View>
-      </View>
-      <Text style={styles.titleText}>{item.title}</Text>
-      <Text style={styles.descText} numberOfLines={2}>
-        {item.description}
-      </Text>
-      <Text style={styles.dateText}>
-        {new Date(item.created_at).toLocaleDateString("id-ID")}
-      </Text>
-    </TouchableOpacity>
-  );
+          <Text className="mt-2.5 text-right text-[11px] text-muted-foreground">
+            {new Date(item.created_at).toLocaleDateString("id-ID")}
+          </Text>
+        </TouchableOpacity>
+      </Card>
+    );
+  };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       <StatusBar barStyle="light-content" />
 
       {/* KOMPONEN GLOBAL ALERT KAMU */}
@@ -209,51 +184,41 @@ export default function AdminComplaints() {
         onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
       />
 
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Ionicons name="chevron-back" size={28} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Laporan Tenant</Text>
-          <TouchableOpacity onPress={onRefresh} style={styles.backBtn}>
+      <ScreenHeader
+        title="Laporan Tenant"
+        right={
+          <TouchableOpacity onPress={onRefresh} className="rounded-xl bg-white/20 p-2">
             <Ionicons name="refresh" size={22} color="white" />
           </TouchableOpacity>
+        }
+      >
+        <View className="mt-5 flex-row items-center justify-around rounded-[20px] bg-white/15 px-1 py-3.5">
+          <View className="flex-1 items-center">
+            <Text className="text-lg font-bold text-white">{stats.pending}</Text>
+            <Text className="mt-1 text-[10px] font-semibold text-white/80">Pending</Text>
+          </View>
+          <View className="h-8 w-px bg-white/30" />
+          <View className="flex-1 items-center">
+            <Text className="text-lg font-bold text-white">{stats.process}</Text>
+            <Text className="mt-1 text-[10px] font-semibold text-white/80">Proses</Text>
+          </View>
+          <View className="h-8 w-px bg-white/30" />
+          <View className="flex-1 items-center">
+            <Text className="text-lg font-bold text-white">{stats.resolved}</Text>
+            <Text className="mt-1 text-[10px] font-semibold text-white/80">Selesai</Text>
+          </View>
         </View>
-      </LinearGradient>
+      </ScreenHeader>
 
-      <View style={styles.statsRow}>
-        <View style={[styles.statsCard, { borderBottomColor: "#e74a3b" }]}>
-          <Text style={styles.statsNumber}>{stats.pending}</Text>
-          <Text style={styles.statsLabel}>Pending</Text>
-        </View>
-        <View style={[styles.statsCard, { borderBottomColor: "#f6c23e" }]}>
-          <Text style={styles.statsNumber}>{stats.process}</Text>
-          <Text style={styles.statsLabel}>Proses</Text>
-        </View>
-        <View style={[styles.statsCard, { borderBottomColor: "#1cc88a" }]}>
-          <Text style={styles.statsNumber}>{stats.resolved}</Text>
-          <Text style={styles.statsLabel}>Selesai</Text>
-        </View>
-      </View>
-
-      <View style={styles.filterContainer}>
+      <View className="flex-row justify-around border-b border-border bg-card py-3.5">
         {["all", "open", "process", "resolved"].map((status) => (
           <TouchableOpacity
             key={status}
-            style={[
-              styles.filterBtn,
-              filterStatus === status && styles.filterBtnActive,
-            ]}
+            className={`rounded-full px-3.5 py-1.5 ${filterStatus === status ? "bg-destructive" : "bg-muted/60"}`}
             onPress={() => setFilterStatus(status)}
           >
             <Text
-              style={[
-                styles.filterText,
-                filterStatus === status && styles.filterTextActive,
-              ]}
+              className={`text-[11px] font-bold ${filterStatus === status ? "text-white" : "text-muted-foreground"}`}
             >
               {status === "all"
                 ? "All"
@@ -266,11 +231,11 @@ export default function AdminComplaints() {
       </View>
 
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#b21f1f"
-          style={{ marginTop: 50 }}
-        />
+        <View className="p-5">
+          <Skeleton className="h-24 w-full rounded-[15px]" />
+          <Skeleton className="mt-3.5 h-24 w-full rounded-[15px]" />
+          <Skeleton className="mt-3.5 h-24 w-full rounded-[15px]" />
+        </View>
       ) : (
         <FlatList
           data={filteredComplaints}
@@ -286,26 +251,26 @@ export default function AdminComplaints() {
           }
           contentContainerStyle={{ padding: 20, paddingBottom: 50 }}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Tidak ada laporan aktif.</Text>
+            <Text className="mt-24 text-center text-muted-foreground">Tidak ada laporan aktif.</Text>
           }
         />
       )}
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalBg}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Respon Laporan</Text>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="rounded-t-[30px] bg-card p-6" style={{ maxHeight: SCREEN_HEIGHT * 0.85 }}>
+            <Text className="mb-4 text-center text-xl font-bold text-foreground">Respon Laporan</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.modalLabel}>Keluhan Tenant:</Text>
-              <View style={styles.bubbleTenant}>
-                <Text style={styles.modalDesc}>
+              <Text className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-secondary-foreground">Keluhan Tenant:</Text>
+              <View className="mb-4 rounded-xl border border-dashed border-border bg-muted/50 p-3">
+                <Text className="text-sm leading-5 text-foreground">
                   {selectedItem?.description}
                 </Text>
               </View>
 
-              <Text style={styles.modalLabel}>Tulis Pesan / Solusi:</Text>
-              <TextInput
-                style={styles.input}
+              <Label className="mb-1.5 mt-4 text-[11px] font-bold uppercase tracking-wide text-secondary-foreground">Tulis Pesan / Solusi:</Label>
+              <Input
+                className="mb-5 h-24 items-start rounded-xl border-border bg-muted/50 p-3.5 text-align-top"
                 placeholder="Pesan akan dikirim sebagai notifikasi..."
                 multiline
                 numberOfLines={4}
@@ -313,34 +278,27 @@ export default function AdminComplaints() {
                 onChangeText={setReply}
               />
 
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: "#f6c23e" }]}
-                  onPress={() => handleUpdateStatus("process")}
-                >
+              <View className="mb-2.5 flex-row justify-between">
+                <Button variant="warning" className="flex-[0.48] rounded-xl p-4" onPress={() => handleUpdateStatus("process")}>
                   <Ionicons name="construct-outline" size={18} color="white" />
-                  <Text style={styles.btnText}> Proses</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: "#1cc88a" }]}
-                  onPress={() => handleUpdateStatus("resolved")}
-                >
+                  <Text className="ml-1 font-bold text-white"> Proses</Text>
+                </Button>
+                <Button variant="success" className="flex-[0.48] rounded-xl p-4" onPress={() => handleUpdateStatus("resolved")}>
                   <Ionicons
                     name="checkmark-circle-outline"
                     size={18}
                     color="white"
                   />
-                  <Text style={styles.btnText}> Selesai</Text>
-                </TouchableOpacity>
+                  <Text className="ml-1 font-bold text-white"> Selesai</Text>
+                </Button>
               </View>
 
               <TouchableOpacity
-                style={[styles.closeBtn, { marginBottom: insets.bottom }]}
+                className="items-center py-3.5"
+                style={{ marginBottom: insets.bottom }}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={{ color: "#858796", fontWeight: "bold" }}>
-                  Tutup
-                </Text>
+                <Text className="font-bold text-muted-foreground">Tutup</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -349,147 +307,3 @@ export default function AdminComplaints() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f4f6f9" },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 50,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  headerTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "white" },
-  backBtn: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: 8,
-    borderRadius: 12,
-  },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginTop: -35,
-    marginBottom: 10,
-  },
-  statsCard: {
-    flex: 0.31,
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 15,
-    alignItems: "center",
-    elevation: 4,
-    borderBottomWidth: 4,
-  },
-  statsNumber: { fontSize: 18, fontWeight: "bold", color: "#2c3e50" },
-  statsLabel: {
-    fontSize: 10,
-    color: "#858796",
-    marginTop: 2,
-    fontWeight: "600",
-  },
-  filterContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 15,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  filterBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    backgroundColor: "#f1f3f9",
-  },
-  filterBtnActive: { backgroundColor: "#b21f1f" },
-  filterText: { fontSize: 11, fontWeight: "bold", color: "#858796" },
-  filterTextActive: { color: "white" },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 18,
-    marginBottom: 15,
-    borderLeftWidth: 6,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  roomText: { fontWeight: "bold", color: "#4e73df", fontSize: 13 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  statusText: { fontSize: 10, fontWeight: "bold" },
-  titleText: { fontSize: 16, fontWeight: "bold", color: "#2c3e50" },
-  descText: { fontSize: 13, color: "#858796", marginTop: 5 },
-  dateText: { fontSize: 11, color: "#ccc", marginTop: 10, textAlign: "right" },
-  emptyText: { textAlign: "center", marginTop: 100, color: "#858796" },
-  modalBg: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 25,
-    maxHeight: SCREEN_HEIGHT * 0.85,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  modalLabel: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#34495e",
-    marginBottom: 6,
-    textTransform: "uppercase",
-  },
-  bubbleTenant: {
-    backgroundColor: "#f8f9fc",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 15,
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#d1d3e2",
-  },
-  modalDesc: { fontSize: 14, color: "#2c3e50", lineHeight: 20 },
-  input: {
-    backgroundColor: "#f1f3f9",
-    borderRadius: 12,
-    padding: 15,
-    textAlignVertical: "top",
-    marginBottom: 20,
-    height: 100,
-    borderWidth: 1,
-    borderColor: "#d1d3e2",
-  },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  modalBtn: {
-    flex: 0.48,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    elevation: 2,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  btnText: { color: "white", fontWeight: "bold" },
-  closeBtn: { alignItems: "center", paddingVertical: 15 },
-});

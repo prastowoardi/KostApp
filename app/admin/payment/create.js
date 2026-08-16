@@ -2,24 +2,27 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     Modal,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
 import GlobalAlert from '../../../components/GlobalAlert';
+import ScreenHeader from '../../../components/ScreenHeader';
 import { API_URL } from '../../../helpers/api';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Separator } from '../../../components/ui/separator';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 const PAYMENT_METHODS = [
     { key: 'cash', label: 'Tunai', icon: 'cash-outline' },
@@ -140,120 +143,114 @@ export default function CreatePayment() {
     };
 
     return (
-        <View style={styles.container}>
+        <View className="flex-1 bg-background">
             <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={28} color="white" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Catat Pembayaran</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-            </LinearGradient>
+            <ScreenHeader title="Catat Pembayaran" />
 
             {receipt ? (
                 /* Receipt View */
-                <View style={styles.receiptContainer}>
-                    <ScrollView contentContainerStyle={styles.receiptScroll}>
-                        <View style={styles.receiptCard}>
-                            <View style={styles.receiptIcon}>
-                                <Ionicons name="checkmark-circle" size={64} color="#1cc88a" />
+                <View className="flex-1 justify-center p-5">
+                    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+                        <Card className="items-center p-8 shadow-md">
+                            <View className="mb-4">
+                                <Ionicons name="checkmark-circle" size={64} color="hsl(var(--success))" />
                             </View>
-                            <Text style={styles.receiptTitle}>Pembayaran Berhasil!</Text>
-                            <Text style={styles.receiptInv}>#{receipt.invoice || '-'}</Text>
-                            <View style={styles.receiptDivider} />
+                            <Text className="mb-1 text-[22px] font-bold text-foreground">Pembayaran Berhasil!</Text>
+                            <Text className="mb-5 text-base font-semibold text-primary">#{receipt.invoice || '-'}</Text>
+                            <Separator className="mb-5 w-full" />
 
-                            <View style={styles.receiptRow}>
-                                <Text style={styles.receiptLabel}>Penghuni</Text>
-                                <Text style={styles.receiptValue}>{receipt.tenant_name || selectedTenant?.name || '-'}</Text>
+                            <View className="mb-4 w-full flex-row justify-between">
+                                <Text className="text-sm text-muted-foreground">Penghuni</Text>
+                                <Text className="text-sm font-semibold text-foreground">{receipt.tenant_name || selectedTenant?.name || '-'}</Text>
                             </View>
-                            <View style={styles.receiptRow}>
-                                <Text style={styles.receiptLabel}>Kamar</Text>
-                                <Text style={styles.receiptValue}>{receipt.room_number || selectedTenant?.room?.room_number || '-'}</Text>
+                            <View className="mb-4 w-full flex-row justify-between">
+                                <Text className="text-sm text-muted-foreground">Kamar</Text>
+                                <Text className="text-sm font-semibold text-foreground">{receipt.room_number || selectedTenant?.room?.room_number || '-'}</Text>
                             </View>
-                            <View style={styles.receiptRow}>
-                                <Text style={styles.receiptLabel}>Periode</Text>
-                                <Text style={styles.receiptValue}>{receipt.period || form.period_month || '-'}</Text>
+                            <View className="mb-4 w-full flex-row justify-between">
+                                <Text className="text-sm text-muted-foreground">Periode</Text>
+                                <Text className="text-sm font-semibold text-foreground">{receipt.period || form.period_month || '-'}</Text>
                             </View>
-                            <View style={styles.receiptRow}>
-                                <Text style={styles.receiptLabel}>Tanggal</Text>
-                                <Text style={styles.receiptValue}>{receipt.payment_date || form.payment_date || '-'}</Text>
+                            <View className="mb-4 w-full flex-row justify-between">
+                                <Text className="text-sm text-muted-foreground">Tanggal</Text>
+                                <Text className="text-sm font-semibold text-foreground">{receipt.payment_date || form.payment_date || '-'}</Text>
                             </View>
-                            <View style={styles.receiptRow}>
-                                <Text style={styles.receiptLabel}>Total</Text>
-                                <Text style={styles.receiptValue}>Rp {formatRupiah(receipt.total || 0)}</Text>
+                            <View className="mb-4 w-full flex-row justify-between">
+                                <Text className="text-sm text-muted-foreground">Total</Text>
+                                <Text className="text-sm font-semibold text-foreground">Rp {formatRupiah(receipt.total || 0)}</Text>
                             </View>
 
-                            <View style={styles.receiptDivider} />
-                            <Text style={styles.receiptFooter}>Kwitansi tersedia di riwayat pembayaran</Text>
+                            <Separator className="mb-2.5 w-full" />
+                            <Text className="mt-2.5 text-xs italic text-muted-foreground">Kwitansi tersedia di riwayat pembayaran</Text>
 
-                            <View style={styles.receiptActions}>
-                                <TouchableOpacity
-                                    style={[styles.receiptBtn, { backgroundColor: '#1a2a6c' }]}
-                                    onPress={() => router.push('/admin/payment/history')}
-                                >
+                            <View className="mt-6 w-full flex-row gap-2.5">
+                                <Button variant="default" className="flex-1 rounded-xl py-3.5" onPress={() => router.push('/admin/payment/history')}>
                                     <Ionicons name="receipt-outline" size={18} color="white" />
-                                    <Text style={styles.receiptBtnText}>Riwayat</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.receiptBtn, { backgroundColor: '#b21f1f' }]}
-                                    onPress={() => {
+                                    <Text className="text-sm font-bold text-white">Riwayat</Text>
+                                </Button>
+                                <Button variant="destructive" className="flex-1 rounded-xl py-3.5" onPress={() => {
                                         setReceipt(null);
                                         resetForm();
-                                    }}
-                                >
+                                    }}>
                                     <Ionicons name="home-outline" size={18} color="white" />
-                                    <Text style={styles.receiptBtnText}>Selesai</Text>
-                                </TouchableOpacity>
+                                    <Text className="text-sm font-bold text-white">Selesai</Text>
+                                </Button>
                             </View>
-                        </View>
+                        </Card>
                     </ScrollView>
                 </View>
+            ) : loading ? (
+                <View className="p-5">
+                    <Skeleton className="h-8 w-44 rounded-lg" />
+                    <Skeleton className="mt-5 h-14 w-full rounded-xl" />
+                    <Skeleton className="mt-5 h-14 w-full rounded-xl" />
+                    <Skeleton className="mt-5 h-14 w-full rounded-xl" />
+                    <Skeleton className="mt-5 h-14 w-full rounded-xl" />
+                </View>
             ) : (
-                <ScrollView style={styles.formBody}>
-                    <Text style={styles.sectionTitle}>Data Pembayaran</Text>
+                <ScrollView className="p-5" showsVerticalScrollIndicator={false}>
+                    <Text className="mb-5 text-lg font-bold text-foreground">Data Pembayaran</Text>
 
-                    <Text style={styles.label}>Penghuni</Text>
-                    <TouchableOpacity style={styles.pickerTrigger} onPress={() => setTenantPickerVisible(true)}>
+                    <Text className="mb-2 mt-4 text-[13px] font-bold text-secondary-foreground">Penghuni</Text>
+                    <TouchableOpacity className="flex-row items-center rounded-xl border border-border bg-card p-3.5" onPress={() => setTenantPickerVisible(true)}>
                         <Ionicons name="person-outline" size={20} color="#4e73df" />
-                        <Text style={{ flex: 1, marginLeft: 10, color: selectedTenant ? '#2c3e50' : '#999' }}>
+                        <Text className={`ml-2.5 flex-1 ${selectedTenant ? 'text-foreground' : 'text-muted-foreground'}`}>
                             {selectedTenant ? `${selectedTenant.name || selectedTenant.user?.name} (Kamar ${selectedTenant.room?.room_number || '?'})` : 'Pilih penghuni...'}
                         </Text>
-                        <Ionicons name="chevron-down" size={20} color="#666" />
+                        <Ionicons name="chevron-down" size={20} color="hsl(var(--muted-foreground))" />
                     </TouchableOpacity>
 
-                    <Text style={styles.label}>Periode Bulan</Text>
-                    <TouchableOpacity style={styles.pickerTrigger} onPress={() => setDatePicker('period_month')}>
+                    <Text className="mb-2 mt-4 text-[13px] font-bold text-secondary-foreground">Periode Bulan</Text>
+                    <TouchableOpacity className="flex-row items-center rounded-xl border border-border bg-card p-3.5" onPress={() => setDatePicker('period_month')}>
                         <Ionicons name="calendar-outline" size={20} color="#4e73df" />
-                        <Text style={{ flex: 1, marginLeft: 10, color: '#2c3e50' }}>
+                        <Text className="ml-2.5 flex-1 text-foreground">
                             {form.period_month ? new Date(form.period_month + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : 'Pilih periode...'}
                         </Text>
-                        <Ionicons name="chevron-down" size={20} color="#666" />
+                        <Ionicons name="chevron-down" size={20} color="hsl(var(--muted-foreground))" />
                     </TouchableOpacity>
 
-                    <Text style={styles.label}>Tanggal Pembayaran</Text>
-                    <TouchableOpacity style={styles.pickerTrigger} onPress={() => setDatePicker('payment_date')}>
+                    <Text className="mb-2 mt-4 text-[13px] font-bold text-secondary-foreground">Tanggal Pembayaran</Text>
+                    <TouchableOpacity className="flex-row items-center rounded-xl border border-border bg-card p-3.5" onPress={() => setDatePicker('payment_date')}>
                         <Ionicons name="calendar-outline" size={20} color="#4e73df" />
-                        <Text style={{ flex: 1, marginLeft: 10, color: '#2c3e50' }}>
+                        <Text className="ml-2.5 flex-1 text-foreground">
                             {form.payment_date ? new Date(form.payment_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Pilih tanggal...'}
                         </Text>
-                        <Ionicons name="chevron-down" size={20} color="#666" />
+                        <Ionicons name="chevron-down" size={20} color="hsl(var(--muted-foreground))" />
                     </TouchableOpacity>
 
-                    <View style={{ flexDirection: 'row', gap: 15 }}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.label}>Jumlah Bayar (Rp)</Text>
-                            <TextInput style={styles.input}
+                    <View className="flex-row gap-3.5">
+                        <View className="flex-1">
+                            <Label className="mb-2 mt-4 text-[13px] font-bold text-secondary-foreground">Jumlah Bayar (Rp)</Label>
+                            <Input className="rounded-xl border-border bg-card p-3.5 text-[15px]"
                                 keyboardType="numeric"
                                 value={form.amount}
                                 onChangeText={(v) => setForm({ ...form, amount: v })}
                                 placeholder="500000"
                             />
                         </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.label}>Denda (Rp)</Text>
-                            <TextInput style={styles.input}
+                        <View className="flex-1">
+                            <Label className="mb-2 mt-4 text-[13px] font-bold text-secondary-foreground">Denda (Rp)</Label>
+                            <Input className="rounded-xl border-border bg-card p-3.5 text-[15px]"
                                 keyboardType="numeric"
                                 value={form.late_fee}
                                 onChangeText={(v) => setForm({ ...form, late_fee: v })}
@@ -262,78 +259,73 @@ export default function CreatePayment() {
                         </View>
                     </View>
 
-                    <Text style={styles.label}>Metode Pembayaran</Text>
-                    <View style={styles.methodRow}>
+                    <Text className="mb-2 mt-4 text-[13px] font-bold text-secondary-foreground">Metode Pembayaran</Text>
+                    <View className="flex-row gap-2.5">
                         {PAYMENT_METHODS.map((m) => (
                             <TouchableOpacity
                                 key={m.key}
-                                style={[styles.methodOption, form.payment_method === m.key && styles.methodActive]}
+                                className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border py-3 ${form.payment_method === m.key ? 'border-primary bg-primary' : 'border-border bg-card'}`}
                                 onPress={() => setForm({ ...form, payment_method: m.key })}
                             >
-                                <Ionicons name={m.icon} size={20} color={form.payment_method === m.key ? 'white' : '#7f8c8d'} />
-                                <Text style={[styles.methodText, form.payment_method === m.key && styles.methodTextActive]}>
+                                <Ionicons name={m.icon} size={20} color={form.payment_method === m.key ? 'white' : 'hsl(var(--muted-foreground))'} />
+                                <Text className={`text-xs font-semibold ${form.payment_method === m.key ? 'text-white' : 'text-muted-foreground'}`}>
                                     {m.label}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
 
-                    <Text style={styles.label}>Catatan (opsional)</Text>
-                    <TextInput style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                    <Label className="mb-2 mt-4 text-[13px] font-bold text-secondary-foreground">Catatan (opsional)</Label>
+                    <Input className="h-20 items-start rounded-xl border-border bg-card p-3.5 text-[15px] text-align-top"
                         multiline
                         value={form.notes}
                         onChangeText={(v) => setForm({ ...form, notes: v })}
                         placeholder="Catatan tambahan..."
                     />
 
-                    <Text style={styles.totalText}>
+                    <Text className="mt-5 text-right text-lg font-bold text-success">
                         Total: Rp {formatRupiah(parseInt(form.amount || 0) + parseInt(form.late_fee || 0))}
                     </Text>
 
-                    <TouchableOpacity
-                        style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
+                    <Button
+                        className="mt-3.5 h-[54px] rounded-[15px]"
                         onPress={handleSubmit}
+                        loading={submitting}
                         disabled={submitting}
                     >
-                        {submitting ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <>
-                                <Ionicons name="checkmark-circle-outline" size={20} color="white" />
-                                <Text style={styles.submitText}>CATAT PEMBAYARAN</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
+                        <Ionicons name="checkmark-circle-outline" size={20} color="white" />
+                        <Text className="ml-2 text-base font-bold text-white">CATAT PEMBAYARAN</Text>
+                    </Button>
                     <View style={{ height: insets.bottom + 40 }} />
                 </ScrollView>
             )}
 
             {/* Tenant Picker */}
             <Modal visible={tenantPickerVisible} transparent animationType="fade">
-                <View style={styles.overlay}>
-                    <View style={styles.pickerModal}>
-                        <Text style={styles.pickerTitle}>Pilih Penghuni</Text>
-                        <ScrollView style={{ maxHeight: 400 }}>
+                <View className="flex-1 justify-center bg-black/60 p-5">
+                    <View className="max-h-[80%] rounded-[20px] bg-card p-5">
+                        <Text className="mb-4 text-center text-lg font-bold text-primary">Pilih Penghuni</Text>
+                        <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
                             {tenants.map((t) => (
                                 <TouchableOpacity
                                     key={t.uuid || t.id}
-                                    style={styles.pickerItem}
+                                    className="flex-row items-center border-b border-muted py-3"
                                     onPress={() => selectTenant(t)}
                                 >
-                                    <View style={styles.pickerAvatar}>
-                                        <Text style={styles.pickerAvatarText}>
+                                    <View className="h-10 w-10 items-center justify-center rounded-full bg-primary">
+                                        <Text className="text-base font-bold text-white">
                                             {(t.name || t.user?.name || '?').charAt(0)}
                                         </Text>
                                     </View>
-                                    <View style={{ marginLeft: 12 }}>
-                                        <Text style={styles.pickerItemName}>{t.name || t.user?.name}</Text>
-                                        <Text style={styles.pickerItemSub}>Kamar {t.room?.room_number || '?'} • Rp {formatRupiah(t.room?.price)}/bln</Text>
+                                    <View className="ml-3">
+                                        <Text className="text-[15px] font-bold text-foreground">{t.name || t.user?.name}</Text>
+                                        <Text className="mt-0.5 text-xs text-muted-foreground">Kamar {t.room?.room_number || '?'} • Rp {formatRupiah(t.room?.price)}/bln</Text>
                                     </View>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
-                        <TouchableOpacity style={styles.pickerClose} onPress={() => setTenantPickerVisible(false)}>
-                            <Text style={{ color: '#b21f1f', fontWeight: 'bold' }}>Tutup</Text>
+                        <TouchableOpacity className="mt-3.5 items-center p-2.5" onPress={() => setTenantPickerVisible(false)}>
+                            <Text className="font-bold text-destructive">Tutup</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -342,7 +334,7 @@ export default function CreatePayment() {
             {/* Date Picker Modal */}
             <DateTimePickerModal
                 isVisible={datePicker !== null}
-                mode={datePicker === 'period_month' ? 'date' : 'date'}
+                mode="date"
                 onConfirm={(date) => {
                     if (datePicker === 'period_month') {
                         const y = date.getFullYear();
@@ -367,51 +359,3 @@ export default function CreatePayment() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    header: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
-    formBody: { padding: 20 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50', marginBottom: 20 },
-    label: { fontSize: 13, fontWeight: 'bold', marginTop: 18, marginBottom: 8, color: '#34495e' },
-    input: { backgroundColor: 'white', borderRadius: 12, padding: 14, fontSize: 15, borderWidth: 1, borderColor: '#e1e8ef', color: '#2c3e50' },
-    pickerTrigger: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#e1e8ef' },
-    methodRow: { flexDirection: 'row', gap: 10 },
-    methodOption: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#e1e8ef', backgroundColor: 'white', gap: 6 },
-    methodActive: { backgroundColor: '#1a2a6c', borderColor: '#1a2a6c' },
-    methodText: { fontSize: 12, fontWeight: '600', color: '#7f8c8d' },
-    methodTextActive: { color: 'white' },
-    totalText: { fontSize: 18, fontWeight: 'bold', color: '#1cc88a', textAlign: 'right', marginTop: 20 },
-    submitBtn: { backgroundColor: '#1a2a6c', flexDirection: 'row', paddingVertical: 16, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 15, gap: 8, elevation: 3 },
-    submitText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-
-    /* Receipt View */
-    receiptContainer: { flex: 1, padding: 20, justifyContent: 'center' },
-    receiptScroll: { flexGrow: 1, justifyContent: 'center' },
-    receiptCard: { backgroundColor: 'white', borderRadius: 25, padding: 30, elevation: 5, alignItems: 'center' },
-    receiptIcon: { marginBottom: 15 },
-    receiptTitle: { fontSize: 22, fontWeight: 'bold', color: '#2c3e50', marginBottom: 4 },
-    receiptInv: { fontSize: 16, fontWeight: '600', color: '#4e73df', marginBottom: 20 },
-    receiptDivider: { height: 1, backgroundColor: '#eee', width: '100%', marginBottom: 20 },
-    receiptRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingVertical: 8 },
-    receiptLabel: { fontSize: 14, color: '#7f8c8d' },
-    receiptValue: { fontSize: 14, color: '#2c3e50', fontWeight: '600' },
-    receiptFooter: { fontSize: 12, color: '#999', fontStyle: 'italic', marginTop: 10 },
-    receiptActions: { flexDirection: 'row', gap: 10, marginTop: 25, width: '100%' },
-    receiptBtn: { flex: 1, flexDirection: 'row', paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', gap: 6 },
-    receiptBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-
-    /* Tenant Picker */
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
-    pickerModal: { backgroundColor: 'white', borderRadius: 20, padding: 20, maxHeight: '80%' },
-    pickerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1a2a6c', marginBottom: 15, textAlign: 'center' },
-    pickerItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f3f9' },
-    pickerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1a2a6c', justifyContent: 'center', alignItems: 'center' },
-    pickerAvatarText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-    pickerItemName: { fontWeight: 'bold', fontSize: 15, color: '#2c3e50' },
-    pickerItemSub: { fontSize: 12, color: '#7f8c8d', marginTop: 2 },
-    pickerClose: { marginTop: 15, padding: 10, alignItems: 'center' },
-});

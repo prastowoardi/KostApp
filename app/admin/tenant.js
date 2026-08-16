@@ -356,7 +356,7 @@ export default function ManageTenant() {
                                                     {p.period_month ? new Date(p.period_month).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '-'}
                                                 </Text>
                                                 <Text className="mt-1 text-[13px] font-semibold text-foreground">
-                                                    Rp {(p.total || p.amount || 0).toLocaleString('id-ID')}
+                                                    Rp {Number(p.total || p.amount || 0).toLocaleString('id-ID')}
                                                 </Text>
                                             </View>
                                             <Badge variant={p.status === 'paid' ? 'success' : p.status === 'pending' ? 'warning' : 'destructive'} className="px-2.5 py-1.5">
@@ -516,10 +516,10 @@ export default function ManageTenant() {
                                         setRoomModalVisible(false);
                                     }}
                                 >
-                                    <Ionicons name="business" size={24} color="hsl(var(--primary))" />
+<Ionicons name="business" size={24} color="hsl(var(--primary))" />
                                     <View className="ml-4">
                                         <Text className="text-base font-bold text-foreground">Kamar {item.room_number}</Text>
-                                        <Text className="text-xs text-muted-foreground">Rp {item.price?.toLocaleString()} • {item.status || item.room_status}</Text>
+                                        <Text className="text-xs text-muted-foreground">Rp {Number(item.price || 0).toLocaleString('id-ID')} • {item.status || item.room_status}</Text>
                                     </View>
                                 </TouchableOpacity>
                             )}

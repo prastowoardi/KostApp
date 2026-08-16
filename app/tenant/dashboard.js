@@ -168,7 +168,7 @@ export default function TenantDashboard() {
                 Tagihan: {data?.payment_status || "Belum Bayar"}
               </Text>
               <Text className="mt-1 text-xl font-bold text-foreground">
-                Rp {(data?.bill_amount || 0).toLocaleString("id-ID")}
+                Rp {Number(data?.bill_amount || 0).toLocaleString("id-ID")}
               </Text>
               {data?.days_left_msg ? (
                 <Text className="mt-1 text-xs font-bold" style={{ color: getStatusColor() }}>

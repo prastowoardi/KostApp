@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -18,6 +19,7 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CustomSplashScreen from '../components/CustomSplashScreen';
 import GlobalAlert from '../components/GlobalAlert';
 import { registerForPushNotificationsAsync } from '../helpers/notificationHelper';
 import { API_URL } from '../helpers/api';
@@ -30,6 +32,8 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
+    const [authResult, setAuthResult] = useState(null);
+    const [splashFinished, setSplashFinished] = useState(false);
     const [secureText, setSecureText] = useState(true);
 
     const [alertConfig, setAlertConfig] = useState({
@@ -46,6 +50,7 @@ export default function LoginScreen() {
         let isMounted = true;
         const checkExistingAuth = async () => {
             try {
+                SplashScreen.hideAsync().catch(() => {});
                 const [token, userData] = await Promise.all([
                     AsyncStorage.getItem('userToken'),
                     AsyncStorage.getItem('userData'),
@@ -53,23 +58,33 @@ export default function LoginScreen() {
 
                 if (token && userData && isMounted) {
                     const parsedUser = JSON.parse(userData);
-                    if (parsedUser?.role === 'admin' || parsedUser?.role === 'staff') {
-                        router.replace('/admin/dashboard');
-                    } else {
-                        router.replace('/tenant/dashboard');
-                    }
+                    const target =
+                        parsedUser?.role === 'admin' || parsedUser?.role === 'staff'
+                            ? '/admin/dashboard'
+                            : '/tenant/dashboard';
+                    setAuthResult({ isLoggedIn: true, target });
                     return;
                 }
             } catch {
                 // If parsing fails, allow user to log in again
-            } finally {
-                if (isMounted) setCheckingAuth(false);
             }
+            if (isMounted) setAuthResult({ isLoggedIn: false });
         };
 
         checkExistingAuth();
         return () => { isMounted = false; };
-    }, [router]);
+    }, []);
+
+    // Transition once both splash animation and auth verification finish
+    useEffect(() => {
+        if (splashFinished && authResult) {
+            if (authResult.isLoggedIn && authResult.target) {
+                router.replace(authResult.target);
+            } else {
+                setCheckingAuth(false);
+            }
+        }
+    }, [splashFinished, authResult, router]);
 
     const showAlert = (title, message, type = 'info', onConfirm = null, confirmText = 'OK') => {
         setAlertConfig({
@@ -144,22 +159,7 @@ export default function LoginScreen() {
     };
 
     if (checkingAuth) {
-        return (
-            <View style={styles.splashContainer}>
-                <StatusBar barStyle="light-content" />
-                <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.splashGradient}>
-                    <View style={styles.logoCircle}>
-                        <Image
-                            source={require('../assets/serrata.png')}
-                            style={styles.logoImage}
-                            resizeMode="contain"
-                        />
-                    </View>
-                    <Text style={styles.splashTitle}>Serrata Kost</Text>
-                    <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 24 }} />
-                </LinearGradient>
-            </View>
-        );
+        return <CustomSplashScreen onFinish={() => setSplashFinished(true)} />;
     }
 
     return (
@@ -284,21 +284,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F8F9FC',
-    },
-    splashContainer: {
-        flex: 1,
-    },
-    splashGradient: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    splashTitle: {
-        color: '#ffffff',
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginTop: 16,
-        letterSpacing: 0.5,
     },
     scrollContent: {
         flexGrow: 1,

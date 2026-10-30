@@ -3,8 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Linking,
@@ -16,15 +15,19 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
 import { API_URL } from "../../helpers/api";
 
+const OWNER_WHATSAPP = "https://wa.me/6285111203521";
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const router = useRouter();
 
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
@@ -34,10 +37,38 @@ export default function ProfileScreen() {
     onConfirm: () => {},
   });
 
-  const onRefresh = async () => {
+  const fetchProfile = useCallback(async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
+
+      const response = await axios.get(`${API_URL}/me`, {
+        headers: {
+          Authorization: `Bearer ${cleanToken}`,
+          Accept: "application/json",
+        },
+      });
+
+      const userData = response.data?.user || response.data;
+      setUser(userData);
+      await AsyncStorage.setItem("userData", JSON.stringify(userData));
+    } catch (error) {
+      console.log("Fetch Profile Error:", error.response?.data || error.message);
+      const localData = await AsyncStorage.getItem("userData");
+      if (localData) setUser(JSON.parse(localData));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const onRefresh = () => {
     setRefreshing(true);
-    await fetchProfile();
-    setRefreshing(false);
+    fetchProfile();
   };
 
   const showAlert = (title, message, type = "info", onConfirm = null) => {
@@ -46,103 +77,73 @@ export default function ProfileScreen() {
       title,
       message,
       type,
-      onConfirm: onConfirm,
+      onConfirm: () => {
+        setAlertConfig((prev) => ({ ...prev, visible: false }));
+        if (onConfirm) onConfirm();
+      },
     });
-  };
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem("userToken");
-
-      const response = await axios.get(`${API_URL}/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "69420",
-        },
-      });
-      console.log("User Data:", JSON.stringify(response.data, null, 2));
-
-      const userData = response.data.user || response.data;
-      setUser(userData);
-
-      await AsyncStorage.setItem("userData", JSON.stringify(userData));
-    } catch (error) {
-      console.log("Fetch Profile Error:", error);
-      const localData = await AsyncStorage.getItem("userData");
-      if (localData) setUser(JSON.parse(localData));
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleLogout = () => {
-    setAlertConfig({
-      visible: true,
-      title: "Konfirmasi Keluar",
-      message: "Apakah Anda yakin ingin keluar dari aplikasi?",
-      type: "confirmation",
-      onConfirm: async () => {
+    showAlert(
+      "Konfirmasi Keluar",
+      "Apakah Anda yakin ingin keluar dari aplikasi?",
+      "confirmation",
+      async () => {
         await AsyncStorage.multiRemove(["userToken", "userData"]);
-        setAlertConfig((prev) => ({ ...prev, visible: false }));
         router.replace("/");
-      },
-      onCancel: () => {
-        setAlertConfig((prev) => ({ ...prev, visible: false }));
-      },
-    });
+      }
+    );
   };
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4e73df" />
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#1a2a6c" />
+        <Text style={styles.loadingText}>Memuat profil...</Text>
       </View>
     );
   }
 
+  const userName = user?.name || "Penghuni";
+  const userInitial = userName.charAt(0).toUpperCase();
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
+      {/* Header */}
+      <LinearGradient
+        colors={["#1a2a6c", "#b21f1f"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
+      >
         <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Ionicons name="chevron-back" size={28} color="white" />
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profil Saya</Text>
           <View style={{ width: 40 }} />
         </View>
 
-        <View style={styles.profileInfo}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>
-                {(user?.name || "U").charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.editBadge}>
-              <Ionicons name="camera" size={16} color="white" />
-            </TouchableOpacity>
+        <View style={styles.profileHero}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarInitial}>{userInitial}</Text>
           </View>
-          <Text style={styles.userName}>{user?.name || "User"}</Text>
-          <Text style={styles.userRole}>
-            {user?.role === "admin"
-              ? "Administrator"
-              : `Penghuni Kamar ${user?.room_number || "-"}`}
-          </Text>
+          <Text style={styles.heroName}>{userName}</Text>
+          <View style={styles.roomPill}>
+            <Ionicons name="bed-outline" size={14} color="#ffffff" />
+            <Text style={styles.roomPillText}>
+              Kamar {user?.room_number || "-"}
+            </Text>
+          </View>
         </View>
       </LinearGradient>
 
       <ScrollView
         style={styles.content}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -153,63 +154,52 @@ export default function ProfileScreen() {
           />
         }
       >
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionLabel}>Informasi Pribadi</Text>
+        {/* Personal Info Card */}
+        <View style={styles.infoCard}>
+          <Text style={styles.sectionHeading}>Informasi Pribadi</Text>
 
-          <InfoItem
-            icon="mail-outline"
-            label="Email"
-            value={user?.email || "-"}
-          />
+          <InfoItem icon="mail-outline" label="Alamat Email" value={user?.email || "-"} />
           <InfoItem
             icon="call-outline"
-            label="Nomor HP"
+            label="Nomor Handphone"
             value={user?.phone || "-"}
+            onPress={() => {
+              if (user?.phone) {
+                Linking.openURL(`tel:${user.phone}`);
+              }
+            }}
           />
-          <InfoItem
-            icon="card-outline"
-            label="No. KTP"
-            value={user?.id_card || "-"}
-          />
-          <InfoItem
-            icon="location-outline"
-            label="Alamat Asal"
-            value={user?.address || "-"}
-          />
+          <InfoItem icon="card-outline" label="Nomor KTP" value={user?.id_card || "-"} />
+          <InfoItem icon="location-outline" label="Alamat Asal" value={user?.address || "-"} />
         </View>
 
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionLabel}>Pengaturan</Text>
+        {/* Settings Card */}
+        <View style={styles.infoCard}>
+          <Text style={styles.sectionHeading}>Pengaturan Akun</Text>
 
           <MenuButton
             icon="lock-closed-outline"
-            label="Ganti Password"
+            label="Ubah Password"
             onPress={() => router.push("/tenant/change-password")}
           />
           <MenuButton
-            icon="help-circle-outline"
-            label="Pusat Bantuan"
-            onPress={() =>
-              showAlert(
-                "Hubungi Pengelola",
-                "Apakah Anda ingin menghubungi pengelola via WhatsApp?",
-                "confirmation",
-                () => Linking.openURL("https://wa.me/6285111203521"),
-              )
-            }
+            icon="logo-whatsapp"
+            label="Hubungi Pengelola Kost"
+            color="#10b981"
+            onPress={() => Linking.openURL(OWNER_WHATSAPP)}
+          />
+          <MenuButton
+            icon="log-out-outline"
+            label="Keluar dari Aplikasi"
+            color="#ef4444"
+            onPress={handleLogout}
+            showDivider={false}
           />
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons
-            name="log-out-outline"
-            size={20}
-            color="#e74a3b"
-            style={{ marginRight: 10 }}
-          />
-          <Text style={styles.logoutText}>Keluar Akun</Text>
-        </TouchableOpacity>
-        <View style={{ height: insets.bottom + 50 }} />
+        <Text style={styles.copyrightText}>
+          Serrata Kost Management v1.0.0
+        </Text>
       </ScrollView>
 
       <GlobalAlert
@@ -219,135 +209,184 @@ export default function ProfileScreen() {
         type={alertConfig.type}
         onClose={() => setAlertConfig((prev) => ({ ...prev, visible: false }))}
         onConfirm={alertConfig.onConfirm}
-        confirmText="Ya, Lanjutkan"
+        confirmText="Keluar"
         cancelText="Batal"
       />
     </View>
   );
 }
 
-const InfoItem = ({ icon, label, value }) => (
-  <View style={styles.infoItem}>
-    <View style={styles.iconBg}>
-      <Ionicons name={icon} size={20} color="#4e73df" />
+const InfoItem = ({ icon, label, value, onPress }) => (
+  <TouchableOpacity
+    style={styles.infoItem}
+    onPress={onPress}
+    disabled={!onPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.infoIconCircle}>
+      <Ionicons name={icon} size={18} color="#4e73df" />
     </View>
-    <View style={{ marginLeft: 15, flex: 1 }}>
-      <Text style={styles.itemLabel}>{label}</Text>
-      <Text style={styles.itemValue}>{value}</Text>
+    <View style={{ flex: 1, marginLeft: 12 }}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
-  </View>
-);
-
-const MenuButton = ({ icon, label, onPress }) => (
-  <TouchableOpacity style={styles.menuButton} onPress={onPress}>
-    <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <Ionicons name={icon} size={22} color="#858796" />
-      <Text style={styles.menuLabel}>{label}</Text>
-    </View>
-    <Ionicons name="chevron-forward" size={20} color="#ccc" />
+    {onPress ? <Ionicons name="chevron-forward" size={16} color="#cbd5e1" /> : null}
   </TouchableOpacity>
 );
 
+const MenuButton = ({ icon, label, color = "#1e293b", onPress, showDivider = true }) => (
+  <>
+    <TouchableOpacity style={styles.menuBtn} onPress={onPress} activeOpacity={0.7}>
+      <Ionicons name={icon} size={20} color={color} style={{ marginRight: 12 }} />
+      <Text style={[styles.menuBtnLabel, { color }]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+    </TouchableOpacity>
+    {showDivider ? <View style={styles.divider} /> : null}
+  </>
+);
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fc" },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+  container: { flex: 1, backgroundColor: "#F8F9FC" },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#64748b",
+    fontSize: 14,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 36,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
   headerTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 15,
+    marginBottom: 16,
   },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "white" },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
   backBtn: {
     backgroundColor: "rgba(255,255,255,0.2)",
     padding: 8,
     borderRadius: 12,
   },
-  profileInfo: { alignItems: "center" },
-  avatarContainer: { position: "relative", marginBottom: 15 },
+  profileHero: {
+    alignItems: "center",
+  },
   avatarCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 3,
-    borderColor: "white",
-  },
-  avatarInitial: { fontSize: 40, fontWeight: "bold", color: "white" },
-  editBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    backgroundColor: "#1cc88a",
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWeight: 2,
-    borderColor: "white",
-  },
-  userName: { fontSize: 22, fontWeight: "bold", color: "white" },
-  userRole: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginTop: 4 },
-  content: { padding: 20 },
-  infoSection: {
-    backgroundColor: "white",
-    borderRadius: 25,
-    padding: 20,
-    marginBottom: 20,
     elevation: 4,
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    marginBottom: 10,
   },
-  sectionLabel: {
-    fontSize: 13,
+  avatarInitial: {
+    fontSize: 30,
     fontWeight: "bold",
-    color: "#4e73df",
-    marginBottom: 20,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+    color: "#1a2a6c",
   },
-  infoItem: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  iconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#f0f4ff",
-    justifyContent: "center",
-    alignItems: "center",
+  heroName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#ffffff",
   },
-  itemLabel: { fontSize: 11, color: "#858796", marginBottom: 2 },
-  itemValue: { fontSize: 15, fontWeight: "600", color: "#2c3e50" },
-  menuButton: {
+  roomPill: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f8f9fc",
-  },
-  menuLabel: { marginLeft: 15, fontSize: 15, color: "#2c3e50" },
-  logoutBtn: {
-    backgroundColor: "#fff",
-    padding: 18,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "#ffeaea",
+    marginTop: 8,
+    gap: 6,
+  },
+  roomPillText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  content: {
+    paddingHorizontal: 16,
+    marginTop: -16,
+  },
+  infoCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+  },
+  sectionHeading: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#64748b",
+    marginBottom: 14,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  infoItem: {
     flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f8fafc",
+  },
+  infoIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#eef2ff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  infoLabel: {
+    fontSize: 11,
+    color: "#94a3b8",
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1e293b",
+    marginTop: 2,
+  },
+  menuBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  menuBtnLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#f1f5f9",
+  },
+  copyrightText: {
+    textAlign: "center",
+    color: "#94a3b8",
+    fontSize: 12,
     marginTop: 10,
   },
-  logoutText: { color: "#e74a3b", fontWeight: "bold", fontSize: 16 },
 });

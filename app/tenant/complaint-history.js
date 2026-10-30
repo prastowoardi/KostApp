@@ -14,11 +14,15 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
 import { API_URL } from "../../helpers/api";
+import { formatDate } from "../../helpers/formatters";
 
 export default function ComplaintHistoryScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
+
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,16 +35,18 @@ export default function ComplaintHistoryScreen() {
     onClose: () => setAlertConfig((prev) => ({ ...prev, visible: false })),
   });
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
+      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
       const response = await axios.get(`${API_URL}/complaints`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${cleanToken}`,
+          Accept: "application/json",
+        },
       });
 
-      // Sesuaikan dengan struktur response Laravel kamu
-      // Jika di Laravel return response()->json(['data' => $data])
-      setComplaints(response.data.data || []);
+      setComplaints(response.data?.data || response.data || []);
     } catch (e) {
       setAlertConfig({
         visible: true,
@@ -55,71 +61,75 @@ export default function ComplaintHistoryScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchComplaints();
-  }, []);
+  }, [fetchComplaints]);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = () => {
     setRefreshing(true);
     fetchComplaints();
-  }, []);
+  };
 
-  // Helper untuk warna status
   const getStatusStyle = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "open":
-        return { color: "#4e73df", bg: "#eef2ff" };
+        return { label: "Menunggu", color: "#2563eb", bg: "#eff6ff" };
       case "in_progress":
-        return { color: "#f6c23e", bg: "#fffbe6" };
+        return { label: "Diproses", color: "#d97706", bg: "#fffbeb" };
       case "resolved":
-        return { color: "#1cc88a", bg: "#e6fffa" };
+        return { label: "Selesai", color: "#059669", bg: "#ecfdf5" };
       case "closed":
-        return { color: "#858796", bg: "#f8f9fc" };
+        return { label: "Ditutup", color: "#64748b", bg: "#f1f5f9" };
       default:
-        return { color: "#4e73df", bg: "#f1f3f9" };
+        return { label: status || "Baru", color: "#2563eb", bg: "#eff6ff" };
     }
   };
 
   const renderItem = ({ item }) => {
     const statusStyle = getStatusStyle(item.status);
+    const targetId = item.uuid || item.id;
 
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => router.push(`/complaint/${item.id || item.uuid}`)}
+        onPress={() => router.push(`/complaint/${targetId}`)}
+        activeOpacity={0.8}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
+          <View style={styles.categoryPill}>
+            <Text style={styles.categoryText}>
+              {item.category ? item.category.toUpperCase() : "UMUM"}
+            </Text>
+          </View>
           <View
             style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}
           >
             <Text style={[styles.statusText, { color: statusStyle.color }]}>
-              {item.status.replace("_", " ")}
+              {statusStyle.label}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.titleText} numberOfLines={1}>
+        <Text style={styles.cardTitle} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.descText} numberOfLines={2}>
+        <Text style={styles.cardDesc} numberOfLines={2}>
           {item.description}
         </Text>
 
+        <View style={styles.divider} />
+
         <View style={styles.cardFooter}>
-          <View style={styles.dateInfo}>
-            <Ionicons name="calendar-outline" size={14} color="#95a5a6" />
-            <Text style={styles.dateText}>
-              {new Date(item.created_at).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </Text>
+          <View style={styles.dateRow}>
+            <Ionicons name="time-outline" size={14} color="#94a3b8" />
+            <Text style={styles.dateText}>{formatDate(item.created_at, true)}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#bdc3c7" />
+          <View style={styles.detailLink}>
+            <Text style={styles.detailLinkText}>Lihat Detail</Text>
+            <Ionicons name="chevron-forward" size={14} color="#4e73df" />
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -127,26 +137,41 @@ export default function ComplaintHistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <GlobalAlert {...alertConfig} />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Riwayat Laporan</Text>
+      {/* Header */}
+      <LinearGradient
+        colors={["#1a2a6c", "#b21f1f"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
+      >
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Riwayat Komplain</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/tenant/report")}
+            style={styles.addBtn}
+          >
+            <Ionicons name="add" size={20} color="white" />
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#4e73df" />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#1a2a6c" />
+          <Text style={styles.loadingText}>Memuat riwayat keluhan...</Text>
         </View>
       ) : (
         <FlatList
           data={complaints}
-          keyExtractor={(item) => (item.id || item.uuid).toString()}
+          keyExtractor={(item) => (item.uuid || item.id || Math.random()).toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 24 }]}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -156,103 +181,189 @@ export default function ComplaintHistoryScreen() {
             />
           }
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons
-                name="document-text-outline"
-                size={80}
-                color="#d1d8e0"
-              />
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubbles-outline" size={56} color="#cbd5e1" />
               <Text style={styles.emptyTitle}>Belum Ada Laporan</Text>
-              <Text style={styles.emptySub}>
-                Semua komplain yang Anda buat akan muncul di sini.
+              <Text style={styles.emptySubtitle}>
+                Semua keluhan fasilitas atau kamar yang Anda laporkan akan tersimpan di sini.
               </Text>
+              <TouchableOpacity
+                style={styles.createBtn}
+                onPress={() => router.push("/tenant/report")}
+              >
+                <Ionicons name="add-circle-outline" size={18} color="white" />
+                <Text style={styles.createBtnText}>Buat Laporan Baru</Text>
+              </TouchableOpacity>
             </View>
           }
         />
       )}
+
+      <GlobalAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={alertConfig.onClose}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fc" },
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fc",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#64748b",
+    fontSize: 14,
+  },
   header: {
-    paddingTop: 50,
-    paddingBottom: 25,
     paddingHorizontal: 20,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  headerTop: {
     flexDirection: "row",
     alignItems: "center",
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    justifyContent: "space-between",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ffffff",
   },
   backBtn: {
-    padding: 5,
     backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 10,
-    marginRight: 15,
+    padding: 8,
+    borderRadius: 12,
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "white" },
-  listContent: { padding: 20, paddingTop: 10 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  addBtn: {
+    backgroundColor: "#10b981",
+    padding: 8,
+    borderRadius: 12,
+  },
+  listContent: {
+    padding: 16,
+  },
   card: {
-    backgroundColor: "white",
+    backgroundColor: "#ffffff",
     borderRadius: 18,
     padding: 16,
-    marginBottom: 16,
-    elevation: 4,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    elevation: 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+  categoryPill: {
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   categoryText: {
     fontSize: 11,
-    fontWeight: "bold",
-    color: "#4e73df",
-    letterSpacing: 1,
+    fontWeight: "700",
+    color: "#475569",
   },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  statusText: { fontSize: 10, fontWeight: "bold", textTransform: "capitalize" },
-  titleText: {
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  cardTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#2c3e50",
+    color: "#1e293b",
     marginBottom: 4,
   },
-  descText: {
-    fontSize: 14,
-    color: "#7f8c8d",
-    lineHeight: 20,
-    marginBottom: 12,
+  cardDesc: {
+    fontSize: 13,
+    color: "#64748b",
+    lineHeight: 18,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#f1f5f9",
+    marginVertical: 12,
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#f1f3f9",
-    paddingTop: 12,
   },
-  dateInfo: { flexDirection: "row", alignItems: "center" },
-  dateText: { fontSize: 12, color: "#95a5a6", marginLeft: 5 },
-  emptyState: { alignItems: "center", marginTop: 100 },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  dateText: {
+    fontSize: 11,
+    color: "#94a3b8",
+  },
+  detailLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  detailLinkText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#4e73df",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 80,
+    paddingHorizontal: 20,
+  },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
-    color: "#2c3e50",
-    marginTop: 20,
+    color: "#1e293b",
+    marginTop: 12,
   },
-  emptySub: {
-    fontSize: 14,
-    color: "#95a5a6",
+  emptySubtitle: {
+    fontSize: 13,
+    color: "#94a3b8",
     textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 40,
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  createBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a2a6c",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 16,
+    gap: 6,
+  },
+  createBtnText: {
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: 13,
   },
 });

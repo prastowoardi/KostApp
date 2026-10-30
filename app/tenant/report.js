@@ -4,7 +4,6 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import {
     ActivityIndicator,
@@ -18,142 +17,154 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
-
 import { API_URL } from '../../helpers/api';
+
+const CATEGORIES = [
+    { id: 'facility', label: 'Fasilitas' },
+    { id: 'cleanliness', label: 'Kebersihan' },
+    { id: 'security', label: 'Keamanan' },
+    { id: 'other', label: 'Lainnya' },
+];
+
+const PRIORITIES = [
+    { id: 'low', label: 'Rendah', color: '#10b981' },
+    { id: 'medium', label: 'Sedang', color: '#f59e0b' },
+    { id: 'high', label: 'Mendesak / Tinggi', color: '#ef4444' },
+];
 
 export default function ReportScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+
     const [loading, setLoading] = useState(false);
-    
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('facility');
     const [priority, setPriority] = useState('medium');
     const [images, setImages] = useState([]);
-    const [inputHeight, setInputHeight] = useState(100);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
         title: '',
         message: '',
         type: 'success',
-        onClose: () => setAlertConfig(prev => ({ ...prev, visible: false }))
+        onClose: () => {},
     });
 
-    const categories = [
-        { id: 'facility', label: 'Fasilitas' },
-        { id: 'cleanliness', label: 'Kebersihan' },
-        { id: 'security', label: 'Keamanan' },
-        { id: 'other', label: 'Lainnya' }
-    ];
-
-    const priorities = [
-        { id: 'low', label: 'Rendah', color: '#1cc88a' },
-        { id: 'medium', label: 'Sedang', color: '#f6c23e' },
-        { id: 'high', label: 'Tinggi', color: '#e74a3b' }
-    ];
-
-    const showAlert = (title, message, type = 'success', customOnClose = null) => {
+    const showAlert = (title, message, type = 'success', onClose = null) => {
         setAlertConfig({
             visible: true,
             title,
             message,
             type,
             onClose: () => {
-                setAlertConfig(prev => ({ ...prev, visible: false }));
-                if (customOnClose) customOnClose();
-            }
+                setAlertConfig((prev) => ({ ...prev, visible: false }));
+                if (onClose) onClose();
+            },
         });
     };
 
     const handlePickImage = () => {
-        if (images.length >= 5) return showAlert("Maksimal", "Hanya boleh 5 foto.", "warning");
-        
-        Alert.alert("Pilih Foto", "Ambil foto dari mana?", [
-            { text: "Kamera", onPress: openCamera },
-            { text: "Galeri", onPress: openLibrary },
-            { text: "Batal", style: "cancel" }
+        if (images.length >= 5) {
+            return showAlert('Maksimal', 'Anda hanya dapat melampirkan maksimal 5 foto.', 'warning');
+        }
+
+        Alert.alert('Pilih Foto Bukti', 'Ambil foto dari mana?', [
+            { text: 'Kamera', onPress: openCamera },
+            { text: 'Galeri', onPress: openLibrary },
+            { text: 'Batal', style: 'cancel' },
         ]);
     };
 
     const openCamera = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') return showAlert("Izin Ditolak", "Butuh akses kamera.", "error");
+        if (status !== 'granted') return showAlert('Izin Ditolak', 'Aplikasi butuh akses kamera.', 'error');
 
-        let result = await ImagePicker.launchCameraAsync({
+        const result = await ImagePicker.launchCameraAsync({
             allowsEditing: true,
             aspect: [4, 3],
             quality: 0.5,
         });
 
-        if (!result.canceled) setImages([...images, result.assets[0].uri]);
+        if (!result.canceled && result.assets?.[0]?.uri) {
+            setImages((prev) => [...prev, result.assets[0].uri]);
+        }
     };
 
     const openLibrary = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') return showAlert("Izin Ditolak", "Butuh akses galeri.", "error");
+        if (status !== 'granted') return showAlert('Izin Ditolak', 'Aplikasi butuh akses galeri.', 'error');
 
-        let result = await ImagePicker.launchImageLibraryAsync({
+        const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsMultipleSelection: true,
             selectionLimit: 5 - images.length,
             quality: 0.5,
         });
 
-        if (!result.canceled) {
-            const newUris = result.assets.map(asset => asset.uri);
-            setImages([...images, ...newUris].slice(0, 5));
+        if (!result.canceled && result.assets) {
+            const newUris = result.assets.map((asset) => asset.uri);
+            setImages((prev) => [...prev, ...newUris].slice(0, 5));
         }
     };
 
+    const removeImage = (index) => {
+        setImages((prev) => prev.filter((_, i) => i !== index));
+    };
+
     const submitComplaint = async () => {
+        if (!title.trim()) {
+            return showAlert('Data Belum Lengkap', 'Silakan tuliskan judul keluhan.', 'warning');
+        }
+        if (!description.trim()) {
+            return showAlert('Data Belum Lengkap', 'Silakan berikan deskripsi detail keluhan.', 'warning');
+        }
+
         setLoading(true);
         try {
             const token = await AsyncStorage.getItem('userToken');
+            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
             const formData = new FormData();
-            
-            formData.append('title', title);
-            formData.append('description', description);
+
+            formData.append('title', title.trim());
+            formData.append('description', description.trim());
             formData.append('category', category);
             formData.append('priority', priority);
 
             // Upload Gambar
             if (images.length > 0) {
                 images.forEach((uri, index) => {
-                    const fileName = uri.split('/').pop();
-                    const fileType = fileName.split('.').pop();
+                    const fileName = uri.split('/').pop() || `img_${index}.jpg`;
+                    const match = /\.(\w+)$/.exec(fileName);
+                    const type = match ? `image/${match[1]}` : `image/jpeg`;
 
                     formData.append('images[]', {
                         uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
-                        name: `image_${index}.${fileType}`,
-                        type: `image/${fileType === 'jpg' ? 'jpeg' : fileType}`,
+                        name: fileName,
+                        type,
                     });
                 });
             }
 
-            const response = await axios.post(`${API_URL}/complaints`, formData, {
+            await axios.post(`${API_URL}/complaints`, formData, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data', // WAJIB
-                    'Accept': 'application/json',
-                },
-                // Penting untuk upload file besar
-                transformRequest: (data, headers) => {
-                    return data; 
+                    Authorization: `Bearer ${cleanToken}`,
+                    'Content-Type': 'multipart/form-data',
+                    Accept: 'application/json',
                 },
             });
 
-            if(response.data.success) {
-                router.replace('/complaint-history'); // Pindah ke history
-            }
-
+            showAlert('Berhasil Terkirim', 'Laporan keluhan Anda berhasil dikirim ke pengelola kost.', 'success', () => {
+                router.replace('/tenant/complaint-history');
+            });
         } catch (e) {
-            console.log("Detail Error:", e.response?.data);
-            Alert.alert("Gagal", e.response?.data?.message || "Terjadi kesalahan");
+            console.log('Detail Error Complaint:', e.response?.data || e.message);
+            const msg = e.response?.data?.message || 'Gagal mengirim laporan keluhan.';
+            showAlert('Gagal Mengirim', msg, 'error');
         } finally {
             setLoading(false);
         }
@@ -161,99 +172,298 @@ export default function ReportScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <GlobalAlert {...alertConfig} />
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
+            {/* Header */}
+            <LinearGradient
+                colors={['#1a2a6c', '#b21f1f']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.header, { paddingTop: insets.top + 16 }]}
+            >
                 <View style={styles.headerTop}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="chevron-back" size={28} color="white" />
+                        <Ionicons name="chevron-back" size={24} color="white" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Buat Komplain</Text>
+                    <Text style={styles.headerTitle}>Buat Laporan Keluhan</Text>
                     <View style={{ width: 40 }} />
                 </View>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <ScrollView
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                     <View style={styles.formCard}>
-                        <Text style={styles.label}>Judul Keluhan</Text>
-                        <TextInput style={styles.input} placeholder="Contoh: Lampu Kamar Mati" value={title} onChangeText={setTitle} placeholderTextColor="#95a5a6" />
-
-                        <Text style={styles.label}>Kategori</Text>
-                        <View style={styles.chipGroup}>
-                            {categories.map((cat) => (
-                                <TouchableOpacity key={cat.id} style={[styles.chip, category === cat.id && styles.chipActive]} onPress={() => setCategory(cat.id)}>
-                                    <Text style={[styles.chipText, category === cat.id && styles.chipTextActive]}>{cat.label}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={styles.label}>Prioritas</Text>
-                        <View style={styles.chipGroup}>
-                            {priorities.map((prio) => (
-                                <TouchableOpacity key={prio.id} style={[styles.chip, priority === prio.id && { backgroundColor: prio.color, borderColor: prio.color }]} onPress={() => setPriority(prio.id)}>
-                                    <Text style={[styles.chipText, priority === prio.id && { color: 'white', fontWeight: 'bold' }]}>{prio.label}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={styles.label}>Deskripsi Kendala</Text>
-                        <TextInput 
-                            style={[styles.input, { height: Math.max(100, inputHeight), textAlignVertical: 'top' }]} 
-                            multiline 
-                            placeholder="Jelaskan detail masalahnya..." 
-                            value={description} 
-                            onChangeText={setDescription} 
-                            onContentSizeChange={(e) => setInputHeight(e.nativeEvent.contentSize.height)} 
-                            placeholderTextColor="#95a5a6" 
+                        {/* Title */}
+                        <Text style={styles.label}>Judul Keluhan *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Contoh: AC kamar bocor / lampu mati"
+                            placeholderTextColor="#94a3b8"
+                            value={title}
+                            onChangeText={setTitle}
                         />
 
-                        <Text style={styles.label}>Lampiran Foto ({images.length}/5)</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageList}>
-                            <TouchableOpacity style={styles.addBtn} onPress={handlePickImage}>
-                                <Ionicons name="camera-outline" size={30} color="#4e73df" />
-                            </TouchableOpacity>
+                        {/* Category */}
+                        <Text style={styles.label}>Kategori</Text>
+                        <View style={styles.chipGroup}>
+                            {CATEGORIES.map((cat) => {
+                                const isSelected = category === cat.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={cat.id}
+                                        style={[styles.chip, isSelected && styles.chipActive]}
+                                        onPress={() => setCategory(cat.id)}
+                                    >
+                                        <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                                            {cat.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        {/* Priority */}
+                        <Text style={styles.label}>Tingkat Prioritas</Text>
+                        <View style={styles.chipGroup}>
+                            {PRIORITIES.map((prio) => {
+                                const isSelected = priority === prio.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={prio.id}
+                                        style={[
+                                            styles.chip,
+                                            isSelected && { backgroundColor: prio.color, borderColor: prio.color },
+                                        ]}
+                                        onPress={() => setPriority(prio.id)}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.chipText,
+                                                isSelected && { color: 'white', fontWeight: 'bold' },
+                                            ]}
+                                        >
+                                            {prio.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        {/* Description */}
+                        <Text style={styles.label}>Deskripsi Detail Keluhan *</Text>
+                        <TextInput
+                            style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]}
+                            placeholder="Jelaskan kendala yang dialami secara rinci agar pengelola dapat segera menanganinya..."
+                            placeholderTextColor="#94a3b8"
+                            multiline
+                            value={description}
+                            onChangeText={setDescription}
+                        />
+
+                        {/* Photos */}
+                        <Text style={styles.label}>Lampiran Foto (Maksimal 5)</Text>
+                        <View style={styles.imageGrid}>
                             {images.map((uri, index) => (
                                 <View key={index} style={styles.imageWrapper}>
-                                    <Image source={{ uri }} style={styles.thumbnail} />
-                                    <TouchableOpacity style={styles.deleteBadge} onPress={() => setImages(images.filter((_, i) => i !== index))}>
-                                        <Ionicons name="close-circle" size={22} color="#e74a3b" />
+                                    <Image source={{ uri }} style={styles.imgPreview} />
+                                    <TouchableOpacity
+                                        style={styles.deleteBadge}
+                                        onPress={() => removeImage(index)}
+                                    >
+                                        <Ionicons name="close" size={14} color="white" />
                                     </TouchableOpacity>
                                 </View>
                             ))}
-                        </ScrollView>
 
-                        <TouchableOpacity style={[styles.submitBtn, { marginBottom: insets.bottom }, loading && { opacity: 0.7 }]} onPress={submitComplaint} disabled={loading}>
-                            {loading ? <ActivityIndicator color="white" /> : <Text style={styles.btnText}>KIRIM LAPORAN SEKARANG</Text>}
+                            {images.length < 5 ? (
+                                <TouchableOpacity style={styles.addPhotoBtn} onPress={handlePickImage}>
+                                    <Ionicons name="camera-outline" size={24} color="#4e73df" />
+                                    <Text style={styles.addPhotoText}>Tambah</Text>
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
+
+                        {/* Submit */}
+                        <TouchableOpacity
+                            style={[styles.submitBtn, loading && { opacity: 0.8 }]}
+                            onPress={submitComplaint}
+                            disabled={loading}
+                            activeOpacity={0.8}
+                        >
+                            <LinearGradient
+                                colors={['#1a2a6c', '#b21f1f']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.gradientBtn}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="white" />
+                                ) : (
+                                    <Text style={styles.submitBtnText}>KIRIM LAPORAN SEKARANG</Text>
+                                )}
+                            </LinearGradient>
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
             </ScrollView>
+
+            <GlobalAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={alertConfig.onClose}
+            />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fc' },
-    header: { paddingTop: 60, paddingBottom: 60, paddingHorizontal: 20, borderBottomLeftRadius: 35, borderBottomRightRadius: 35 },
-    headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 5, borderRadius: 10 },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 40, marginTop: -40, paddingTop: 10 },
-    formCard: { backgroundColor: 'white', borderRadius: 25, padding: 22, elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.1, shadowRadius: 15 },
-    label: { fontSize: 13, fontWeight: 'bold', color: '#4e73df', marginBottom: 8, marginTop: 15 },
-    input: { backgroundColor: '#f8f9fc', borderRadius: 15, padding: 15, fontSize: 14, color: '#2c3e50', borderWidth: 1, borderColor: '#eaecf4' },
-    chipGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 5 },
-    chip: { paddingHorizontal: 15, paddingVertical: 10, borderRadius: 20, backgroundColor: '#f1f3f9', borderWidth: 1, borderColor: '#d1d8e0' },
-    chipActive: { backgroundColor: '#4e73df', borderColor: '#4e73df' },
-    chipText: { fontSize: 12, color: '#7f8c8d' },
-    chipTextActive: { color: 'white', fontWeight: 'bold' },
-    imageList: { flexDirection: 'row', marginTop: 10, marginBottom: 20 },
-    addBtn: { width: 80, height: 80, backgroundColor: '#f8f9fc', borderRadius: 15, justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed', borderWidth: 1, borderColor: '#4e73df', marginRight: 12 },
-    imageWrapper: { position: 'relative', marginRight: 12 },
-    thumbnail: { width: 80, height: 80, borderRadius: 15 },
-    deleteBadge: { position: 'absolute', top: -8, right: -8, backgroundColor: 'white', borderRadius: 12 },
-    submitBtn: { backgroundColor: '#4e73df', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 15, elevation: 5 },
-    btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fc',
+    },
+    header: {
+        paddingHorizontal: 20,
+        paddingBottom: 24,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    backBtn: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        padding: 8,
+        borderRadius: 12,
+    },
+    scrollContent: {
+        padding: 16,
+    },
+    formCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+    },
+    label: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#334155',
+        marginTop: 14,
+        marginBottom: 8,
+    },
+    input: {
+        backgroundColor: '#f8fafc',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        borderRadius: 12,
+        padding: 12,
+        fontSize: 14,
+        color: '#1e293b',
+    },
+    chipGroup: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 4,
+    },
+    chip: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+    },
+    chipActive: {
+        backgroundColor: '#1a2a6c',
+        borderColor: '#1a2a6c',
+    },
+    chipText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#64748b',
+    },
+    chipTextActive: {
+        color: '#ffffff',
+        fontWeight: '700',
+    },
+    imageGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginTop: 4,
+    },
+    imageWrapper: {
+        width: 76,
+        height: 76,
+        borderRadius: 12,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    imgPreview: {
+        width: '100%',
+        height: '100%',
+    },
+    deleteBadge: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        backgroundColor: '#ef4444',
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    addPhotoBtn: {
+        width: 76,
+        height: 76,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#cbd5e1',
+        borderStyle: 'dashed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+    },
+    addPhotoText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#4e73df',
+        marginTop: 2,
+    },
+    submitBtn: {
+        marginTop: 24,
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    gradientBtn: {
+        paddingVertical: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    submitBtnText: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 14,
+        letterSpacing: 0.6,
+    },
 });

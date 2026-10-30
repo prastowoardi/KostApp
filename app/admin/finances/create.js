@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import {
-    StyleSheet,
-    View,
-    Text,
-    TouchableOpacity,
-    TextInput,
-    ScrollView,
-    Image,
-    ActivityIndicator,
-    StatusBar,
-    Modal,
-    FlatList
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    Image,
+    Modal,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
-import api, { API_URL } from '../../../helpers/api';
-import { Platform } from 'react-native';
+import api from '../../../helpers/api';
 
 export default function CreateTransaction() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+
     const [loading, setLoading] = useState(false);
     const [image, setImage] = useState(null);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [categories, setCategories] = useState({ income: [], expense: [] });
-    
+
     const [form, setForm] = useState({
         type: 'expense',
         category: '',
@@ -43,68 +43,70 @@ export default function CreateTransaction() {
         title: '',
         message: '',
         type: 'success',
-        onConfirm: () => {}
+        onConfirm: () => {},
     });
 
-    useEffect(() => { fetchCategories(); }, []);
-
-    const fetchCategories = async () => {
-        try {
-            const token = await AsyncStorage.getItem('userToken');
-            const response = await api.get(`${API_URL}/admin/categories`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setCategories({
-                income: response.data.incomeCategories || [],
-                expense: response.data.expenseCategories || []
-            });
-        } catch (error) { console.error(error); }
+    const showAlert = (title, message, type = 'success', onConfirm = null) => {
+        setAlertConfig({
+            visible: true,
+            title,
+            message,
+            type,
+            onConfirm: () => {
+                setAlertConfig((prev) => ({ ...prev, visible: false }));
+                if (onConfirm) onConfirm();
+            },
+        });
     };
 
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await api.get('/admin/categories');
+                setCategories({
+                    income: response.data?.incomeCategories || [],
+                    expense: response.data?.expenseCategories || [],
+                });
+            } catch (error) {
+                console.log('Error fetch categories:', error.response?.data || error.message);
+            }
+        };
+        fetchCategories();
+    }, []);
+
     const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
+        const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
             quality: 0.7,
         });
-        if (!result.canceled) setImage(result.assets[0].uri);
-    };
-
-    const formatCurrency = (value) => {
-        if (!value) return '';
-        const number = value.replace(/\D/g, '');
-        return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        if (!result.canceled && result.assets?.[0]?.uri) {
+            setImage(result.assets[0].uri);
+        }
     };
 
     const handleSave = async () => {
-        const cleanAmount = form.amount.replace(/\./g, '');
-        
-        if (!cleanAmount || !form.category) {
-            setAlertConfig({ 
-                visible: true, 
-                title: "Peringatan", 
-                message: "Isi semua data!", 
-                type: "warning",
-                isConfirmation: false,
-                confirmText: "Siap",
-                onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false }))
-            });
-            return;
+        const cleanAmount = parseInt(form.amount.toString().replace(/\D/g, '') || 0);
+
+        if (!cleanAmount) {
+            return showAlert('Peringatan', 'Nominal transaksi harus lebih dari 0.', 'warning');
+        }
+        if (!form.category) {
+            return showAlert('Peringatan', 'Silakan pilih kategori transaksi.', 'warning');
         }
 
         setLoading(true);
         try {
-            const token = await AsyncStorage.getItem('userToken');
             const formData = new FormData();
             formData.append('type', form.type);
             formData.append('category', form.category);
-            formData.append('amount', cleanAmount);
+            formData.append('amount', cleanAmount.toString());
             formData.append('transaction_date', form.transaction_date);
             formData.append('description', form.description || '');
 
             if (image) {
-                const filename = 'receipt_' + Date.now() + '.jpg';
+                const filename = `receipt_${Date.now()}.jpg`;
                 if (Platform.OS === 'web') {
                     const response = await fetch(image);
                     const blob = await response.blob();
@@ -118,220 +120,453 @@ export default function CreateTransaction() {
                 }
             }
 
-            await api.post(`${API_URL}/admin/finances`, formData, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'
-                }
+            await api.post('/admin/finances', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
 
-            setAlertConfig({ 
-                visible: true,
-                title: "Berhasil",
-                message: "Catatan Pembayaran berhasil disimpan!",
-                type: "success",
-                isConfirmation: false,
-                confirmText: "Oke",
-                onConfirm: () => {
-                    setAlertConfig(prev => ({ ...prev, visible: false }));
-                    router.push('/admin/finances');
-                }
+            showAlert('Berhasil', 'Catatan keuangan berhasil disimpan!', 'success', () => {
+                router.back();
             });
         } catch (error) {
-            console.log("Error Full:", error.response?.data);
-            setAlertConfig({ 
-                visible: true, 
-                title: "Gagal", 
-                message: error.response?.data?.message || "Terjadi kesalahan pada server", 
-                type: "error",
-                isConfirmation: false,
-                confirmText: "Coba Lagi",
-                onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false }))
-            });
-        } finally { 
-            setLoading(false); 
+            console.log('Error save transaction:', error.response?.data || error.message);
+            const msg = error.response?.data?.message || 'Gagal menyimpan transaksi.';
+            showAlert('Gagal', msg, 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const renderCategoryItem = ({ item }) => (
-        <TouchableOpacity
-            style={styles.categoryItem}
-            onPress={() => {
-                setForm({ ...form, category: item });
-                setShowCategoryModal(false);
-            }}
-        >
-            <Text style={styles.categoryItemText}>{item}</Text>
-            {form.category === item && <Ionicons name="checkmark-circle" size={20} color="#1a2a6c" />}
-        </TouchableOpacity>
-    );
+    const currentCategoryList = form.type === 'income' ? categories.income : categories.expense;
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            
-            <LinearGradient colors={['#1a2a6c', '#b21f1f']} style={styles.header}>
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+            {/* Header */}
+            <LinearGradient
+                colors={['#1a2a6c', '#b21f1f']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.header, { paddingTop: insets.top + 16 }]}
+            >
                 <View style={styles.headerTop}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
                         <Ionicons name="chevron-back" size={24} color="white" />
                     </TouchableOpacity>
-                    <View style={{ marginLeft: 12 }}>
-                        <Text style={styles.headerTitle}>Catat Keuangan</Text>
-                        <Text style={styles.headerSub}>Input data secara akurat</Text>
-                    </View>
+                    <Text style={styles.headerTitle}>Catat Transaksi</Text>
+                    <View style={{ width: 40 }} />
                 </View>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.typeContainer}>
-                    <TouchableOpacity 
-                        style={[styles.typeBtn, form.type === 'income' && styles.activeIncome]}
-                        onPress={() => setForm({ ...form, type: 'income', category: '' })}
-                    >
-                        <Text style={[styles.typeText, form.type === 'income' && styles.textWhite]}>Pemasukan</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={[styles.typeBtn, form.type === 'expense' && styles.activeExpense]}
-                        onPress={() => setForm({ ...form, type: 'expense', category: '' })}
-                    >
-                        <Text style={[styles.typeText, form.type === 'expense' && styles.textWhite]}>Pengeluaran</Text>
-                    </TouchableOpacity>
-                </View>
+            <ScrollView
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
+                <View style={styles.card}>
+                    {/* Type Toggle */}
+                    <Text style={styles.fieldLabel}>Jenis Transaksi *</Text>
+                    <View style={styles.typeRow}>
+                        <TouchableOpacity
+                            style={[
+                                styles.typeBtn,
+                                form.type === 'expense' && styles.typeBtnActiveExpense,
+                            ]}
+                            onPress={() => setForm({ ...form, type: 'expense', category: '' })}
+                        >
+                            <Ionicons
+                                name="arrow-up-circle"
+                                size={18}
+                                color={form.type === 'expense' ? '#ffffff' : '#ef4444'}
+                            />
+                            <Text
+                                style={[
+                                    styles.typeText,
+                                    form.type === 'expense' && styles.typeTextActive,
+                                ]}
+                            >
+                                Pengeluaran
+                            </Text>
+                        </TouchableOpacity>
 
-                {/* Dropdown Custom Style */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Kategori</Text>
-                    <TouchableOpacity 
-                        style={styles.customDropdown} 
+                        <TouchableOpacity
+                            style={[
+                                styles.typeBtn,
+                                form.type === 'income' && styles.typeBtnActiveIncome,
+                            ]}
+                            onPress={() => setForm({ ...form, type: 'income', category: '' })}
+                        >
+                            <Ionicons
+                                name="arrow-down-circle"
+                                size={18}
+                                color={form.type === 'income' ? '#ffffff' : '#10b981'}
+                            />
+                            <Text
+                                style={[
+                                    styles.typeText,
+                                    form.type === 'income' && styles.typeTextActive,
+                                ]}
+                            >
+                                Pemasukan
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Category Selector */}
+                    <Text style={styles.fieldLabel}>Kategori *</Text>
+                    <TouchableOpacity
+                        style={styles.pickerBox}
                         onPress={() => setShowCategoryModal(true)}
                     >
-                        <Text style={[styles.dropdownValue, !form.category && { color: '#aaa' }]}>
-                            {form.category || "Pilih kategori transaksi..."}
+                        <Ionicons name="grid-outline" size={18} color="#4e73df" />
+                        <Text style={[styles.pickerText, !form.category && { color: '#94a3b8' }]}>
+                            {form.category || 'Pilih kategori transaksi...'}
                         </Text>
-                        <Ionicons name="chevron-down" size={20} color="#666" />
+                        <Ionicons name="chevron-down" size={18} color="#94a3b8" />
                     </TouchableOpacity>
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Nominal (Rp)</Text>
-                    <View style={styles.inputWrapper}>
+                    {/* Amount */}
+                    <Text style={styles.fieldLabel}>Nominal (Rp) *</Text>
+                    <View style={styles.amountInputWrap}>
                         <Text style={styles.currencyPrefix}>Rp</Text>
-                        <TextInput 
-                            style={styles.flexInput}
+                        <TextInput
+                            style={styles.amountInput}
                             placeholder="0"
+                            placeholderTextColor="#94a3b8"
                             keyboardType="numeric"
-                            value={form.amount} 
-                            onChangeText={(txt) => {
-                                const formatted = formatCurrency(txt);
-                                setForm({ ...form, amount: formatted });
+                            value={form.amount ? parseInt(form.amount).toLocaleString('id-ID') : ''}
+                            onChangeText={(val) => {
+                                const clean = val.replace(/\D/g, '');
+                                setForm({ ...form, amount: clean });
                             }}
                         />
                     </View>
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Bukti Foto</Text>
-                    <TouchableOpacity style={styles.imageBox} onPress={pickImage}>
-                        {image ? (
-                            <Image source={{ uri: image }} style={styles.previewImg} />
-                        ) : (
-                            <View style={styles.imagePlaceholder}>
-                                <Ionicons name="images-outline" size={40} color="#ccc" />
-                                <Text style={{ color: '#aaa', marginTop: 5 }}>Klik untuk upload</Text>
-                            </View>
-                        )}
+                    {/* Date */}
+                    <Text style={styles.fieldLabel}>Tanggal Transaksi *</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor="#94a3b8"
+                        value={form.transaction_date}
+                        onChangeText={(date) => setForm({ ...form, transaction_date: date })}
+                    />
+
+                    {/* Description */}
+                    <Text style={styles.fieldLabel}>Keterangan / Catatan</Text>
+                    <TextInput
+                        style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                        multiline
+                        placeholder="Contoh: Pembayaran token listrik gedung A..."
+                        placeholderTextColor="#94a3b8"
+                        value={form.description}
+                        onChangeText={(desc) => setForm({ ...form, description: desc })}
+                    />
+
+                    {/* Receipt Image Upload */}
+                    <Text style={styles.fieldLabel}>Lampiran Bukti / Struk (Opsional)</Text>
+                    {image ? (
+                        <View style={styles.imagePreviewWrap}>
+                            <Image source={{ uri: image }} style={styles.imagePreview} />
+                            <TouchableOpacity
+                                style={styles.removeImageBtn}
+                                onPress={() => setImage(null)}
+                            >
+                                <Ionicons name="close-circle" size={24} color="#ef4444" />
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity style={styles.uploadBtn} onPress={pickImage}>
+                            <Ionicons name="camera-outline" size={24} color="#4e73df" />
+                            <Text style={styles.uploadText}>Pilih Foto Struk / Bukti</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {/* Save Button */}
+                    <TouchableOpacity
+                        style={[styles.submitButton, loading && { opacity: 0.8 }]}
+                        onPress={handleSave}
+                        disabled={loading}
+                    >
+                        <LinearGradient
+                            colors={['#1a2a6c', '#b21f1f']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.gradientBtn}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="#ffffff" />
+                            ) : (
+                                <Text style={styles.submitText}>SIMPAN TRANSAKSI</Text>
+                            )}
+                        </LinearGradient>
                     </TouchableOpacity>
                 </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Keterangan</Text>
-                    <TextInput 
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Detail transaksi..."
-                        multiline
-                        value={form.description}
-                        onChangeText={(txt) => setForm({ ...form, description: txt })}
-                    />
-                </View>
-
-                <TouchableOpacity style={[styles.saveBtn, { marginBottom: insets.bottom }]} onPress={handleSave} disabled={loading}>
-                    {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveBtnText}>Simpan Sekarang</Text>}
-                </TouchableOpacity>
             </ScrollView>
 
-            {/* Modal untuk Dropdown yang Lebih Cantik */}
-            <Modal visible={showCategoryModal} animationType="slide" transparent={true}>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
+            {/* Category Selector Modal */}
+            <Modal visible={showCategoryModal} transparent animationType="fade">
+                <View style={styles.modalBg}>
+                    <View style={styles.categorySheet}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Pilih Kategori</Text>
                             <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                                <Ionicons name="close" size={24} color="#333" />
+                                <Ionicons name="close" size={22} color="#64748b" />
                             </TouchableOpacity>
                         </View>
+
                         <FlatList
-                            data={form.type === 'income' ? categories.income : categories.expense}
-                            keyExtractor={(item) => item}
-                            renderItem={renderCategoryItem}
-                            contentContainerStyle={{ paddingBottom: 20 }}
+                            data={currentCategoryList}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.categoryItem}
+                                    onPress={() => {
+                                        setForm({ ...form, category: item });
+                                        setShowCategoryModal(false);
+                                    }}
+                                >
+                                    <Text style={styles.categoryItemText}>{item}</Text>
+                                    {form.category === item ? (
+                                        <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                                    ) : null}
+                                </TouchableOpacity>
+                            )}
+                            ListEmptyComponent={
+                                <View style={{ padding: 20, alignItems: 'center' }}>
+                                    <Text style={{ color: '#94a3b8' }}>Tidak ada kategori default.</Text>
+                                </View>
+                            }
                         />
                     </View>
                 </View>
             </Modal>
 
             <GlobalAlert
-                            visible={alertConfig.visible}
-                            title={alertConfig.title}
-                            message={alertConfig.message}
-                            type={alertConfig.type}
-                            isConfirmation={alertConfig.isConfirmation}
-                            confirmText={alertConfig.confirmText}
-                            cancelText={alertConfig.cancelText}
-                            onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
-                            onConfirm={alertConfig.onConfirm}
-                        />
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={() => setAlertConfig((prev) => ({ ...prev, visible: false }))}
+                onConfirm={alertConfig.onConfirm}
+            />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f4f6f9' },
-    header: { paddingTop: 60, paddingBottom: 25, paddingHorizontal: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-    headerTop: { flexDirection: 'row', alignItems: 'center' },
-    headerTitle: { fontSize: 22, fontWeight: 'bold', color: 'white' },
-    headerSub: { color: 'rgba(255,255,255,0.7)', fontSize: 13 },
-    backBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 },
-    
-    scrollContent: { padding: 20 },
-    typeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25, backgroundColor: '#eee', padding: 5, borderRadius: 15 },
-    typeBtn: { flex: 1, padding: 12, borderRadius: 12, alignItems: 'center' },
-    activeIncome: { backgroundColor: '#1cc88a' },
-    activeExpense: { backgroundColor: '#e74a3b' },
-    typeText: { fontWeight: 'bold', color: '#888' },
-    textWhite: { color: 'white' },
-
-    inputGroup: { marginBottom: 20 },
-    label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8, marginLeft: 5 },
-    inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e0e0e0', paddingHorizontal: 15 },
-    currencyPrefix: { fontSize: 16, fontWeight: 'bold', color: '#555', marginRight: 5 },
-    flexInput: { flex: 1, height: 50, fontSize: 16, color: '#333' },
-    input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0', padding: 15, borderRadius: 12, fontSize: 16 },
-    customDropdown: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0', padding: 15, borderRadius: 12 },
-    dropdownValue: { fontSize: 16, color: '#333' },
-    textArea: { height: 100, textAlignVertical: 'top' },
-    
-    imageBox: { height: 150, backgroundColor: '#fff', borderRadius: 15, borderStyle: 'dashed', borderWidth: 2, borderColor: '#ccc', overflow: 'hidden' },
-    imagePlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    previewImg: { width: '100%', height: '100%', resizeMode: 'cover' },
-    
-    saveBtn: { backgroundColor: '#1a2a6c', padding: 18, borderRadius: 15, alignItems: 'center', marginTop: 10, elevation: 4, shadowColor: '#1a2a6c', shadowOpacity: 0.3, shadowRadius: 10 },
-    saveBtnText: { color: 'white', fontWeight: 'bold', fontSize: 17 },
-
-    // Modal Styles
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: { backgroundColor: 'white', borderTopLeftRadius: 25, borderTopRightRadius: 25, maxHeight: '70%', padding: 20 },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 15 },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    categoryItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
-    categoryItemText: { fontSize: 16, color: '#444' }
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fc',
+    },
+    header: {
+        paddingHorizontal: 20,
+        paddingBottom: 24,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    backBtn: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        padding: 8,
+        borderRadius: 12,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    scrollContent: {
+        padding: 16,
+    },
+    card: {
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+    },
+    fieldLabel: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#334155',
+        marginTop: 14,
+        marginBottom: 6,
+    },
+    typeRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 4,
+    },
+    typeBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        gap: 6,
+    },
+    typeBtnActiveExpense: {
+        backgroundColor: '#ef4444',
+        borderColor: '#ef4444',
+    },
+    typeBtnActiveIncome: {
+        backgroundColor: '#10b981',
+        borderColor: '#10b981',
+    },
+    typeText: {
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: '#64748b',
+    },
+    typeTextActive: {
+        color: '#ffffff',
+    },
+    pickerBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    pickerText: {
+        flex: 1,
+        fontSize: 14,
+        color: '#1e293b',
+        marginLeft: 8,
+    },
+    amountInputWrap: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    currencyPrefix: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#4e73df',
+        marginRight: 6,
+    },
+    amountInput: {
+        flex: 1,
+        paddingVertical: 12,
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#1e293b',
+    },
+    input: {
+        backgroundColor: '#f8fafc',
+        borderRadius: 12,
+        padding: 12,
+        fontSize: 14,
+        color: '#1e293b',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    uploadBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        backgroundColor: '#f8fafc',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        borderStyle: 'dashed',
+        gap: 8,
+    },
+    uploadText: {
+        color: '#4e73df',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    imagePreviewWrap: {
+        height: 140,
+        borderRadius: 12,
+        overflow: 'hidden',
+        position: 'relative',
+        backgroundColor: '#f1f5f9',
+    },
+    imagePreview: {
+        width: '100%',
+        height: '100%',
+    },
+    removeImageBtn: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+    },
+    submitButton: {
+        marginTop: 24,
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    gradientBtn: {
+        paddingVertical: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    submitText: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 14,
+        letterSpacing: 0.8,
+    },
+    modalBg: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: 24,
+    },
+    categorySheet: {
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 20,
+        maxHeight: '70%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    modalTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1e293b',
+    },
+    categoryItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f1f5f9',
+    },
+    categoryItemText: {
+        fontSize: 14,
+        color: '#1e293b',
+        fontWeight: '500',
+    },
 });

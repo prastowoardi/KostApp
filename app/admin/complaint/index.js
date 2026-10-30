@@ -3,15 +3,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    Dimensions,
     FlatList,
     Modal,
     RefreshControl,
-    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -19,12 +16,15 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../../components/GlobalAlert";
 import { API_URL } from "../../../helpers/api";
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+import { formatDate } from "../../../helpers/formatters";
 
 export default function AdminComplaints() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
     title: "",
@@ -43,15 +43,16 @@ export default function AdminComplaints() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [reply, setReply] = useState("");
-  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
+      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
       const response = await axios.get(`${API_URL}/admin/complaints`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "69420",
+          Authorization: `Bearer ${cleanToken}`,
+          Accept: "application/json",
         },
       });
 
@@ -60,17 +61,17 @@ export default function AdminComplaints() {
       }
     } catch (error) {
       if (error.response?.status === 401) {
-        router.replace("/login");
+        router.replace("/");
       }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchComplaints();
-  }, []);
+  }, [fetchComplaints]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -88,194 +89,183 @@ export default function AdminComplaints() {
     }
 
     const dbStatus = status === "process" ? "in_progress" : status;
+    const targetId = selectedItem?.uuid || selectedItem?.id;
 
+    setSubmitting(true);
     try {
       const token = await AsyncStorage.getItem("userToken");
+      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
       await axios.post(
-        `${API_URL}/admin/complaints/${selectedItem.id || selectedItem.uuid}/respond`,
+        `${API_URL}/admin/complaints/${targetId}/respond`,
         {
           status: dbStatus,
           response: reply,
         },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${cleanToken}`,
+            Accept: "application/json",
+          },
         },
       );
 
       showAlert("Berhasil", "Laporan berhasil diperbarui.", "success");
-
       setModalVisible(false);
       setReply("");
       fetchComplaints();
     } catch (e) {
-      console.log("Update Error:", e.response?.data || e.message);
       showAlert(
         "Gagal",
-        "Terjadi kesalahan saat memperbarui laporan.",
+        e.response?.data?.message || "Terjadi kesalahan sistem.",
         "error",
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const filteredComplaints = complaints.filter((item) =>
-    filterStatus === "all"
-      ? true
-      : filterStatus === "process"
-        ? item.status === "in_progress"
-        : item.status === filterStatus,
-  );
+  const filteredComplaints = complaints.filter((item) => {
+    if (filterStatus === "all") return true;
+    if (filterStatus === "open") return item.status === "open";
+    if (filterStatus === "in_progress") return item.status === "in_progress";
+    if (filterStatus === "resolved") return item.status === "resolved" || item.status === "closed";
+    return true;
+  });
 
-  const stats = {
-    pending: complaints.filter((c) => c.status === "open").length,
-    process: complaints.filter((c) => c.status === "in_progress").length,
-    resolved: complaints.filter((c) => c.status === "resolved").length,
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "open":
+        return { label: "Baru", bg: "#eff6ff", text: "#3b82f6" };
+      case "in_progress":
+        return { label: "Diproses", bg: "#fffbeb", text: "#f59e0b" };
+      case "resolved":
+        return { label: "Selesai", bg: "#ecfdf5", text: "#10b981" };
+      case "closed":
+        return { label: "Ditutup", bg: "#f1f5f9", text: "#64748b" };
+      default:
+        return { label: status, bg: "#f1f5f9", text: "#64748b" };
+    }
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          borderLeftColor:
-            item.status === "open"
-              ? "#e74a3b"
-              : item.status === "in_progress"
-                ? "#f6c23e"
-                : "#1cc88a",
-        },
-      ]}
-      onPress={() => {
-        setSelectedItem(item);
-        setReply(item.response || "");
-        setModalVisible(true);
-      }}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.roomText}>
-          Kamar {item.room?.room_number || "-"} • {item.tenant?.name || "User"}
-        </Text>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor:
-                item.status === "open"
-                  ? "#ffeaea"
-                  : item.status === "in_progress"
-                    ? "#fff4e5"
-                    : "#eafaf1",
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              {
-                color:
-                  item.status === "open"
-                    ? "#e74a3b"
-                    : item.status === "in_progress"
-                      ? "#d39e00"
-                      : "#1cc88a",
-              },
-            ]}
-          >
-            {item.status === "in_progress"
-              ? "PROSES"
-              : item.status.toUpperCase()}
-          </Text>
+  const renderItem = ({ item }) => {
+    const statusStyle = getStatusBadge(item.status);
+    const targetId = item.uuid || item.id;
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push(`/admin/complaint/${targetId}`)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.cardTop}>
+          <View style={styles.categoryPill}>
+            <Text style={styles.categoryText}>
+              {item.category ? item.category.toUpperCase() : "UMUM"}
+            </Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+            <Text style={[styles.statusText, { color: statusStyle.text }]}>
+              {statusStyle.label}
+            </Text>
+          </View>
         </View>
-      </View>
-      <Text style={styles.titleText}>{item.title}</Text>
-      <Text style={styles.descText} numberOfLines={2}>
-        {item.description}
-      </Text>
-      <Text style={styles.dateText}>
-        {new Date(item.created_at).toLocaleDateString("id-ID")}
-      </Text>
-    </TouchableOpacity>
-  );
+
+        <Text style={styles.cardTitle} numberOfLines={2}>
+          {item.title}
+        </Text>
+        <Text style={styles.cardDesc} numberOfLines={2}>
+          {item.description}
+        </Text>
+
+        <View style={styles.divider} />
+
+        <View style={styles.cardFooter}>
+          <View>
+            <Text style={styles.tenantName}>
+              {item.tenant?.user?.name || item.tenant?.name || "Penghuni"}
+            </Text>
+            <Text style={styles.roomText}>
+              Kamar {item.room?.room_number || "-"} • {formatDate(item.created_at)}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.quickRespondBtn}
+            onPress={(e) => {
+              e.stopPropagation();
+              setSelectedItem(item);
+              setReply(item.response || "");
+              setModalVisible(true);
+            }}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={15} color="#4e73df" />
+            <Text style={styles.quickRespondText}>Respon</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* KOMPONEN GLOBAL ALERT KAMU */}
-      <GlobalAlert
-        visible={alertConfig.visible}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        type={alertConfig.type}
-        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
-      />
-
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
+      {/* Header */}
+      <LinearGradient
+        colors={["#1a2a6c", "#b21f1f"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
+      >
         <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Ionicons name="chevron-back" size={28} color="white" />
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Laporan Tenant</Text>
-          <TouchableOpacity onPress={onRefresh} style={styles.backBtn}>
-            <Ionicons name="refresh" size={22} color="white" />
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Komplain Penghuni</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        {/* Filter Tabs */}
+        <View style={styles.filterRow}>
+          {[
+            { key: "all", label: "Semua" },
+            { key: "open", label: "Baru" },
+            { key: "in_progress", label: "Diproses" },
+            { key: "resolved", label: "Selesai" },
+          ].map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[
+                styles.filterTab,
+                filterStatus === tab.key && styles.filterTabActive,
+              ]}
+              onPress={() => setFilterStatus(tab.key)}
+            >
+              <Text
+                style={[
+                  styles.filterTabText,
+                  filterStatus === tab.key && styles.filterTabTextActive,
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </LinearGradient>
 
-      <View style={styles.statsRow}>
-        <View style={[styles.statsCard, { borderBottomColor: "#e74a3b" }]}>
-          <Text style={styles.statsNumber}>{stats.pending}</Text>
-          <Text style={styles.statsLabel}>Pending</Text>
-        </View>
-        <View style={[styles.statsCard, { borderBottomColor: "#f6c23e" }]}>
-          <Text style={styles.statsNumber}>{stats.process}</Text>
-          <Text style={styles.statsLabel}>Proses</Text>
-        </View>
-        <View style={[styles.statsCard, { borderBottomColor: "#1cc88a" }]}>
-          <Text style={styles.statsNumber}>{stats.resolved}</Text>
-          <Text style={styles.statsLabel}>Selesai</Text>
-        </View>
-      </View>
-
-      <View style={styles.filterContainer}>
-        {["all", "open", "process", "resolved"].map((status) => (
-          <TouchableOpacity
-            key={status}
-            style={[
-              styles.filterBtn,
-              filterStatus === status && styles.filterBtnActive,
-            ]}
-            onPress={() => setFilterStatus(status)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                filterStatus === status && styles.filterTextActive,
-              ]}
-            >
-              {status === "all"
-                ? "All"
-                : status === "open"
-                  ? "PENDING"
-                  : status.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#b21f1f"
-          style={{ marginTop: 50 }}
-        />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#b21f1f" />
+          <Text style={styles.loadingText}>Memuat komplain...</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredComplaints}
-          keyExtractor={(item) => (item.id || item.uuid).toString()}
+          keyExtractor={(item) => (item.uuid || item.id || Math.random()).toString()}
           renderItem={renderItem}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 24 }]}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -284,212 +274,302 @@ export default function AdminComplaints() {
               tintColor="#b21f1f"
             />
           }
-          contentContainerStyle={{ padding: 20, paddingBottom: 50 }}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Tidak ada laporan aktif.</Text>
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubbles-outline" size={56} color="#cbd5e1" />
+              <Text style={styles.emptyTitle}>Tidak Ada Komplain</Text>
+              <Text style={styles.emptySubtitle}>
+                Tidak ada laporan keluhan dengan status ini.
+              </Text>
+            </View>
           }
         />
       )}
 
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalBg}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Respon Laporan</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.modalLabel}>Keluhan Tenant:</Text>
-              <View style={styles.bubbleTenant}>
-                <Text style={styles.modalDesc}>
-                  {selectedItem?.description}
-                </Text>
-              </View>
+      {/* Quick Respond Modal */}
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Tanggapi Komplain</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
 
-              <Text style={styles.modalLabel}>Tulis Pesan / Solusi:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Pesan akan dikirim sebagai notifikasi..."
-                multiline
-                numberOfLines={4}
-                value={reply}
-                onChangeText={setReply}
-              />
+            <Text style={styles.modalSub}>
+              {selectedItem?.title} • {selectedItem?.tenant?.name}
+            </Text>
 
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: "#f6c23e" }]}
-                  onPress={() => handleUpdateStatus("process")}
-                >
-                  <Ionicons name="construct-outline" size={18} color="white" />
-                  <Text style={styles.btnText}> Proses</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: "#1cc88a" }]}
-                  onPress={() => handleUpdateStatus("resolved")}
-                >
-                  <Ionicons
-                    name="checkmark-circle-outline"
-                    size={18}
-                    color="white"
-                  />
-                  <Text style={styles.btnText}> Selesai</Text>
-                </TouchableOpacity>
-              </View>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Tulis pesan/respon untuk penghuni..."
+              placeholderTextColor="#94a3b8"
+              multiline
+              numberOfLines={4}
+              value={reply}
+              onChangeText={setReply}
+              textAlignVertical="top"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }]}
+                onPress={() => handleUpdateStatus("process")}
+                disabled={submitting}
+              >
+                <Ionicons name="time" size={16} color="#2563eb" />
+                <Text style={[styles.modalBtnText, { color: "#2563eb" }]}>Proses</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.closeBtn, { marginBottom: insets.bottom }]}
-                onPress={() => setModalVisible(false)}
+                style={[styles.modalBtn, { backgroundColor: "#10b981", borderColor: "#10b981" }]}
+                onPress={() => handleUpdateStatus("resolved")}
+                disabled={submitting}
               >
-                <Text style={{ color: "#858796", fontWeight: "bold" }}>
-                  Tutup
-                </Text>
+                {submitting ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
+                    <Text style={[styles.modalBtnText, { color: "#ffffff" }]}>Selesaikan</Text>
+                  </>
+                )}
               </TouchableOpacity>
-            </ScrollView>
+            </View>
           </View>
         </View>
       </Modal>
+
+      <GlobalAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f4f6f9" },
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fc",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#64748b",
+    fontSize: 14,
+  },
   header: {
-    paddingTop: 60,
-    paddingBottom: 50,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   headerTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 16,
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "white" },
   backBtn: {
     backgroundColor: "rgba(255,255,255,0.2)",
     padding: 8,
     borderRadius: 12,
   },
-  statsRow: {
+  headerTitle: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  filterRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginTop: -35,
-    marginBottom: 10,
+    backgroundColor: "rgba(0,0,0,0.15)",
+    borderRadius: 12,
+    padding: 4,
   },
-  statsCard: {
-    flex: 0.31,
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 15,
+  filterTab: {
+    flex: 1,
+    paddingVertical: 8,
     alignItems: "center",
-    elevation: 4,
-    borderBottomWidth: 4,
+    borderRadius: 9,
   },
-  statsNumber: { fontSize: 18, fontWeight: "bold", color: "#2c3e50" },
-  statsLabel: {
-    fontSize: 10,
-    color: "#858796",
-    marginTop: 2,
+  filterTabActive: {
+    backgroundColor: "#ffffff",
+  },
+  filterTabText: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 12,
     fontWeight: "600",
   },
-  filterContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 15,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+  filterTabTextActive: {
+    color: "#1a2a6c",
+    fontWeight: "700",
   },
-  filterBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    backgroundColor: "#f1f3f9",
+  listContent: {
+    padding: 16,
   },
-  filterBtnActive: { backgroundColor: "#b21f1f" },
-  filterText: { fontSize: 11, fontWeight: "bold", color: "#858796" },
-  filterTextActive: { color: "white" },
   card: {
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 18,
-    marginBottom: 15,
-    borderLeftWidth: 6,
-    elevation: 3,
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
   },
-  cardHeader: {
+  cardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  roomText: { fontWeight: "bold", color: "#4e73df", fontSize: 13 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  statusText: { fontSize: 10, fontWeight: "bold" },
-  titleText: { fontSize: 16, fontWeight: "bold", color: "#2c3e50" },
-  descText: { fontSize: 13, color: "#858796", marginTop: 5 },
-  dateText: { fontSize: 11, color: "#ccc", marginTop: 10, textAlign: "right" },
-  emptyText: { textAlign: "center", marginTop: 100, color: "#858796" },
-  modalBg: {
+  categoryPill: {
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  categoryText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1e293b",
+    marginBottom: 6,
+  },
+  cardDesc: {
+    fontSize: 13,
+    color: "#64748b",
+    lineHeight: 18,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#f1f5f9",
+    marginVertical: 12,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  tenantName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+  roomText: {
+    fontSize: 11,
+    color: "#94a3b8",
+    marginTop: 2,
+  },
+  quickRespondBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eef2ff",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  quickRespondText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#4e73df",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 80,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1e293b",
+    marginTop: 12,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: "#94a3b8",
+    textAlign: "center",
+    marginTop: 4,
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
-  modalContent: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 25,
-    maxHeight: SCREEN_HEIGHT * 0.85,
+  modalSheet: {
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
+    color: "#1e293b",
   },
-  modalLabel: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#34495e",
-    marginBottom: 6,
-    textTransform: "uppercase",
+  modalSub: {
+    fontSize: 12,
+    color: "#64748b",
+    marginBottom: 14,
   },
-  bubbleTenant: {
-    backgroundColor: "#f8f9fc",
+  modalInput: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
     padding: 12,
-    borderRadius: 12,
-    marginBottom: 15,
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#d1d3e2",
-  },
-  modalDesc: { fontSize: 14, color: "#2c3e50", lineHeight: 20 },
-  input: {
-    backgroundColor: "#f1f3f9",
-    borderRadius: 12,
-    padding: 15,
-    textAlignVertical: "top",
-    marginBottom: 20,
-    height: 100,
-    borderWidth: 1,
-    borderColor: "#d1d3e2",
+    fontSize: 14,
+    color: "#1e293b",
+    minHeight: 100,
+    marginBottom: 16,
   },
   modalActions: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
+    gap: 12,
   },
   modalBtn: {
-    flex: 0.48,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    elevation: 2,
+    flex: 1,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 6,
   },
-  btnText: { color: "white", fontWeight: "bold" },
-  closeBtn: { alignItems: "center", paddingVertical: 15 },
+  modalBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
 });

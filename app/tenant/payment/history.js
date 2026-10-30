@@ -1,72 +1,60 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
     RefreshControl,
+    StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
-
-import { API_URL } from '../../../helpers/api';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { API_URL } from "../../../helpers/api";
+import { formatRupiah, formatDate, formatMonthYear } from "../../../helpers/formatters";
 
 export default function PaymentHistory() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const router = useRouter();
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
-      const [token, userData] = await Promise.all([
-        AsyncStorage.getItem("userToken"),
-        AsyncStorage.getItem("userData"),
-      ]);
-
+      const token = await AsyncStorage.getItem("userToken");
       const cleanToken = token ? token.replace(/"/g, "").trim() : "";
 
-      const user = userData ? JSON.parse(userData) : null;
-      const userName = user?.name || "User Tidak Diketahui";
-
-      console.log(`📌 [PAYMENT_HISTORY] Fetching Data User: ${userName}`);
-
       const response = await axios.get(`${API_URL}/tenant/payments`, {
-        headers: { Authorization: `Bearer ${cleanToken}` },
-        "ngrok-skip-browser-warning": "69420",
+        headers: {
+          Authorization: `Bearer ${cleanToken}`,
+          Accept: "application/json",
+        },
       });
 
-      console.log(
-        "📦 [PAYMENT_DATA_JSON]:",
-        JSON.stringify(response.data, null, 2),
-      );
-
-      const arrayData = response.data.data;
+      const arrayData = response.data?.data || response.data || [];
       if (Array.isArray(arrayData)) {
         setPayments(arrayData);
       } else {
         setPayments([]);
       }
     } catch (error) {
-      console.log("❌ [RESPONSE_ERROR] Failed Get History");
-      console.log("⚠️ [ERROR_DETAIL]:", error.response?.data || error.message);
+      console.log("Error fetch payment history:", error.response?.data || error.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -75,179 +63,242 @@ export default function PaymentHistory() {
 
   const renderItem = ({ item }) => {
     if (!item) return null;
-    const isPaid =
-      item.status === "paid" ||
-      item.status === "Lunas" ||
-      item.status === "verified";
-    const formattedDate = item.period_month
-      ? new Date(item.period_month).toLocaleDateString("id-ID", {
-          month: "long",
-          year: "numeric",
-        })
-      : "-";
+    const statusLower = (item.status || "").toLowerCase();
+    const isPaid = statusLower === "paid" || statusLower === "lunas" || statusLower === "verified";
+    const isPending = statusLower === "pending";
+
+    const statusBg = isPaid ? "#ecfdf5" : isPending ? "#fffbeb" : "#fef2f2";
+    const statusColor = isPaid ? "#10b981" : isPending ? "#f59e0b" : "#ef4444";
+    const statusLabel = isPaid ? "Lunas" : isPending ? "Menunggu" : "Ditolak";
+    const targetId = item.uuid || item.id;
 
     return (
       <TouchableOpacity
-        style={[
-          styles.card,
-          { borderLeftColor: isPaid ? "#1cc88a" : "#e74a3b" },
-        ]}
+        style={styles.card}
         onPress={() =>
           router.push({
             pathname: "/tenant/payment/detail",
-            params: { id: item.id || item.uuid },
+            params: { id: targetId },
           })
         }
+        activeOpacity={0.8}
       >
-        <View style={styles.cardContent}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.invoiceText}>
-              #{item.invoice_number || "INV-000"}
+        <View style={styles.cardHeader}>
+          <View style={styles.invoiceRow}>
+            <Ionicons name="receipt-outline" size={16} color="#4e73df" />
+            <Text style={styles.invoiceText}>#{item.invoice_number || "INV-000"}</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+            <Text style={[styles.statusBadgeText, { color: statusColor }]}>
+              {statusLabel}
             </Text>
-            <Text style={styles.dateText}>Periode: {formattedDate}</Text>
-            <Text style={styles.amountText}>
-              Rp{" "}
-              {Math.round(item.total || item.amount || 0).toLocaleString(
-                "id-ID",
-              )}
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.cardBody}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.periodLabel}>Periode Sewa</Text>
+            <Text style={styles.periodValue}>
+              {item.period_month ? formatMonthYear(item.period_month) : "-"}
+            </Text>
+            <Text style={styles.paymentDate}>
+              Dibayar: {formatDate(item.payment_date || item.created_at)}
             </Text>
           </View>
 
-          <View style={styles.rightInfo}>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: isPaid ? "#f0fdf4" : "#fff1f2" },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  { color: isPaid ? "#16a34a" : "#e11d48" },
-                ]}
-              >
-                {isPaid ? "Lunas" : "Ditolak"}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#d1d3e2" />
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={styles.amountLabel}>Total Tagihan</Text>
+            <Text style={styles.amountValue}>
+              {formatRupiah(item.total || item.amount || 0)}
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4e73df" />
-        <Text style={{ marginTop: 10, color: "#858796" }}>
-          Memuat Riwayat...
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+      {/* Header */}
+      <LinearGradient
+        colors={["#1a2a6c", "#b21f1f"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
+      >
         <View style={styles.headerTop}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Riwayat Bayar</Text>
-          <View style={{ width: 44 }} />
+          <Text style={styles.headerTitle}>Riwayat Pembayaran</Text>
+          <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
 
-      <FlatList
-        data={payments}
-        keyExtractor={(item) => item.id?.toString() || item.uuid?.toString() || Math.random().toString()}
-        renderItem={renderItem}
-        contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 40 }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={["#b21f1f"]}
-            tintColor="#b21f1f"
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyBox}>
-            <MaterialCommunityIcons name="receipt" size={80} color="#eaecf4" />
-            <Text style={styles.emptyText}>Belum ada riwayat pembayaran</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#1a2a6c" />
+          <Text style={styles.loadingText}>Memuat riwayat transaksi...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={payments}
+          keyExtractor={(item) => (item.uuid || item.id || Math.random()).toString()}
+          renderItem={renderItem}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 24 }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#b21f1f"]}
+              tintColor="#b21f1f"
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="receipt-outline" size={56} color="#cbd5e1" />
+              <Text style={styles.emptyTitle}>Belum Ada Pembayaran</Text>
+              <Text style={styles.emptySubtitle}>
+                Riwayat pembayaran sewa kamar Anda akan muncul di sini.
+              </Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FC" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fc",
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#64748b",
+    fontSize: 14,
+  },
   header: {
-    paddingTop: 60,
-    paddingBottom: 30,
     paddingHorizontal: 20,
+    paddingBottom: 24,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
   headerTop: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
   },
-  headerTitle: { color: "white", fontSize: 20, fontWeight: "bold" },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
   backBtn: {
     backgroundColor: "rgba(255,255,255,0.2)",
     padding: 8,
     borderRadius: 12,
   },
-  listContainer: { paddingHorizontal: 25, paddingTop: 30, paddingBottom: 40 },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    marginBottom: 15,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    borderLeftWidth: 5,
-    flexDirection: "row", // Tambahkan ini agar konten sejajar
-    overflow: "hidden",
+  listContent: {
+    padding: 16,
   },
-  cardContent: {
-    flex: 1,
-    padding: 20,
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+  },
+  cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  invoiceText: { fontSize: 11, color: "#858796", fontWeight: "bold" },
-  dateText: {
-    fontSize: 14,
-    color: "#2c3e50",
-    marginVertical: 4,
-    fontWeight: "500",
+  invoiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  amountText: { fontSize: 16, fontWeight: "bold", color: "#4e73df" },
-  rightInfo: { alignItems: "flex-end", marginLeft: 10 },
+  invoiceText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#1e293b",
+  },
   statusBadge: {
-    paddingVertical: 4,
     paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 8,
-    marginBottom: 5,
   },
-  statusText: { fontSize: 10, fontWeight: "bold" },
-  emptyBox: { alignItems: "center", marginTop: 100 },
-  emptyText: {
-    color: "#b7b9cc",
-    marginTop: 10,
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#f1f5f9",
+    marginVertical: 12,
+  },
+  cardBody: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  periodLabel: {
+    fontSize: 11,
+    color: "#94a3b8",
+  },
+  periodValue: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "bold",
+    color: "#1e293b",
+    marginTop: 2,
+  },
+  paymentDate: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 4,
+  },
+  amountLabel: {
+    fontSize: 11,
+    color: "#94a3b8",
+  },
+  amountValue: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#10b981",
+    marginTop: 2,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 80,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1e293b",
+    marginTop: 12,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: "#94a3b8",
+    textAlign: "center",
+    marginTop: 4,
   },
 });

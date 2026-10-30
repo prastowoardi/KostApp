@@ -3,10 +3,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    Dimensions,
     RefreshControl,
     ScrollView,
     StatusBar,
@@ -15,20 +14,18 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
 import { API_URL } from "../../helpers/api";
-
-const { width } = Dimensions.get("window");
-
-// Hitung lebar item menu (Layar dikurangi padding, dibagi 4)
-const CONTENT_PADDING = 20;
-const MENU_ITEM_WIDTH = (width - (CONTENT_PADDING * 2)) / 4;
+import { formatRupiah } from "../../helpers/formatters";
 
 export default function AdminDashboard() {
+    const insets = useSafeAreaInsets();
+    const router = useRouter();
+
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const router = useRouter();
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -38,37 +35,43 @@ export default function AdminDashboard() {
         onConfirm: () => {},
     });
 
-    const fetchAdminData = async () => {
+    const fetchAdminData = useCallback(async () => {
         try {
             const token = await AsyncStorage.getItem("userToken");
             const cleanToken = token ? token.replace(/"/g, "").trim() : "";
             const response = await axios.get(`${API_URL}/admin/stats`, {
-                headers: { 
+                headers: {
                     Authorization: `Bearer ${cleanToken}`,
-                    Accept: 'application/json'
+                    Accept: "application/json",
                 },
+                timeout: 10000,
             });
             setStats(response.data);
         } catch (error) {
-            console.log("Error Fetch:", error.message);
+            console.log("Error Fetch Admin Stats:", error.message);
             setStats({
-                total_rooms: 0, occupied_rooms: 0, vacant_rooms: 0,
-                monthly_income: 0, monthly_reports: [],
-                payment_history: [], latest_complaints: [],
+                total_rooms: 0,
+                occupied_rooms: 0,
+                vacant_rooms: 0,
+                monthly_income: 0,
+                monthly_reports: [],
+                payment_history: [],
             });
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, []);
 
-    useEffect(() => { fetchAdminData(); }, []);
+    useEffect(() => {
+        fetchAdminData();
+    }, [fetchAdminData]);
 
     const handleLogout = () => {
         setAlertConfig({
             visible: true,
-            title: "Logout",
-            message: "Yakin ingin keluar?",
+            title: "Konfirmasi Keluar",
+            message: "Apakah Anda yakin ingin keluar dari akun administrator?",
             type: "confirmation",
             onConfirm: async () => {
                 await AsyncStorage.multiRemove(["userToken", "userData"]);
@@ -81,375 +84,529 @@ export default function AdminDashboard() {
     if (loading) {
         return (
             <View style={styles.loadingWrap}>
+                <StatusBar barStyle="dark-content" />
                 <ActivityIndicator size="large" color="#b21f1f" />
+                <Text style={styles.loadingText}>Memuat Dashboard...</Text>
             </View>
         );
     }
 
-    const maxReportAmount = stats?.monthly_reports?.length > 0 
-    ? Math.max(...stats.monthly_reports.map(o => o.amount)) 
-    : 1000000;
+    const maxReportAmount = stats?.monthly_reports?.length > 0
+        ? Math.max(...stats.monthly_reports.map((o) => o.amount), 1)
+        : 1000000;
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <ScrollView 
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            <ScrollView
                 showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAdminData} colors={["#b21f1f"]} />}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={() => {
+                            setRefreshing(true);
+                            fetchAdminData();
+                        }}
+                        colors={["#b21f1f"]}
+                        tintColor="#ffffff"
+                    />
+                }
             >
                 {/* HEADER */}
-                <LinearGradient colors={["#1a2a6c", "#b21f1f"]} style={styles.header}>
+                <LinearGradient
+                    colors={["#1a2a6c", "#2a5298", "#b21f1f"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.header, { paddingTop: insets.top + 20 }]}
+                >
                     <View style={styles.headerTop}>
                         <View>
-                            <Text style={styles.adminTag}>Serrata Management</Text>
+                            <Text style={styles.adminTag}>Serrata Kost • Pengelola</Text>
                             <Text style={styles.userName}>Owner Dashboard 👋</Text>
                         </View>
-                        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-                            <Ionicons name="log-out-outline" size={22} color="white" />
+                        <TouchableOpacity
+                            onPress={handleLogout}
+                            style={styles.logoutBtn}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            <Ionicons name="log-out-outline" size={20} color="white" />
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.statsRow}>
-                        <StatItem label="Kamar" value={stats?.total_rooms || 0} icon="business" />
-                        <StatItem label="Terisi" value={stats?.occupied_rooms || 0} icon="people" />
-                        <StatItem label="Kosong" value={stats?.vacant_rooms || 0} icon="log-out" />
+
+                    {/* STATS ROW */}
+                    <View style={styles.statsCardWrapper}>
+                        <View style={styles.statsRow}>
+                            <StatItem
+                                label="Total Kamar"
+                                value={stats?.total_rooms || 0}
+                                icon="business"
+                                color="#4e73df"
+                            />
+                            <View style={styles.statDivider} />
+                            <StatItem
+                                label="Terisi"
+                                value={stats?.occupied_rooms || 0}
+                                icon="people"
+                                color="#1cc88a"
+                            />
+                            <View style={styles.statDivider} />
+                            <StatItem
+                                label="Kosong"
+                                value={stats?.vacant_rooms || 0}
+                                icon="log-out"
+                                color="#f6c23e"
+                            />
+                        </View>
                     </View>
                 </LinearGradient>
 
                 <View style={styles.content}>
-                    {/* INCOME */}
+                    {/* INCOME SUMMARY */}
                     <Text style={styles.sectionTitle}>Ringkasan Keuangan</Text>
                     <View style={styles.incomeCard}>
-                        <View>
+                        <View style={{ flex: 1 }}>
                             <Text style={styles.incomeLabel}>Pendapatan Bulan Ini</Text>
-                            <Text style={styles.incomeValue}>Rp {(stats?.monthly_income || 0).toLocaleString("id-ID")}</Text>
+                            <Text style={styles.incomeValue}>
+                                {formatRupiah(stats?.monthly_income || 0)}
+                            </Text>
                         </View>
-                        <View style={styles.incomeIconWrap}><Ionicons name="trending-up" size={28} color="#1cc88a" /></View>
+                        <View style={styles.incomeIconWrap}>
+                            <Ionicons name="trending-up" size={26} color="#10b981" />
+                        </View>
                     </View>
 
+                    {/* CHART */}
                     <View style={styles.chartCard}>
-                        <Text style={styles.chartTitle}>Trend 5 Bulan Terakhir</Text>
+                        <View style={styles.chartHeader}>
+                            <Ionicons name="bar-chart-outline" size={18} color="#4e73df" />
+                            <Text style={styles.chartTitle}>Tren Pendapatan (5 Bulan)</Text>
+                        </View>
                         <View style={styles.chartRow}>
                             {stats?.monthly_reports?.length > 0 ? (
-                                stats.monthly_reports.map((item, index) => (
-                                    <View key={index} style={styles.chartBarWrapper}>
-                                        {/* Label angka di atas bar (optional) */}
-                                        <Text style={{fontSize: 7, color: '#bdc3c7', marginBottom: 2}}>
-                                            {item.amount > 0 ? (item.amount / 1000000).toFixed(1) + 'M' : ''}
-                                        </Text>
-                                        <View
-                                            style={[
-                                                styles.chartBar,
-                                                {
-                                                    height: Math.max((item.amount / (maxReportAmount || 1)) * 60, 5),
-                                                },
-                                            ]}
-                                        />
-                                        <Text style={styles.chartMonth}>{item.month}</Text>
-                                    </View>
-                                ))
+                                stats.monthly_reports.map((item, index) => {
+                                    const heightRatio = Math.max((item.amount / maxReportAmount) * 70, 6);
+                                    const formattedMil = item.amount > 0 ? (item.amount / 1000000).toFixed(1) + "M" : "0";
+                                    return (
+                                        <View key={index} style={styles.chartBarWrapper}>
+                                            <Text style={styles.chartBarValue}>{formattedMil}</Text>
+                                            <View style={[styles.chartBar, { height: heightRatio }]} />
+                                            <Text style={styles.chartMonth}>{item.month}</Text>
+                                        </View>
+                                    );
+                                })
                             ) : (
                                 <Text style={styles.emptyText}>Data grafik belum tersedia</Text>
                             )}
                         </View>
                     </View>
 
-                    {/* MENU MANAJEMEN - SEKARANG RAPI & SEJAJAR */}
-                    <Text style={styles.sectionTitle}>Manajemen</Text>
+                    {/* MANAJEMEN MENU */}
+                    <Text style={styles.sectionTitle}>Menu Manajemen</Text>
                     <View style={styles.menuGrid}>
-                        <ControlBtn title="Bayar" icon="cash-outline" color="#1cc88a" onPress={() => router.push("/admin/payment/create")} />
-                        <ControlBtn title="Verifikasi" icon="shield-checkmark" color="#b21f1f" onPress={() => router.push("/admin/verify")} />
-                        <ControlBtn title="Komplain" icon="chatbubbles" color="#f6c23e" onPress={() => router.push("/admin/complaint")} />
-                        <ControlBtn title="Tenant" icon="people" color="#36b9cc" onPress={() => router.push("/admin/tenant")} />
-                        <ControlBtn title="Kamar" icon="bed" color="#4e73df" onPress={() => router.push("/admin/room")} />
-                        <ControlBtn title="Keuangan" icon="bar-chart-outline" color="#4e73df" onPress={() => router.push("/admin/finances")} />
+                        <ControlBtn
+                            title="Catat Bayar"
+                            icon="cash-outline"
+                            color="#10b981"
+                            bgColor="#ecfdf5"
+                            onPress={() => router.push("/admin/payment/create")}
+                        />
+                        <ControlBtn
+                            title="Verifikasi"
+                            icon="shield-checkmark-outline"
+                            color="#ef4444"
+                            bgColor="#fef2f2"
+                            onPress={() => router.push("/admin/verify")}
+                        />
+                        <ControlBtn
+                            title="Komplain"
+                            icon="chatbubbles-outline"
+                            color="#f59e0b"
+                            bgColor="#fffbeb"
+                            onPress={() => router.push("/admin/complaint")}
+                        />
+                        <ControlBtn
+                            title="Penghuni"
+                            icon="people-outline"
+                            color="#06b6d4"
+                            bgColor="#ecfeff"
+                            onPress={() => router.push("/admin/tenant")}
+                        />
+                        <ControlBtn
+                            title="Kamar"
+                            icon="bed-outline"
+                            color="#6366f1"
+                            bgColor="#eef2ff"
+                            onPress={() => router.push("/admin/room")}
+                        />
+                        <ControlBtn
+                            title="Keuangan"
+                            icon="pie-chart-outline"
+                            color="#8b5cf6"
+                            bgColor="#f5f3ff"
+                            onPress={() => router.push("/admin/finances")}
+                        />
                     </View>
 
                     {/* PEMBAYARAN TERBARU */}
                     <View style={styles.flexRow}>
                         <Text style={styles.sectionTitle}>Pembayaran Terbaru</Text>
                         <TouchableOpacity onPress={() => router.push("/admin/verify")}>
-                            <Text style={styles.seeAll}>Lihat Semua</Text>
+                            <Text style={styles.seeAll}>Lihat Semua ›</Text>
                         </TouchableOpacity>
                     </View>
 
-                    {stats?.payment_history?.map((pay, index) => {
-                        const isSuccess = pay.status.toLowerCase() === 'success' || pay.status.toLowerCase() === 'paid';
-                        const statusColor = isSuccess ? '#1cc88a' : '#4e73df';
-                        const bgColor = isSuccess ? '#eafaf1' : '#ebf0ff';
+                    {stats?.payment_history?.length > 0 ? (
+                        stats.payment_history.map((pay, index) => {
+                            const statusLower = (pay.status || "").toLowerCase();
+                            const isSuccess = statusLower === "paid" || statusLower === "success" || statusLower === "lunas";
+                            const isPending = statusLower === "pending";
 
-                        return (
-                            <View key={index} style={styles.paymentItem}>
-                                {/* Garis Indikator Samping */}
-                                <View style={[styles.payStatusLine, { backgroundColor: statusColor }]} />
-                                
-                                <View style={{ flex: 1 }}>
-                                    <Text style={styles.payName}>{pay.name} ({pay.room})</Text>
-                                    <Text style={styles.payDate}>{pay.date}</Text>
-                                </View>
+                            const statusColor = isSuccess ? "#10b981" : isPending ? "#f59e0b" : "#ef4444";
+                            const statusBg = isSuccess ? "#ecfdf5" : isPending ? "#fffbeb" : "#fef2f2";
+                            const statusLabel = isSuccess ? "Lunas" : isPending ? "Pending" : "Ditolak";
 
-                                <View style={{ alignItems: 'flex-end' }}>
-                                    <Text style={styles.payAmount}>
-                                        Rp {Number(pay.amount).toLocaleString("id-ID")}
-                                    </Text>
-                                    
-                                    <View style={[styles.statusBadge, { backgroundColor: bgColor }]}>
-                                        <Text style={[styles.statusBadgeText, { color: statusColor }]}>
-                                            {pay.status}
+                            return (
+                                <View key={index} style={styles.paymentItem}>
+                                    <View style={[styles.payStatusLine, { backgroundColor: statusColor }]} />
+                                    <View style={{ flex: 1, paddingRight: 10 }}>
+                                        <Text style={styles.payName} numberOfLines={1}>
+                                            {pay.name}
+                                        </Text>
+                                        <Text style={styles.paySub}>
+                                            Kamar {pay.room} • {pay.date}
                                         </Text>
                                     </View>
+                                    <View style={{ alignItems: "flex-end" }}>
+                                        <Text style={styles.payAmount}>
+                                            {formatRupiah(pay.amount)}
+                                        </Text>
+                                        <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+                                            <Text style={[styles.statusBadgeText, { color: statusColor }]}>
+                                                {statusLabel}
+                                            </Text>
+                                        </View>
+                                    </View>
                                 </View>
-                            </View>
-                        );
-                    })}
+                            );
+                        })
+                    ) : (
+                        <View style={styles.emptyCard}>
+                            <Ionicons name="receipt-outline" size={36} color="#cbd5e1" />
+                            <Text style={styles.emptyText}>Belum ada riwayat transaksi terbaru</Text>
+                        </View>
+                    )}
                 </View>
-                <View style={{ height: 50 }} />
             </ScrollView>
 
-            <GlobalAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type} onClose={() => setAlertConfig(p => ({...p, visible: false}))} onConfirm={alertConfig.onConfirm} />
+            <GlobalAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onClose={() => setAlertConfig((p) => ({ ...p, visible: false }))}
+                onConfirm={alertConfig.onConfirm}
+            />
         </View>
     );
 }
 
-const StatItem = ({ label, value, icon }) => (
+const StatItem = ({ label, value, icon, color }) => (
     <View style={styles.statItem}>
-        <View style={styles.statIconCircle}><Ionicons name={icon} size={18} color="white" /></View>
+        <View style={[styles.statIconCircle, { backgroundColor: color + "15" }]}>
+            <Ionicons name={icon} size={18} color={color} />
+        </View>
         <Text style={styles.statValue}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
     </View>
 );
 
-const ControlBtn = ({ title, icon, color, onPress }) => (
-    <TouchableOpacity style={styles.menuItemWrap} onPress={onPress}>
-        <View style={[styles.menuIconContainer, { backgroundColor: color }]}>
-            <Ionicons name={icon} size={26} color="white" />
+const ControlBtn = ({ title, icon, color, bgColor, onPress }) => (
+    <TouchableOpacity style={styles.menuItemWrap} onPress={onPress} activeOpacity={0.75}>
+        <View style={[styles.menuIconContainer, { backgroundColor: bgColor }]}>
+            <Ionicons name={icon} size={24} color={color} />
         </View>
-        <Text style={styles.menuText} numberOfLines={1}>{title}</Text>
+        <Text style={styles.menuText} numberOfLines={1}>
+            {title}
+        </Text>
     </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: "#f8f9fc" 
+    container: {
+        flex: 1,
+        backgroundColor: "#f8f9fc",
     },
-    loadingWrap: { 
-        flex: 1, 
-        justifyContent: "center", 
-        alignItems: "center" 
+    loadingWrap: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#f8f9fc",
+    },
+    loadingText: {
+        marginTop: 12,
+        color: "#64748b",
+        fontSize: 14,
     },
     header: {
-        paddingHorizontal: 25,
-        paddingTop: 50,
-        paddingBottom: 30,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30
+        paddingHorizontal: 20,
+        paddingBottom: 28,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
     },
     headerTop: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 20
+        marginBottom: 18,
     },
     adminTag: {
-        color: "rgba(255,255,255,0.7)",
-        fontSize: 10,
-        fontWeight: "800",
-        textTransform: "uppercase"
+        color: "rgba(255,255,255,0.75)",
+        fontSize: 11,
+        fontWeight: "700",
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
     },
     userName: {
-        color: "white",
+        color: "#ffffff",
         fontSize: 22,
-        fontWeight: "bold"
+        fontWeight: "bold",
+        marginTop: 2,
     },
     logoutBtn: {
         backgroundColor: "rgba(255,255,255,0.2)",
-        padding: 10,
-        borderRadius: 12
+        padding: 8,
+        borderRadius: 12,
+    },
+    statsCardWrapper: {
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        borderRadius: 20,
+        paddingVertical: 14,
+        paddingHorizontal: 12,
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
     },
     statsRow: {
         flexDirection: "row",
-        justifyContent: "space-around"
+        justifyContent: "space-around",
+        alignItems: "center",
     },
     statItem: {
-        alignItems: "center"
+        alignItems: "center",
+        flex: 1,
+    },
+    statDivider: {
+        width: 1,
+        height: 36,
+        backgroundColor: "#e2e8f0",
     },
     statIconCircle: {
-        backgroundColor: "rgba(255,255,255,0.15)",
         padding: 8,
-        borderRadius: 50,
-        marginBottom: 5
+        borderRadius: 20,
+        marginBottom: 4,
     },
     statValue: {
-        color: "white",
-        fontSize: 20,
-        fontWeight: "bold"
+        color: "#1e293b",
+        fontSize: 18,
+        fontWeight: "bold",
     },
     statLabel: {
-        color: "white",
-        fontSize: 10,
-        opacity: 0.8
+        color: "#64748b",
+        fontSize: 11,
+        marginTop: 2,
+        fontWeight: "500",
     },
     content: {
         paddingHorizontal: 20,
-        marginTop: 20
+        marginTop: 16,
     },
     sectionTitle: {
         fontSize: 16,
-        fontWeight: "bold",
-        color: "#2c3e50",
-        marginVertical: 10
-    },
-    incomeCard: {
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 20,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        elevation: 3
-    },
-    incomeLabel: {
-        color: "#858796",
-        fontSize: 12
-    },
-    incomeValue: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#1cc88a",
-        marginTop: 5
-    },
-    incomeIconWrap: {
-        backgroundColor: "#f0fff4",
-        padding: 10,
-        borderRadius: 12
-    },
-    chartCard: {
-        backgroundColor: "white",
-        borderRadius: 20,
-        padding: 20,
-        marginTop: 15,
-        elevation: 2
-    },
-    chartTitle: {
-        fontSize: 12,
-        color: "#858796",
-        marginBottom: 15,
-        fontWeight: "600"
-    },
-    chartRow: {
-        flexDirection: "row",
-        alignItems: "flex-end",
-        justifyContent: "space-around",
-        height: 80
-    },
-    chartBarWrapper: {
-        alignItems: "center"
-    },
-    chartBar: {
-        width: 15,
-        backgroundColor: "#4e73df",
-        borderRadius: 4
-    },
-    chartMonth: {
-        fontSize: 9,
-        color: "#858796",
-        marginTop: 5
-    },
-    horizontalMenu: {
-        paddingVertical: 10
-    },
-    controlBtn: {
-        alignItems: "center",
-        marginRight: 20
-    },
-    iconWrap: {
-        width: 55,
-        height: 55,
-        borderRadius: 18,
-        justifyContent: "center",
-        alignItems: "center",
-        elevation: 3
-    },
-    controlText: {
-        fontSize: 11,
         fontWeight: "700",
-        color: "#4e73df",
-        marginTop: 5
+        color: "#1e293b",
+        marginVertical: 12,
     },
     flexRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "center"
+        alignItems: "center",
     },
     seeAll: {
+        fontSize: 13,
         color: "#4e73df",
-        fontSize: 12,
-        fontWeight: "bold"
+        fontWeight: "600",
     },
-    paymentItem: {
-        backgroundColor: "white",
-        padding: 15,
-        borderRadius: 15,
+    incomeCard: {
+        backgroundColor: "#ffffff",
+        borderRadius: 18,
+        padding: 18,
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 10,
-        elevation: 1
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
     },
-    payStatusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 10
-    },
-    payName: {
-        fontWeight: "bold",
-        color: "#2c3e50",
-        fontSize: 13
-    },
-    payDate: {
-        color: "#858796",
-        fontSize: 11
-    },
-    payAmount: {
-        fontWeight: "bold",
+    incomeLabel: {
+        color: "#64748b",
         fontSize: 13,
-        color: "#2c3e50"
+        fontWeight: "500",
     },
-    emptyText: {
-        textAlign: 'center',
-        color: '#858796',
-        fontSize: 12,
-        marginVertical: 10
+    incomeValue: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#10b981",
+        marginTop: 4,
+    },
+    incomeIconWrap: {
+        backgroundColor: "#ecfdf5",
+        padding: 12,
+        borderRadius: 14,
+    },
+    chartCard: {
+        backgroundColor: "#ffffff",
+        borderRadius: 18,
+        padding: 18,
+        marginTop: 14,
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+    },
+    chartHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    chartTitle: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#1e293b",
+        marginLeft: 8,
+    },
+    chartRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+        height: 110,
+        paddingTop: 10,
+    },
+    chartBarWrapper: {
+        alignItems: "center",
+        flex: 1,
+    },
+    chartBarValue: {
+        fontSize: 10,
+        color: "#94a3b8",
+        fontWeight: "600",
+        marginBottom: 6,
+    },
+    chartBar: {
+        width: 22,
+        backgroundColor: "#4e73df",
+        borderRadius: 6,
+    },
+    chartMonth: {
+        fontSize: 11,
+        color: "#64748b",
+        marginTop: 8,
+        fontWeight: "500",
     },
     menuGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
-        justifyContent: "flex-start",
-        width: '100%',
-        gap: 15,
-        paddingVertical: 10,
+        justifyContent: "space-between",
     },
     menuItemWrap: {
-        width: (width - 85) / 4,
+        width: "31%",
+        backgroundColor: "#ffffff",
+        borderRadius: 16,
+        paddingVertical: 14,
         alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 15,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        elevation: 1,
+        shadowColor: "#000",
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
     },
     menuIconContainer: {
-        width: 60,
-        height: 60,
-        borderRadius: 20,
+        width: 48,
+        height: 48,
+        borderRadius: 14,
         justifyContent: "center",
         alignItems: "center",
-        elevation: 3,
+        marginBottom: 8,
     },
     menuText: {
         fontSize: 12,
-        fontWeight: "700",
-        color: "#4e73df",
-        marginTop: 8,
+        fontWeight: "600",
+        color: "#334155",
         textAlign: "center",
-        width: '100%',
-        paddingHorizontal: 5,
+    },
+    paymentItem: {
+        backgroundColor: "#ffffff",
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 10,
+        flexDirection: "row",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        position: "relative",
+        overflow: "hidden",
+    },
+    payStatusLine: {
+        width: 4,
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+    },
+    payName: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#1e293b",
+        marginLeft: 8,
+    },
+    paySub: {
+        fontSize: 12,
+        color: "#64748b",
+        marginTop: 3,
+        marginLeft: 8,
+    },
+    payAmount: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#1e293b",
+    },
+    statusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 8,
+        marginTop: 4,
+    },
+    statusBadgeText: {
+        fontSize: 11,
+        fontWeight: "700",
+    },
+    emptyCard: {
+        backgroundColor: "#ffffff",
+        borderRadius: 14,
+        padding: 24,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        borderStyle: "dashed",
+    },
+    emptyText: {
+        color: "#94a3b8",
+        fontSize: 13,
+        marginTop: 8,
     },
 });

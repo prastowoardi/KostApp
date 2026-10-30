@@ -21,28 +21,29 @@ export default function Layout() {
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
-      console.log("Notifikasi diklik dengan data:", data);
-      if (data.type === 'payment_verified' || data.type === "payment_rejected") {
+      if (!data) return;
+
+      if (data.type === 'payment_verified' || data.type === 'payment_rejected') {
         router.push({
-              pathname: '/tenant/payment/detail', 
-              params: { id: data.id } 
-          });
+          pathname: '/tenant/payment/detail',
+          params: { id: data.id || data.uuid },
+        });
       }
 
-      if (data && data.type === 'complaint_update') {
-        router.push('/tenant/complaint-history'); 
+      if (data.type === 'complaint_update') {
+        router.push('/tenant/complaint-history');
       }
     });
 
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      console.log("Notifikasi diterima:", notification);
+    const notificationListener = Notifications.addNotificationReceivedListener(() => {
+      // Notification received in foreground
     });
 
     return () => {
       subscription.remove();
       notificationListener.remove();
     };
-  }, []);
+  }, [router]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

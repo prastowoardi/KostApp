@@ -1,189 +1,347 @@
-import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Linking,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_URL } from '../../../helpers/api';
+import { formatRupiah, formatDate, formatMonthYear } from '../../../helpers/formatters';
+
+const OWNER_WHATSAPP = 'https://wa.me/6285111203521';
 
 export default function PaymentDetail() {
+    const insets = useSafeAreaInsets();
     const { id } = useLocalSearchParams();
     const router = useRouter();
+
     const [payment, setPayment] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchDetail = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                const response = await axios.get(`${API_URL}/tenant/payments/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setPayment(response.data);
-            } catch (error) {
-                console.error("Error Detail:", error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchDetail();
+    const fetchDetail = useCallback(async () => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
+            const response = await axios.get(`${API_URL}/tenant/payments/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${cleanToken}`,
+                    Accept: 'application/json',
+                },
+            });
+            setPayment(response.data?.data || response.data);
+        } catch (error) {
+            console.log('Error fetch payment detail:', error.response?.data || error.message);
+        } finally {
+            setLoading(false);
+        }
     }, [id]);
 
-    const formatRp = (num) => num ? Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "0";
-    
-    const formatPeriod = (date) => {
-        if(!date) return "";
-        const d = new Date(date);
-        return d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-    };
+    useEffect(() => {
+        fetchDetail();
+    }, [fetchDetail]);
 
-    if (loading) return (
-        <View style={styles.center}><ActivityIndicator size="large" color="#0d9488" /></View>
-    );
-
-    if (!payment) return null;
-
-    const isPaid = payment.status === 'paid';
-
-    if (!isPaid) {
+    if (loading) {
         return (
-            <SafeAreaView style={styles.containerRejected}>
-                <View style={styles.navBar}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backCircle}>
-                        <Ionicons name="arrow-back" size={24} color="#7f1d1d" />
-                    </TouchableOpacity>
-                    <Text style={styles.navTitle}>Status Pembayaran</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-
-                <ScrollView contentContainerStyle={styles.scrollRejected}>
-                    <View style={styles.alertBox}>
-                        <MaterialIcons name="error-outline" size={60} color="#e11d48" />
-                        <Text style={styles.alertTitle}>Pembayaran Tertunda</Text>
-                        <Text style={styles.alertSub}>Perlu Konfirmasi Manual</Text>
-                        <View style={styles.alertDivider} />
-                        <Text style={styles.alertDesc}>
-                            Maaf, pembayaran Anda belum dapat kami verifikasi secara otomatis. 
-                            Mohon lakukan konfirmasi manual kepada pengelola kost untuk pengecekan lebih lanjut.
-                        </Text>
-                    </View>
-
-                    <View style={styles.detailBox}>
-                        <Text style={styles.sectionTitle}>Detail Pembayaran:</Text>
-                        
-                        <View style={styles.dataRow}>
-                            <Text style={styles.dataLabel}>No. Invoice</Text>
-                            <Text style={styles.dataValue}>#{payment.invoice_number}</Text>
-                        </View>
-                        <View style={styles.dataRow}>
-                            <Text style={styles.dataLabel}>Unit Kamar</Text>
-                            <Text style={styles.dataValue}>No. {payment.room?.room_number}</Text>
-                        </View>
-                        <View style={styles.dataRow}>
-                            <Text style={styles.dataLabel}>Periode</Text>
-                            <Text style={styles.dataValue}>{formatPeriod(payment.period_month)}</Text>
-                        </View>
-                        <View style={styles.dataRow}>
-                            <Text style={styles.dataLabel}>Nominal</Text>
-                            <Text style={[styles.dataValue, { color: '#b91c1c' }]}>Rp {formatRp(payment.total)}</Text>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity 
-                        style={styles.waButton}
-                        onPress={() => Linking.openURL('https://wa.me/6285111203521')}
-                    >
-                        <FontAwesome5 name="whatsapp" size={20} color="white" />
-                        <Text style={styles.waButtonText}>Hubungi Pengelola</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-            </SafeAreaView>
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#1a2a6c" />
+                <Text style={styles.loadingText}>Memuat detail pembayaran...</Text>
+            </View>
         );
     }
 
+    if (!payment) {
+        return (
+            <View style={styles.center}>
+                <Ionicons name="receipt-outline" size={56} color="#cbd5e1" />
+                <Text style={styles.emptyTitle}>Data Pembayaran Tidak Ditemukan</Text>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Text style={styles.backButtonText}>Kembali</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
+    const statusLower = (payment.status || '').toLowerCase();
+    const isPaid = statusLower === 'paid' || statusLower === 'lunas' || statusLower === 'verified';
+    const isPending = statusLower === 'pending';
+
+    const statusColor = isPaid ? '#10b981' : isPending ? '#f59e0b' : '#ef4444';
+    const statusBg = isPaid ? '#ecfdf5' : isPending ? '#fffbeb' : '#fef2f2';
+    const statusLabel = isPaid ? 'Pembayaran Lunas' : isPending ? 'Menunggu Verifikasi' : 'Pembayaran Tertunda / Ditolak';
+
     return (
-        <SafeAreaView style={styles.containerSuccess}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <Ionicons name="chevron-back" size={28} color="#134e4a" />
-            </TouchableOpacity>
-            <ScrollView contentContainerStyle={styles.scrollSuccess} showsVerticalScrollIndicator={false}>
-                <View style={styles.card}>
-                    <View style={styles.circleAccent} />
-                    <View style={styles.header}>
-                        <Text style={styles.brandName}>Serrata Kost</Text>
-                        <Text style={styles.title}>E-Kwitansi</Text>
-                        <View style={styles.statusBadge}>
-                            <Text style={styles.statusText}>● Lunas</Text>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+            {/* Header */}
+            <LinearGradient
+                colors={isPaid ? ['#10b981', '#059669'] : ['#1a2a6c', '#b21f1f']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.header, { paddingTop: insets.top + 16 }]}
+            >
+                <View style={styles.headerTop}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                        <Ionicons name="chevron-back" size={24} color="white" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Detail Bukti Bayar</Text>
+                    <View style={{ width: 40 }} />
+                </View>
+
+                <View style={styles.statusHeaderWrap}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: isPaid ? '#ecfdf5' : '#fffbeb' }]}>
+                        <Ionicons
+                            name={isPaid ? 'checkmark-circle' : isPending ? 'time' : 'alert-circle'}
+                            size={40}
+                            color={statusColor}
+                        />
+                    </View>
+                    <Text style={styles.statusHeaderTitle}>{statusLabel}</Text>
+                    <Text style={styles.statusHeaderSub}>
+                        {isPaid
+                            ? 'Transaksi Anda telah diverifikasi oleh pengelola.'
+                            : isPending
+                            ? 'Bukti bayar Anda sedang ditinjau oleh pengelola.'
+                            : 'Mohon konfirmasi kembali kepada pengelola kost.'}
+                    </Text>
+                </View>
+            </LinearGradient>
+
+            <ScrollView
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Receipt Card */}
+                <View style={styles.receiptCard}>
+                    <View style={styles.receiptTopRow}>
+                        <Text style={styles.invoiceNumber}>
+                            #{payment.invoice_number || 'INV-000'}
+                        </Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+                            <Text style={[styles.statusBadgeText, { color: statusColor }]}>
+                                {isPaid ? 'LUNAS' : isPending ? 'PENDING' : 'DITOLAK'}
+                            </Text>
                         </View>
                     </View>
-                    <View style={styles.content}>
-                        <View style={styles.infoGrid}>
-                            <View style={styles.infoItem}><Text style={styles.label}>Penyewa</Text><Text style={styles.value}>{payment.tenant?.user?.name}</Text></View>
-                            <View style={styles.infoItem}><Text style={styles.label}>Unit Kamar</Text><Text style={[styles.value, { color: '#0d9488' }]}>No. {payment.room?.room_number}</Text></View>
-                            <View style={styles.infoItem}><Text style={styles.label}>Periode</Text><Text style={styles.value}>{formatPeriod(payment.period_month)}</Text></View>
-                            <View style={styles.infoItem}><Text style={styles.label}>No. Invoice</Text><View style={styles.invoiceNoBox}><Text style={styles.invoiceNoText}>#{payment.invoice_number}</Text></View></View>
-                        </View>
-                        <View style={styles.amountCard}>
-                            <Text style={styles.totalLabel}>Total Diterima</Text>
-                            <View style={styles.amountWrapper}><Text style={styles.currencyPrefix}>Rp</Text><Text style={styles.totalAmount}>{formatRp(payment.total)}</Text></View>
-                        </View>
-                        <View style={styles.divider} />
-                        <View style={styles.footer}><Text style={styles.footerText}>Generated by System</Text></View>
+
+                    <View style={styles.divider} />
+
+                    <ReceiptRow label="Penghuni" value={payment.tenant?.user?.name || payment.tenant?.name || '-'} />
+                    <ReceiptRow label="Unit Kamar" value={`Kamar ${payment.room?.room_number || '-'}`} />
+                    <ReceiptRow label="Periode Sewa" value={formatMonthYear(payment.period_month)} />
+                    <ReceiptRow label="Tanggal Bayar" value={formatDate(payment.payment_date || payment.created_at)} />
+                    <ReceiptRow label="Metode Bayar" value={(payment.payment_method || 'transfer').toUpperCase()} />
+
+                    {payment.verified_at ? (
+                        <ReceiptRow label="Diverifikasi Pada" value={formatDate(payment.verified_at, true)} />
+                    ) : null}
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.totalRow}>
+                        <Text style={styles.totalLabel}>Total Pembayaran</Text>
+                        <Text style={[styles.totalValue, { color: statusColor }]}>
+                            {formatRupiah(payment.total || payment.amount || 0)}
+                        </Text>
                     </View>
                 </View>
+
+                {/* WhatsApp Help Button */}
+                <TouchableOpacity
+                    style={styles.waButton}
+                    onPress={() => Linking.openURL(OWNER_WHATSAPP)}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons name="logo-whatsapp" size={20} color="white" />
+                    <Text style={styles.waButtonText}>Hubungi Pengelola Kost</Text>
+                </TouchableOpacity>
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
-const styles = StyleSheet.create({
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    
-    // REJECTED STYLES
-    containerRejected: { flex: 1, backgroundColor: '#fff1f2' },
-    navBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20 },
-    backCircle: { backgroundColor: 'white', padding: 8, borderRadius: 20, elevation: 2 },
-    navTitle: { fontSize: 16, fontWeight: '700', color: '#7f1d1d' },
-    scrollRejected: { padding: 20, alignItems: 'center' },
-    alertBox: { backgroundColor: 'white', borderRadius: 24, padding: 30, alignItems: 'center', width: '100%', marginBottom: 20, elevation: 3 },
-    alertTitle: { fontSize: 20, fontWeight: '800', color: '#1f2937', marginTop: 15 },
-    alertSub: { fontSize: 14, fontWeight: '600', color: '#e11d48', marginTop: 5 },
-    alertDivider: { height: 1, width: '40%', backgroundColor: '#fecdd3', marginVertical: 20 },
-    alertDesc: { textAlign: 'center', color: '#6b7280', lineHeight: 22, fontSize: 14 },
-    detailBox: { backgroundColor: '#ffffff', borderRadius: 20, padding: 20, width: '100%', borderLeftWidth: 5, borderLeftColor: '#e11d48' },
-    sectionTitle: { fontSize: 13, fontWeight: '700', color: '#9ca3af', marginBottom: 15, textTransform: 'uppercase' },
-    dataRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-    dataLabel: { color: '#6b7280', fontSize: 14 },
-    dataValue: { fontWeight: '700', color: '#111827', fontSize: 14 },
-    waButton: { backgroundColor: '#16a34a', flexDirection: 'row', padding: 16, borderRadius: 100, width: '100%', justifyContent: 'center', alignItems: 'center', marginTop: 25 },
-    waButtonText: { color: 'white', fontWeight: '700', marginLeft: 10, fontSize: 15 },
+const ReceiptRow = ({ label, value }) => (
+    <View style={styles.receiptRow}>
+        <Text style={styles.receiptLabel}>{label}</Text>
+        <Text style={styles.receiptValue}>{value}</Text>
+    </View>
+);
 
-    // SUCCESS STYLES (Identik dengan Web kamu)
-    containerSuccess: { flex: 1, backgroundColor: '#f0f9f9' },
-    scrollSuccess: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20, paddingBottom: 40 },
-    backButton: { padding: 10, position: 'absolute', top: 10, left: 10, zIndex: 10 },
-    card: { backgroundColor: '#ffffff', borderRadius: 32, width: '100%', maxWidth: 480, alignSelf: 'center', elevation: 10, overflow: 'hidden', position: 'relative' },
-    circleAccent: { position: 'absolute', top: -50, right: -50, width: 150, height: 150, backgroundColor: 'rgba(20, 184, 166, 0.08)', borderRadius: 75 },
-    header: { padding: 40, paddingBottom: 20 },
-    brandName: { fontSize: 12, fontWeight: '800', color: '#0d9488', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 },
-    title: { fontSize: 28, color: '#134e4a', fontWeight: '800', letterSpacing: -0.5 },
-    statusBadge: { backgroundColor: '#f0fdf4', paddingVertical: 6, paddingHorizontal: 16, borderRadius: 100, alignSelf: 'flex-start', marginTop: 12, borderWidth: 1, borderColor: '#dcfce7' },
-    statusText: { color: '#16a34a', fontSize: 12, fontWeight: '700' },
-    content: { paddingHorizontal: 40, paddingBottom: 40 },
-    divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 30 },
-    infoGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    infoItem: { width: '48%', marginBottom: 25 },
-    label: { fontSize: 10, color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-    value: { fontSize: 15, fontWeight: '700', color: '#334155' },
-    invoiceNoBox: { backgroundColor: '#f8fafc', paddingVertical: 3, paddingHorizontal: 8, borderRadius: 6, alignSelf: 'flex-start' },
-    invoiceNoText: { color: '#64748b', fontSize: 11, fontWeight: '700' },
-    amountCard: { backgroundColor: '#f0fdfa', padding: 24, borderRadius: 24, marginTop: 10, borderWidth: 1, borderColor: '#ccfbf1', alignItems: 'center' },
-    totalLabel: { fontSize: 11, color: '#115e59', fontWeight: '700', textTransform: 'uppercase', marginBottom: 6 },
-    amountWrapper: { flexDirection: 'row', alignItems: 'baseline' },
-    currencyPrefix: { fontSize: 14, color: '#115e59', fontWeight: '700', marginRight: 6 },
-    totalAmount: { fontSize: 32, fontWeight: '800', color: '#115e59' },
-    footer: { alignItems: 'center' },
-    footerText: { fontSize: 10, color: '#94a3b8', fontWeight: '500' },
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fc',
+    },
+    center: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    loadingText: {
+        marginTop: 10,
+        color: '#64748b',
+        fontSize: 14,
+    },
+    emptyTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1e293b',
+        marginTop: 12,
+    },
+    backButton: {
+        marginTop: 16,
+        backgroundColor: '#1a2a6c',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 12,
+    },
+    backButtonText: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+    },
+    header: {
+        paddingHorizontal: 20,
+        paddingBottom: 36,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    backBtn: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        padding: 8,
+        borderRadius: 12,
+    },
+    statusHeaderWrap: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    statusIconCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    statusHeaderTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    statusHeaderSub: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.85)',
+        textAlign: 'center',
+        marginTop: 4,
+        lineHeight: 18,
+    },
+    scrollContent: {
+        padding: 16,
+    },
+    receiptCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 20,
+        marginTop: -16,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+    },
+    receiptTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    invoiceNumber: {
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#1e293b',
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    statusBadgeText: {
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#f1f5f9',
+        marginVertical: 14,
+    },
+    receiptRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 7,
+    },
+    receiptLabel: {
+        fontSize: 13,
+        color: '#64748b',
+    },
+    receiptValue: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#1e293b',
+    },
+    totalRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 4,
+    },
+    totalLabel: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#1e293b',
+    },
+    totalValue: {
+        fontSize: 18,
+        fontWeight: '800',
+    },
+    waButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#10b981',
+        paddingVertical: 14,
+        borderRadius: 14,
+        marginTop: 18,
+        gap: 8,
+        elevation: 2,
+        shadowColor: '#10b981',
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 3 },
+    },
+    waButtonText: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
 });

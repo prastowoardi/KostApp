@@ -176,7 +176,7 @@ export default function LoginScreen() {
             >
                 {/* Header Gradient */}
                 <LinearGradient
-                    colors={['#1a2a6c', '#2a5298', '#b21f1f']}
+                    colors={['#0f172a', '#1e293b', '#1e3a8a']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={[styles.header, { paddingTop: insets.top + 30 }]}
@@ -200,7 +200,7 @@ export default function LoginScreen() {
 
                         <Text style={styles.inputLabel}>Email</Text>
                         <View style={styles.inputGroup}>
-                            <Ionicons name="mail-outline" size={20} color="#4e73df" style={styles.inputIcon} />
+                            <Ionicons name="mail-outline" size={20} color="#2563eb" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
                                 placeholder="nama@email.com"
@@ -215,7 +215,7 @@ export default function LoginScreen() {
 
                         <Text style={styles.inputLabel}>Password</Text>
                         <View style={styles.inputGroup}>
-                            <Ionicons name="lock-closed-outline" size={20} color="#4e73df" style={styles.inputIcon} />
+                            <Ionicons name="lock-closed-outline" size={20} color="#2563eb" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
                                 placeholder="Masukkan password"
@@ -244,7 +244,7 @@ export default function LoginScreen() {
                             activeOpacity={0.85}
                         >
                             <LinearGradient
-                                colors={['#1a2a6c', '#b21f1f']}
+                                colors={['#0f172a', '#1e3a8a']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.gradientBtn}
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         padding: 24,
         elevation: 4,
-        shadowColor: '#1a2a6c',
+        shadowColor: '#0f172a',
         shadowOpacity: 0.08,
         shadowRadius: 16,
         shadowOffset: { width: 0, height: 6 },
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         overflow: 'hidden',
         elevation: 3,
-        shadowColor: '#b21f1f',
+        shadowColor: '#1e3a8a',
         shadowOpacity: 0.3,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 4 },

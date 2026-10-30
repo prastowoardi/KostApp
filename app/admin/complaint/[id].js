@@ -104,7 +104,7 @@ export default function AdminComplaintDetail() {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#b21f1f" />
+                <ActivityIndicator size="large" color="#2563eb" />
                 <Text style={styles.loadingText}>Memuat detail laporan...</Text>
             </View>
         );
@@ -146,7 +146,7 @@ export default function AdminComplaintDetail() {
 
             {/* Header */}
             <LinearGradient
-                colors={['#1a2a6c', '#b21f1f']}
+                colors={['#0f172a', '#1e293b', '#1e3a8a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -305,7 +305,7 @@ export default function AdminComplaintDetail() {
                     </View>
 
                     {updating ? (
-                        <ActivityIndicator size="small" color="#b21f1f" style={{ marginTop: 12 }} />
+                        <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 12 }} />
                     ) : null}
                 </View>
             </ScrollView>

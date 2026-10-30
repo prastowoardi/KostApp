@@ -198,7 +198,7 @@ export default function RoomManagement() {
             <TouchableOpacity style={styles.card} onPress={() => openDetail(item)} activeOpacity={0.8}>
                 <View style={styles.cardLeft}>
                     <View style={styles.roomIcon}>
-                        <Ionicons name="bed" size={22} color="#1a2a6c" />
+                        <Ionicons name="bed" size={22} color="#1e3a8a" />
                     </View>
                     <View style={{ marginLeft: 14, flex: 1 }}>
                         <Text style={styles.roomNumber}>Kamar {item.room_number}</Text>
@@ -230,7 +230,7 @@ export default function RoomManagement() {
 
             {/* Header */}
             <LinearGradient
-                colors={['#1a2a6c', '#b21f1f']}
+                colors={['#0f172a', '#1e293b', '#1e3a8a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -276,7 +276,7 @@ export default function RoomManagement() {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#b21f1f" />
+                    <ActivityIndicator size="large" color="#1e3a8a" />
                     <Text style={styles.loadingText}>Memuat data kamar...</Text>
                 </View>
             ) : (
@@ -287,7 +287,7 @@ export default function RoomManagement() {
                     contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 24 }]}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#b21f1f']} />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563eb']} />
                     }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
@@ -306,7 +306,7 @@ export default function RoomManagement() {
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={styles.detailHeader}>
                                 <View style={styles.roomIconBig}>
-                                    <Ionicons name="business" size={28} color="#1a2a6c" />
+                                    <Ionicons name="business" size={28} color="#1e3a8a" />
                                 </View>
                                 <Text style={styles.detailTitle}>Kamar {selectedRoom?.room_number}</Text>
                                 {selectedRoom?.status ? (
@@ -385,7 +385,7 @@ export default function RoomManagement() {
 
                         <View style={styles.detailActions}>
                             <TouchableOpacity
-                                style={[styles.detailBtn, { backgroundColor: '#1a2a6c' }]}
+                                style={[styles.detailBtn, { backgroundColor: '#1e3a8a' }]}
                                 onPress={() => openEdit(selectedRoom)}
                             >
                                 <Ionicons name="create-outline" size={18} color="white" />
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     filterTabTextActive: {
-        color: '#1a2a6c',
+        color: '#1e3a8a',
         fontWeight: '700',
     },
     list: {
@@ -736,8 +736,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     statusSwitchBtnActive: {
-        backgroundColor: '#1a2a6c',
-        borderColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
+        borderColor: '#1e3a8a',
     },
     statusSwitchText: {
         fontSize: 12,
@@ -814,8 +814,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     typeChipActive: {
-        backgroundColor: '#1a2a6c',
-        borderColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
+        borderColor: '#1e3a8a',
     },
     typeChipText: {
         fontSize: 11,
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
     },
     saveBtn: {
-        backgroundColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
         paddingVertical: 14,
         borderRadius: 14,
         alignItems: 'center',

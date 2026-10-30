@@ -53,7 +53,7 @@ export default function PaymentDetail() {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#1a2a6c" />
+                <ActivityIndicator size="large" color="#1e3a8a" />
                 <Text style={styles.loadingText}>Memuat detail pembayaran...</Text>
             </View>
         );
@@ -85,7 +85,7 @@ export default function PaymentDetail() {
 
             {/* Header */}
             <LinearGradient
-                colors={isPaid ? ['#10b981', '#059669'] : ['#1a2a6c', '#b21f1f']}
+                colors={isPaid ? ['#10b981', '#059669'] : ['#0f172a', '#1e293b', '#1e3a8a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     },
     backButton: {
         marginTop: 16,
-        backgroundColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 12,

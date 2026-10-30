@@ -176,7 +176,7 @@ export default function ReportScreen() {
 
             {/* Header */}
             <LinearGradient
-                colors={['#1a2a6c', '#b21f1f']}
+                colors={['#0f172a', '#1e293b', '#1e3a8a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -295,7 +295,7 @@ export default function ReportScreen() {
                             activeOpacity={0.8}
                         >
                             <LinearGradient
-                                colors={['#1a2a6c', '#b21f1f']}
+                                colors={['#0f172a', '#1e3a8a']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.gradientBtn}
@@ -393,8 +393,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#f8fafc',
     },
     chipActive: {
-        backgroundColor: '#1a2a6c',
-        borderColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
+        borderColor: '#1e3a8a',
     },
     chipText: {
         fontSize: 12,

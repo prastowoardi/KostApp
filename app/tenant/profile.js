@@ -99,7 +99,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1a2a6c" />
+        <ActivityIndicator size="large" color="#1e3a8a" />
         <Text style={styles.loadingText}>Memuat profil...</Text>
       </View>
     );
@@ -114,7 +114,7 @@ export default function ProfileScreen() {
 
       {/* Header */}
       <LinearGradient
-        colors={["#1a2a6c", "#b21f1f"]}
+        colors={["#0f172a", "#1e293b", "#1e3a8a"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -149,8 +149,8 @@ export default function ProfileScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#b21f1f"]}
-            tintColor="#b21f1f"
+            colors={["#2563eb"]}
+            tintColor="#2563eb"
           />
         }
       >
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 30,
     fontWeight: "bold",
-    color: "#1a2a6c",
+    color: "#1e3a8a",
   },
   heroName: {
     fontSize: 20,

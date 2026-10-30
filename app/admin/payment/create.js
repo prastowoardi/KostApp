@@ -245,7 +245,7 @@ export default function CreatePayment() {
 
             {/* Header */}
             <LinearGradient
-                colors={['#1a2a6c', '#b21f1f']}
+                colors={['#0f172a', '#1e293b', '#1e3a8a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -404,7 +404,7 @@ export default function CreatePayment() {
                         activeOpacity={0.8}
                     >
                         <LinearGradient
-                            colors={['#1a2a6c', '#b21f1f']}
+                            colors={['#0f172a', '#1e3a8a']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={styles.submitGradient}
@@ -451,7 +451,7 @@ export default function CreatePayment() {
 
                         {/* Back to Home Button */}
                         <TouchableOpacity style={styles.cardHomeBtn} onPress={handleBackToHome}>
-                            <Ionicons name="home-outline" size={18} color="#1a2a6c" />
+                            <Ionicons name="home-outline" size={18} color="#1e3a8a" />
                             <Text style={styles.cardHomeBtnText}>Kembali ke Dashboard</Text>
                         </TouchableOpacity>
 
@@ -536,7 +536,7 @@ export default function CreatePayment() {
                             activeOpacity={0.8}
                         >
                             <LinearGradient
-                                colors={['#1a2a6c', '#b21f1f']}
+                                colors={['#0f172a', '#1e3a8a']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={styles.doneGradient}
@@ -773,8 +773,8 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     methodChipSelected: {
-        backgroundColor: '#1a2a6c',
-        borderColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
+        borderColor: '#1e3a8a',
     },
     methodChipText: {
         fontSize: 11,
@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     cardHomeBtnText: {
-        color: '#1a2a6c',
+        color: '#1e3a8a',
         fontWeight: 'bold',
         fontSize: 13,
     },

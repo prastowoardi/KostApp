@@ -141,7 +141,7 @@ export default function ComplaintHistoryScreen() {
 
       {/* Header */}
       <LinearGradient
-        colors={["#1a2a6c", "#b21f1f"]}
+        colors={["#0f172a", "#1e293b", "#1e3a8a"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -162,7 +162,7 @@ export default function ComplaintHistoryScreen() {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#1a2a6c" />
+          <ActivityIndicator size="large" color="#1e3a8a" />
           <Text style={styles.loadingText}>Memuat riwayat keluhan...</Text>
         </View>
       ) : (
@@ -176,8 +176,8 @@ export default function ComplaintHistoryScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={["#b21f1f"]}
-              tintColor="#b21f1f"
+              colors={["#2563eb"]}
+              tintColor="#2563eb"
             />
           }
           ListEmptyComponent={
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   createBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a2a6c",
+    backgroundColor: "#1e3a8a",
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 12,

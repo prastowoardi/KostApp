@@ -153,7 +153,7 @@ export default function PaymentScreen() {
 
             {/* Header */}
             <LinearGradient
-                colors={['#1a2a6c', '#b21f1f']}
+                colors={['#0f172a', '#1e293b', '#1e3a8a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -193,7 +193,7 @@ export default function PaymentScreen() {
                     <Text style={styles.bankTitle}>Tujuan Transfer:</Text>
                     <View style={styles.bankCard}>
                         <View style={styles.bankIconWrap}>
-                            <Ionicons name="card" size={22} color="#1a2a6c" />
+                            <Ionicons name="card" size={22} color="#1e3a8a" />
                         </View>
                         <View style={{ flex: 1, marginLeft: 12 }}>
                             <Text style={styles.bankName}>{BANK_INFO.bankName}</Text>
@@ -246,7 +246,7 @@ export default function PaymentScreen() {
                     activeOpacity={0.8}
                 >
                     <LinearGradient
-                        colors={['#1a2a6c', '#b21f1f']}
+                        colors={['#0f172a', '#1e3a8a']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={styles.gradientBtn}
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         overflow: 'hidden',
         elevation: 3,
-        shadowColor: '#b21f1f',
+        shadowColor: '#1e3a8a',
         shadowOpacity: 0.25,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 4 },

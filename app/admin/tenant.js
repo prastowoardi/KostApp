@@ -317,7 +317,7 @@ export default function ManageTenant() {
 
             {/* Header */}
             <LinearGradient
-                colors={['#1a2a6c', '#b21f1f']}
+                colors={['#0f172a', '#1e293b', '#1e3a8a']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
@@ -359,7 +359,7 @@ export default function ManageTenant() {
 
             {loading ? (
                 <View style={styles.centered}>
-                    <ActivityIndicator size="large" color="#b21f1f" />
+                    <ActivityIndicator size="large" color="#1e3a8a" />
                     <Text style={styles.loadingText}>Memuat data penghuni...</Text>
                 </View>
             ) : (
@@ -444,7 +444,7 @@ export default function ManageTenant() {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={[styles.detailBtn, { backgroundColor: '#1a2a6c' }]}
+                                style={[styles.detailBtn, { backgroundColor: '#1e3a8a' }]}
                                 onPress={() => openEditModal(selectedTenant)}
                             >
                                 <Ionicons name="create-outline" size={18} color="white" />
@@ -476,7 +476,7 @@ export default function ManageTenant() {
                 <View style={styles.detailOverlay}>
                     <View style={[styles.detailContainer, { minHeight: '55%', paddingBottom: insets.bottom + 16 }]}>
                         <View style={styles.detailHeader}>
-                            <Ionicons name="receipt-outline" size={32} color="#1a2a6c" />
+                            <Ionicons name="receipt-outline" size={32} color="#1e3a8a" />
                             <Text style={styles.detailName}>Riwayat Pembayaran</Text>
                             <Text style={styles.detailSub}>
                                 {selectedTenant?.name || selectedTenant?.user?.name}
@@ -485,7 +485,7 @@ export default function ManageTenant() {
 
                         <View style={{ flex: 1 }}>
                             {paymentLoading ? (
-                                <ActivityIndicator size="large" color="#1a2a6c" style={{ marginVertical: 40 }} />
+                                <ActivityIndicator size="large" color="#1e3a8a" style={{ marginVertical: 40 }} />
                             ) : paymentHistory.length === 0 ? (
                                 <View style={{ alignItems: 'center', marginVertical: 40 }}>
                                     <Ionicons name="document-text-outline" size={48} color="#cbd5e1" />
@@ -530,7 +530,7 @@ export default function ManageTenant() {
                         </View>
 
                         <TouchableOpacity
-                            style={[styles.saveBtn, { backgroundColor: '#1a2a6c', marginTop: 12 }]}
+                            style={[styles.saveBtn, { backgroundColor: '#1e3a8a', marginTop: 12 }]}
                             onPress={() => setPaymentModalVisible(false)}
                         >
                             <Text style={styles.saveBtnText}>Tutup</Text>
@@ -706,7 +706,7 @@ export default function ManageTenant() {
                                     }}
                                 >
                                     <View style={styles.roomItemIcon}>
-                                        <Ionicons name="business" size={20} color="#1a2a6c" />
+                                        <Ionicons name="business" size={20} color="#1e3a8a" />
                                     </View>
                                     <View style={{ marginLeft: 12, flex: 1 }}>
                                         <Text style={styles.roomNumber}>Kamar {item.room_number}</Text>
@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -901,7 +901,7 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 30,
-        backgroundColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 10,
@@ -1036,7 +1036,7 @@ const styles = StyleSheet.create({
         borderColor: '#e2e8f0',
     },
     saveBtn: {
-        backgroundColor: '#1a2a6c',
+        backgroundColor: '#1e3a8a',
         paddingVertical: 14,
         borderRadius: 14,
         alignItems: 'center',

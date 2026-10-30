@@ -17,11 +17,11 @@ const GlobalAlert = ({
     const isConfirmMode = isConfirmation || type === 'confirmation';
 
     const config = {
-        success: { icon: 'checkmark-circle', color: '#2ecc71', btn: '#2ecc71' },
-        error: { icon: 'close-circle', color: '#b21f1f', btn: '#b21f1f' },
-        warning: { icon: 'warning', color: '#f39c12', btn: '#f39c12' },
-        info: { icon: 'information-circle', color: '#1a2a6c', btn: '#1a2a6c' },
-        confirmation: { icon: 'help-circle-outline', color: '#1a2a6c', btn: '#1a2a6c' },
+        success: { icon: 'checkmark-circle', color: '#10b981', btn: '#10b981' },
+        error: { icon: 'close-circle', color: '#ef4444', btn: '#ef4444' },
+        warning: { icon: 'warning', color: '#f59e0b', btn: '#f59e0b' },
+        info: { icon: 'information-circle', color: '#1e3a8a', btn: '#1e3a8a' },
+        confirmation: { icon: 'help-circle-outline', color: '#1e3a8a', btn: '#1e3a8a' },
     };
 
     const theme = config[type] || config.success;

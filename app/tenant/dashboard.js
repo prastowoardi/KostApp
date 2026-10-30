@@ -85,7 +85,7 @@ export default function TenantDashboard() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1a2a6c" />
+        <ActivityIndicator size="large" color="#1e3a8a" />
         <Text style={styles.loadingText}>Memuat Informasi Penghuni...</Text>
       </View>
     );
@@ -112,14 +112,14 @@ export default function TenantDashboard() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#b21f1f"]}
+            colors={["#2563eb"]}
             tintColor="#ffffff"
           />
         }
       >
         {/* HEADER GRADIENT */}
         <LinearGradient
-          colors={["#1a2a6c", "#2a5298", "#b21f1f"]}
+          colors={["#0f172a", "#1e293b", "#1e3a8a"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.header, { paddingTop: insets.top + 20 }]}
@@ -271,7 +271,7 @@ export default function TenantDashboard() {
           <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Ionicons name="shield-checkmark" size={22} color="#1a2a6c" style={{ marginRight: 8 }} />
+                <Ionicons name="shield-checkmark" size={22} color="#1e3a8a" style={{ marginRight: 8 }} />
                 <Text style={styles.modalTitle}>Tata Tertib Serrata Kost</Text>
               </View>
               <TouchableOpacity onPress={() => setRulesModalVisible(false)}>
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   ruleNum: {
-    color: "#1a2a6c",
+    color: "#1e3a8a",
     fontWeight: "bold",
     fontSize: 12,
   },
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   closeRulesBtn: {
-    backgroundColor: "#1a2a6c",
+    backgroundColor: "#1e3a8a",
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",

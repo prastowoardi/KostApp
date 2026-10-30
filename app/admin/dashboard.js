@@ -185,106 +185,131 @@ export default function AdminDashboard() {
                 </LinearGradient>
 
                 <View style={styles.content}>
-                    {/* HERO FINANCIAL & CASHFLOW CARD */}
-                    <View style={styles.heroCard}>
-                        {/* Top: Laba Bersih & Arus Kas */}
-                        <View style={styles.heroTop}>
-                            <View style={{ flex: 1 }}>
-                                <View style={styles.heroLabelRow}>
-                                    <Ionicons name="cash-outline" size={16} color="#64748b" />
-                                    <Text style={styles.heroLabel}>Laba Bersih Bulan Ini</Text>
-                                    <View style={styles.monthBadge}>
-                                        <Text style={styles.monthBadgeText}>Real-time</Text>
-                                    </View>
+                    {/* CARD 1: FINANCIAL & CASHFLOW OVERVIEW */}
+                    <View style={styles.financeCard}>
+                        {/* Top: Header Row with Icon & Action */}
+                        <View style={styles.cardHeaderRow}>
+                            <View style={styles.cardHeaderLeft}>
+                                <View style={styles.cardHeaderIconWrap}>
+                                    <Ionicons name="wallet-outline" size={16} color="#059669" />
                                 </View>
-                                <Text
-                                    style={[
-                                        styles.heroAmount,
-                                        { color: (stats?.net_profit || 0) >= 0 ? "#059669" : "#dc2626" },
-                                    ]}
-                                >
-                                    {formatRupiah(stats?.net_profit || 0)}
-                                </Text>
+                                <Text style={styles.cardHeaderTitle}>Kinerja Keuangan</Text>
                             </View>
-                            <View style={styles.heroIconCircle}>
-                                <Ionicons name="trending-up" size={22} color="#10b981" />
-                            </View>
+                            <TouchableOpacity
+                                onPress={() => router.push("/admin/finances")}
+                                style={styles.cardHeaderAction}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.cardHeaderActionText}>Buku Kas ›</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Laba Bersih Big Stat */}
+                        <View style={styles.netProfitSection}>
+                            <Text style={styles.netProfitLabel}>Laba Bersih Bulan Ini</Text>
+                            <Text
+                                style={[
+                                    styles.netProfitAmount,
+                                    { color: (stats?.net_profit || 0) >= 0 ? "#059669" : "#dc2626" },
+                                ]}
+                            >
+                                {formatRupiah(stats?.net_profit || 0)}
+                            </Text>
                         </View>
 
                         {/* Income & Expense Breakdown Chips */}
                         <View style={styles.cashflowRow}>
                             <View style={styles.cashflowChipIn}>
-                                <Ionicons name="arrow-down-circle" size={14} color="#10b981" />
-                                <Text style={styles.cashflowLabel}>Masuk:</Text>
-                                <Text style={styles.cashflowValIn}>
-                                    {formatRupiah(stats?.monthly_income || 0)}
-                                </Text>
+                                <Ionicons name="arrow-down-circle" size={16} color="#10b981" />
+                                <View style={{ marginLeft: 6 }}>
+                                    <Text style={styles.cashflowLabel}>Pemasukan</Text>
+                                    <Text style={styles.cashflowValIn}>
+                                        {formatRupiah(stats?.monthly_income || 0)}
+                                    </Text>
+                                </View>
                             </View>
                             <View style={styles.cashflowChipOut}>
-                                <Ionicons name="arrow-up-circle" size={14} color="#ef4444" />
-                                <Text style={styles.cashflowLabel}>Keluar:</Text>
-                                <Text style={styles.cashflowValOut}>
-                                    {formatRupiah(stats?.monthly_expense || 0)}
-                                </Text>
+                                <Ionicons name="arrow-up-circle" size={16} color="#ef4444" />
+                                <View style={{ marginLeft: 6 }}>
+                                    <Text style={styles.cashflowLabel}>Pengeluaran</Text>
+                                    <Text style={styles.cashflowValOut}>
+                                        {formatRupiah(stats?.monthly_expense || 0)}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
 
-                        <View style={styles.heroDivider} />
-
-                        {/* Bottom: Okupansi Kamar & Piutang */}
-                        <View style={styles.occupancySection}>
-                            <View style={styles.occupancyHeaderRow}>
-                                <Text style={styles.occupancyTitle}>Status Okupansi Kamar</Text>
-                                <View style={styles.ratePill}>
-                                    <Text style={styles.ratePillText}>{occupancyRate}% Terisi</Text>
-                                </View>
+                        {/* Piutang Sewa Banner if Any */}
+                        {stats?.total_arrears > 0 ? (
+                            <View style={styles.arrearsAlertBox}>
+                                <Ionicons name="warning-outline" size={16} color="#d97706" />
+                                <Text style={styles.arrearsAlertText}>
+                                    Piutang Sewa:{" "}
+                                    <Text style={{ fontWeight: "bold" }}>
+                                        {formatRupiah(stats.total_arrears)}
+                                    </Text>{" "}
+                                    ({stats.unpaid_tenants_count} penghuni belum lunas)
+                                </Text>
                             </View>
+                        ) : null}
+                    </View>
 
-                            {/* Progress bar */}
-                            <View style={styles.progressBarTrack}>
-                                <View
-                                    style={[
-                                        styles.progressBarFill,
-                                        { width: `${Math.min(occupancyRate, 100)}%` },
-                                    ]}
-                                />
+                    {/* CARD 2: ROOM OCCUPANCY & CAPACITY */}
+                    <View style={styles.occupancyCard}>
+                        <View style={styles.cardHeaderRow}>
+                            <View style={styles.cardHeaderLeft}>
+                                <View style={[styles.cardHeaderIconWrap, { backgroundColor: "#eef2ff" }]}>
+                                    <Ionicons name="bed-outline" size={16} color="#4f46e5" />
+                                </View>
+                                <Text style={styles.cardHeaderTitle}>Status Okupansi Kamar</Text>
                             </View>
-
-                            {/* Stats 3 Columns */}
-                            <View style={styles.occupancyColsRow}>
-                                <View style={styles.occCol}>
-                                    <Text style={styles.occColVal}>{totalRooms}</Text>
-                                    <Text style={styles.occColLabel}>Total Kamar</Text>
-                                </View>
-                                <View style={styles.occColDivider} />
-                                <View style={styles.occCol}>
-                                    <Text style={[styles.occColVal, { color: "#10b981" }]}>
-                                        {occupiedRooms}
-                                    </Text>
-                                    <Text style={styles.occColLabel}>Kamar Terisi</Text>
-                                </View>
-                                <View style={styles.occColDivider} />
-                                <View style={styles.occCol}>
-                                    <Text style={[styles.occColVal, { color: "#f59e0b" }]}>
-                                        {vacantRooms}
-                                    </Text>
-                                    <Text style={styles.occColLabel}>Kamar Kosong</Text>
-                                </View>
+                            <View style={styles.ratePill}>
+                                <Text style={styles.ratePillText}>{occupancyRate}% Terisi</Text>
                             </View>
+                        </View>
 
-                            {/* Piutang Sewa Banner if Any */}
-                            {stats?.total_arrears > 0 ? (
-                                <View style={styles.arrearsAlertBox}>
-                                    <Ionicons name="warning-outline" size={16} color="#d97706" />
-                                    <Text style={styles.arrearsAlertText}>
-                                        Piutang Sewa:{" "}
-                                        <Text style={{ fontWeight: "bold" }}>
-                                            {formatRupiah(stats.total_arrears)}
-                                        </Text>{" "}
-                                        ({stats.unpaid_tenants_count} penghuni belum lunas)
-                                    </Text>
-                                </View>
-                            ) : null}
+                        {/* Progress bar */}
+                        <View style={styles.progressBarTrack}>
+                            <View
+                                style={[
+                                    styles.progressBarFill,
+                                    { width: `${Math.min(occupancyRate, 100)}%` },
+                                ]}
+                            />
+                        </View>
+
+                        {/* Stats 3 Columns (Clickable to respective modules) */}
+                        <View style={styles.occupancyColsRow}>
+                            <TouchableOpacity
+                                style={styles.occCol}
+                                onPress={() => router.push("/admin/room")}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.occColVal}>{totalRooms}</Text>
+                                <Text style={styles.occColLabel}>Total Kamar</Text>
+                            </TouchableOpacity>
+                            <View style={styles.occColDivider} />
+                            <TouchableOpacity
+                                style={styles.occCol}
+                                onPress={() => router.push("/admin/tenant")}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[styles.occColVal, { color: "#10b981" }]}>
+                                    {occupiedRooms}
+                                </Text>
+                                <Text style={styles.occColLabel}>Kamar Terisi</Text>
+                            </TouchableOpacity>
+                            <View style={styles.occColDivider} />
+                            <TouchableOpacity
+                                style={styles.occCol}
+                                onPress={() => router.push("/admin/room")}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[styles.occColVal, { color: "#f59e0b" }]}>
+                                    {vacantRooms}
+                                </Text>
+                                <Text style={styles.occColLabel}>Kamar Kosong</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
 
@@ -705,62 +730,82 @@ const styles = StyleSheet.create({
     },
     content: {
         paddingHorizontal: 20,
-        marginTop: -22,
+        marginTop: -20,
     },
-    heroCard: {
+    /* CARD 1: FINANCE */
+    financeCard: {
         backgroundColor: "#ffffff",
-        borderRadius: 22,
-        padding: 18,
+        borderRadius: 18,
+        padding: 16,
         borderWidth: 1,
         borderColor: "#e2e8f0",
         shadowColor: "#0f172a",
-        shadowOpacity: 0.07,
-        shadowRadius: 14,
-        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
         elevation: 3,
+        marginBottom: 12,
+    },
+    /* CARD 2: OCCUPANCY */
+    occupancyCard: {
+        backgroundColor: "#ffffff",
+        borderRadius: 18,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        shadowColor: "#0f172a",
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
         marginBottom: 14,
     },
-    heroTop: {
+    cardHeaderRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        marginBottom: 10,
     },
-    heroLabelRow: {
+    cardHeaderLeft: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
+        gap: 8,
     },
-    heroLabel: {
-        color: "#64748b",
-        fontSize: 12,
-        fontWeight: "600",
-    },
-    monthBadge: {
-        backgroundColor: "#f1f5f9",
-        paddingHorizontal: 7,
-        paddingVertical: 2,
-        borderRadius: 6,
-    },
-    monthBadgeText: {
-        fontSize: 10,
-        color: "#475569",
-        fontWeight: "700",
-    },
-    heroAmount: {
-        fontSize: 24,
-        fontWeight: "bold",
-        marginTop: 6,
-        letterSpacing: -0.5,
-    },
-    heroIconCircle: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
+    cardHeaderIconWrap: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
         backgroundColor: "#ecfdf5",
         justifyContent: "center",
         alignItems: "center",
-        borderWidth: 1,
-        borderColor: "#a7f3d0",
+    },
+    cardHeaderTitle: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: "#1e293b",
+    },
+    cardHeaderAction: {
+        paddingVertical: 2,
+        paddingHorizontal: 6,
+    },
+    cardHeaderActionText: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#2563eb",
+    },
+    netProfitSection: {
+        marginVertical: 4,
+    },
+    netProfitLabel: {
+        fontSize: 11,
+        color: "#64748b",
+        fontWeight: "500",
+    },
+    netProfitAmount: {
+        fontSize: 24,
+        fontWeight: "bold",
+        marginTop: 2,
+        letterSpacing: -0.5,
     },
     cashflowRow: {
         flexDirection: "row",
@@ -775,10 +820,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#f0fdf4",
         borderWidth: 1,
         borderColor: "#bbf7d0",
-        paddingVertical: 6,
-        paddingHorizontal: 8,
+        paddingVertical: 7,
+        paddingHorizontal: 10,
         borderRadius: 10,
-        gap: 4,
     },
     cashflowChipOut: {
         flex: 1,
@@ -787,10 +831,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#fef2f2",
         borderWidth: 1,
         borderColor: "#fecdd3",
-        paddingVertical: 6,
-        paddingHorizontal: 8,
+        paddingVertical: 7,
+        paddingHorizontal: 10,
         borderRadius: 10,
-        gap: 4,
     },
     cashflowLabel: {
         fontSize: 10,
@@ -801,28 +844,13 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: "700",
         color: "#15803d",
+        marginTop: 1,
     },
     cashflowValOut: {
         fontSize: 11,
         fontWeight: "700",
         color: "#b91c1c",
-    },
-    heroDivider: {
-        height: 1,
-        backgroundColor: "#f1f5f9",
-        marginVertical: 14,
-    },
-    occupancySection: {},
-    occupancyHeaderRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-    occupancyTitle: {
-        fontSize: 13,
-        fontWeight: "700",
-        color: "#334155",
+        marginTop: 1,
     },
     ratePill: {
         backgroundColor: "#ecfdf5",

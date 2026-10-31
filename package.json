@@ -8,6 +8,12 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "export": "expo export",
+    "export:prod": "NODE_ENV=production expo export --clear",
+    "build:prod": "node ./scripts/build-prod-apk.js",
+    "build:prod:universal": "node ./scripts/build-prod-apk.js --universal",
+    "build:eas:prod": "eas build --platform android --profile production",
+    "build:eas:aab": "eas build --platform android --profile production-aab",
     "lint": "expo lint"
   },
   "dependencies": {

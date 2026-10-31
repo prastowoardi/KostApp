@@ -21,6 +21,14 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://serrata.xyz"
       }
+    },
+    "production-aab": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://serrata.xyz"
+      }
     }
   }
 }

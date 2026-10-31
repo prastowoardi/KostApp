@@ -146,8 +146,6 @@ export default StyleSheet.create({
     color: "#94a3b8",
     textAlign: "center",
     marginTop: 4,
-  },
-    marginTop: 4,
     lineHeight: 18,
   },
   createBtn: {

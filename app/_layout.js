@@ -2,6 +2,8 @@ import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import { AppState, Platform } from 'react-native';
+import * as NavigationBar from 'expo-navigation-bar';
 import 'react-native-reanimated';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -20,6 +22,34 @@ export const unstable_settings = {
 
 export default function Layout() {
   const router = useRouter();
+
+  // Hide system navigation bar (Android) & keep hidden on resume
+  useEffect(() => {
+    const hideSystemNavBar = async () => {
+      if (Platform.OS === 'android') {
+        try {
+          await NavigationBar.setPositionAsync('absolute');
+          await NavigationBar.setBackgroundColorAsync('#ffffff00');
+          await NavigationBar.setVisibilityAsync('hidden');
+          await NavigationBar.setBehaviorAsync('inset-swipe');
+        } catch {
+          // Graceful fallback for non-supported device/emulators
+        }
+      }
+    };
+
+    hideSystemNavBar();
+
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        hideSystemNavBar();
+      }
+    });
+
+    return () => {
+      appStateSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
@@ -49,10 +79,15 @@ export default function Layout() {
   }, [router]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="admin" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="tenant/dashboard" options={{ gestureEnabled: false }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        autoHideHomeIndicator: true,
+      }}
+    >
+      <Stack.Screen name="index" options={{ autoHideHomeIndicator: true }} />
+      <Stack.Screen name="admin" options={{ gestureEnabled: false, autoHideHomeIndicator: true }} />
+      <Stack.Screen name="tenant/dashboard" options={{ gestureEnabled: false, autoHideHomeIndicator: true }} />
     </Stack>
   );
 }

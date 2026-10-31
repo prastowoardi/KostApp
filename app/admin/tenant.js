@@ -63,6 +63,8 @@ export default function ManageTenant() {
         id_card: '',
         address: '',
         entry_date: new Date().toISOString().split('T')[0],
+        exit_date: '',
+        status: 'active',
         emergency_contact_name: '',
         emergency_contact_phone: '',
     });
@@ -121,6 +123,8 @@ export default function ManageTenant() {
             id_card: '',
             address: '',
             entry_date: new Date().toISOString().split('T')[0],
+            exit_date: '',
+            status: 'active',
             emergency_contact_name: '',
             emergency_contact_phone: '',
         });
@@ -143,6 +147,8 @@ export default function ManageTenant() {
             id_card: tenant.id_card || '',
             address: tenant.address || '',
             entry_date: tenant.entry_date ? tenant.entry_date.split('T')[0] : new Date().toISOString().split('T')[0],
+            exit_date: tenant.exit_date ? tenant.exit_date.split('T')[0] : '',
+            status: tenant.status || 'active',
             emergency_contact_name: tenant.emergency_contact_name || '',
             emergency_contact_phone: tenant.emergency_contact_phone || '',
         });
@@ -173,6 +179,11 @@ export default function ManageTenant() {
                 const tenantId = selectedTenant?.uuid || selectedTenant?.id;
                 const payload = { ...form };
                 if (!payload.password) delete payload.password;
+                if (payload.status === 'inactive' && !payload.exit_date) {
+                    payload.exit_date = new Date().toISOString().split('T')[0];
+                } else if (payload.status === 'active') {
+                    delete payload.exit_date;
+                }
                 await axios.post(`${API_URL}/admin/tenants/update/${tenantId}`, payload, { headers });
                 showAlert('Berhasil', 'Data penghuni berhasil diperbarui.', 'success');
                 setModalVisible(false);
@@ -447,6 +458,7 @@ export default function ManageTenant() {
                                 {renderDetailRow('No. KTP', selectedTenant?.id_card)}
                                 {renderDetailRow('Alamat Asal', selectedTenant?.address)}
                                 {renderDetailRow('Tanggal Masuk', formatDate(selectedTenant?.entry_date))}
+                                {selectedTenant?.exit_date ? renderDetailRow('Tanggal Keluar', formatDate(selectedTenant.exit_date)) : null}
                                 {renderDetailRow('Kontak Darurat', selectedTenant?.emergency_contact_name)}
                                 {renderDetailRow('No. HP Darurat', selectedTenant?.emergency_contact_phone, true)}
                             </View>
@@ -574,6 +586,81 @@ export default function ManageTenant() {
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                     >
+                        {editMode && (
+                            <View style={styles.statusSection}>
+                                <Text style={styles.formLabel}>Status Penghuni *</Text>
+                                <View style={styles.statusToggleContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.statusToggleBtn,
+                                            form.status === 'active' && styles.statusToggleBtnActive,
+                                        ]}
+                                        onPress={() => setForm({ ...form, status: 'active', exit_date: '' })}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons
+                                            name="checkmark-circle"
+                                            size={18}
+                                            color={form.status === 'active' ? '#10b981' : '#94a3b8'}
+                                        />
+                                        <Text
+                                            style={[
+                                                styles.statusToggleText,
+                                                form.status === 'active' && styles.statusToggleTextActive,
+                                            ]}
+                                        >
+                                            Aktif (Menempati)
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.statusToggleBtn,
+                                            form.status === 'inactive' && styles.statusToggleBtnInactive,
+                                        ]}
+                                        onPress={() =>
+                                            setForm({
+                                                ...form,
+                                                status: 'inactive',
+                                                exit_date: form.exit_date || new Date().toISOString().split('T')[0],
+                                            })
+                                        }
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons
+                                            name="close-circle"
+                                            size={18}
+                                            color={form.status === 'inactive' ? '#ef4444' : '#94a3b8'}
+                                        />
+                                        <Text
+                                            style={[
+                                                styles.statusToggleText,
+                                                form.status === 'inactive' && styles.statusToggleTextInactive,
+                                            ]}
+                                        >
+                                            Nonaktif (Keluar)
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {form.status === 'inactive' && (
+                                    <View style={{ marginTop: 12 }}>
+                                        <Text style={styles.formLabel}>Tanggal Keluar</Text>
+                                        <TextInput
+                                            style={styles.formInput}
+                                            placeholder="YYYY-MM-DD"
+                                            placeholderTextColor="#94a3b8"
+                                            value={form.exit_date}
+                                            onChangeText={(v) => setForm({ ...form, exit_date: v })}
+                                        />
+                                        <Text style={styles.statusHintText}>
+                                            💡 Mengubah status menjadi Nonaktif akan menandai kamar kos terkait sebagai tersedia (available) kembali.
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
+                        )}
+
                         <Text style={styles.formLabel}>Pilih Kamar *</Text>
                         <TouchableOpacity
                             style={styles.pickerTrigger}

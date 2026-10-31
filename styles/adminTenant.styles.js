@@ -463,4 +463,53 @@ export default StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 14,
     },
+    statusSection: {
+        marginTop: 6,
+        marginBottom: 8,
+    },
+    statusToggleContainer: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 4,
+    },
+    statusToggleBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+    },
+    statusToggleBtnActive: {
+        borderColor: '#10b981',
+        backgroundColor: '#ecfdf5',
+    },
+    statusToggleBtnInactive: {
+        borderColor: '#ef4444',
+        backgroundColor: '#fef2f2',
+    },
+    statusToggleText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#64748b',
+    },
+    statusToggleTextActive: {
+        color: '#065f46',
+        fontWeight: '700',
+    },
+    statusToggleTextInactive: {
+        color: '#991b1b',
+        fontWeight: '700',
+    },
+    statusHintText: {
+        fontSize: 11,
+        color: '#d97706',
+        marginTop: 6,
+        lineHeight: 16,
+    },
 });

@@ -20,7 +20,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
 import { API_URL } from '../../../helpers/api';
-import { formatRupiah } from '../../../helpers/formatters';
+import {
+    addMonthsToPeriod,
+    formatDate,
+    formatPaymentDateTime,
+    formatPeriodIndo,
+    formatRupiah,
+    getLocalDateString,
+    getLocalPeriodString,
+    getLocalTimeString,
+} from '../../../helpers/formatters';
 import styles from '../../../styles/adminPaymentCreate.styles';
 
 const PAYMENT_METHODS = [
@@ -45,8 +54,9 @@ export default function CreatePayment() {
 
     const [form, setForm] = useState({
         tenant_id: '',
-        period_month: new Date().toISOString().slice(0, 7),
-        payment_date: new Date().toISOString().slice(0, 10),
+        period_month: getLocalPeriodString(),
+        payment_date: getLocalDateString(),
+        payment_time: getLocalTimeString(),
         amount: '',
         late_fee: '0',
         payment_method: 'transfer',
@@ -97,24 +107,55 @@ export default function CreatePayment() {
         }
     };
 
+    const calculateNextPeriod = (tenant) => {
+        if (!tenant) return new Date().toISOString().slice(0, 7);
+        if (tenant.next_period) return tenant.next_period;
+
+        const payments = (tenant.payments || []).filter((p) => p.status === 'paid');
+        if (payments.length > 0) {
+            const sorted = payments
+                .map((p) => (p.period_month ? p.period_month.slice(0, 7) : ''))
+                .filter(Boolean)
+                .sort();
+            const lastPaid = sorted[sorted.length - 1];
+            if (lastPaid) {
+                return addMonthsToPeriod(lastPaid, 1);
+            }
+        }
+
+        if (tenant.entry_date) {
+            return tenant.entry_date.slice(0, 7);
+        }
+
+        return new Date().toISOString().slice(0, 7);
+    };
+
+    const isPeriodAlreadyPaid = Boolean(
+        selectedTenant &&
+        selectedTenant.paid_periods &&
+        selectedTenant.paid_periods.includes(form.period_month)
+    );
+
     const selectTenant = (tenant) => {
         setSelectedTenant(tenant);
         const uuid = tenant.uuid || tenant.id;
         const roomPrice = tenant.room?.price ? tenant.room.price.toString() : '';
+        const targetPeriod = calculateNextPeriod(tenant);
 
         setForm((prev) => ({
             ...prev,
             tenant_id: uuid,
             amount: roomPrice || prev.amount,
+            period_month: targetPeriod || prev.period_month,
         }));
         setTenantPickerVisible(false);
     };
 
     const handleDateConfirm = (date) => {
         if (datePickerType === 'payment') {
-            setForm((prev) => ({ ...prev, payment_date: date.toISOString().slice(0, 10) }));
+            setForm((prev) => ({ ...prev, payment_date: getLocalDateString(date) }));
         } else if (datePickerType === 'period') {
-            setForm((prev) => ({ ...prev, period_month: date.toISOString().slice(0, 7) }));
+            setForm((prev) => ({ ...prev, period_month: getLocalPeriodString(date) }));
         }
         setDatePickerType(null);
     };
@@ -122,6 +163,15 @@ export default function CreatePayment() {
     const handleSubmit = async () => {
         if (!selectedTenant) {
             return showAlert('Data Belum Lengkap', 'Silakan pilih penghuni kost terlebih dahulu.', 'warning');
+        }
+
+        if (isPeriodAlreadyPaid) {
+            const recPeriod = selectedTenant.next_period ? formatPeriodIndo(selectedTenant.next_period) : 'bulan berikutnya';
+            return showAlert(
+                'Periode Sudah Lunas',
+                `Periode ${formatPeriodIndo(form.period_month)} sudah tercatat lunas untuk penghuni ${selectedTenant.name || selectedTenant.user?.name}.\n\nDisarankan memilih periode ${recPeriod}.`,
+                'warning'
+            );
         }
 
         const cleanAmount = parseInt(form.amount.toString().replace(/\D/g, '') || 0);
@@ -175,9 +225,12 @@ export default function CreatePayment() {
         const tenantName = receipt?.tenant_name || selectedTenant?.name || selectedTenant?.user?.name || 'Kak';
         const roomNum = receipt?.room_number || selectedTenant?.room?.room_number || '-';
         const invoiceNo = receipt?.invoice || receipt?.payment?.invoice_number || receipt?.id || '-';
-        const periodStr = receipt?.period || form.period_month;
+        const periodStr = receipt?.period || formatPeriodIndo(form.period_month);
         const totalStr = formatRupiah(receipt?.total || form.amount);
-        const dateStr = receipt?.payment_date || form.payment_date;
+        const dateStr =
+            receipt?.formatted_payment_date ||
+            receipt?.payment_datetime ||
+            formatPaymentDateTime(receipt?.payment_date || form.payment_date, receipt?.payment_time || form.payment_time);
         const methodMap = {
             cash: 'Tunai (Cash)',
             transfer: 'Transfer Bank',
@@ -223,8 +276,9 @@ export default function CreatePayment() {
         setShowSuccessModal(false);
         setForm({
             tenant_id: '',
-            period_month: new Date().toISOString().slice(0, 7),
-            payment_date: new Date().toISOString().slice(0, 10),
+            period_month: getLocalPeriodString(),
+            payment_date: getLocalDateString(),
+            payment_time: getLocalTimeString(),
             amount: '',
             late_fee: '0',
             payment_method: 'transfer',
@@ -293,16 +347,63 @@ export default function CreatePayment() {
                         <Ionicons name="chevron-down" size={20} color="#94a3b8" />
                     </TouchableOpacity>
 
+                    {/* Tenant Payment Status Card */}
+                    {selectedTenant ? (
+                        <View style={styles.tenantPaymentStatusCard}>
+                            <View style={styles.tenantPaymentStatusRow}>
+                                <View style={styles.statusBadgeIcon}>
+                                    <Ionicons
+                                        name={selectedTenant.last_paid_period ? 'shield-checkmark' : 'information-circle'}
+                                        size={18}
+                                        color="#0284c7"
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.tenantPaymentStatusTitle}>
+                                        {selectedTenant.last_paid_period
+                                            ? `Terakhir Bayar: ${formatPeriodIndo(selectedTenant.last_paid_period)}`
+                                            : 'Belum Ada Riwayat Bayar'}
+                                    </Text>
+                                    <Text style={styles.tenantPaymentStatusDesc}>
+                                        {selectedTenant.next_period
+                                            ? `Pembayaran Selanjutnya: ${formatPeriodIndo(selectedTenant.next_period)}`
+                                            : selectedTenant.entry_date
+                                                ? `Mulai sewa sejak ${formatDate(selectedTenant.entry_date)}`
+                                                : 'Mulai sewa bulan ini'}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    ) : null}
+
                     {/* Period & Payment Date Row */}
                     <View style={styles.row}>
                         <View style={{ flex: 1, marginRight: 8 }}>
                             <Text style={styles.fieldLabel}>Periode Bulan *</Text>
                             <TouchableOpacity
-                                style={styles.dateBox}
+                                style={[
+                                    styles.dateBox,
+                                    isPeriodAlreadyPaid && { borderColor: '#fca5a5', backgroundColor: '#fff1f2' },
+                                ]}
                                 onPress={() => setDatePickerType('period')}
                             >
-                                <Ionicons name="calendar-outline" size={18} color="#4e73df" />
-                                <Text style={styles.dateBoxText}>{form.period_month}</Text>
+                                <Ionicons
+                                    name={isPeriodAlreadyPaid ? 'alert-circle' : 'calendar-outline'}
+                                    size={18}
+                                    color={isPeriodAlreadyPaid ? '#e11d48' : '#4e73df'}
+                                />
+                                <View style={{ flex: 1 }}>
+                                    <Text
+                                        style={[
+                                            styles.dateBoxText,
+                                            isPeriodAlreadyPaid && { color: '#be123c' },
+                                        ]}
+                                        numberOfLines={1}
+                                    >
+                                        {formatPeriodIndo(form.period_month)}
+                                    </Text>
+                                    <Text style={styles.dateBoxSub}>({form.period_month})</Text>
+                                </View>
                             </TouchableOpacity>
                         </View>
 
@@ -313,10 +414,46 @@ export default function CreatePayment() {
                                 onPress={() => setDatePickerType('payment')}
                             >
                                 <Ionicons name="today-outline" size={18} color="#4e73df" />
-                                <Text style={styles.dateBoxText}>{form.payment_date}</Text>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.dateBoxText} numberOfLines={1}>
+                                        {formatDate(form.payment_date)}
+                                    </Text>
+                                    <Text style={styles.dateBoxSub}>
+                                        {form.payment_time ? `${form.payment_time} WIB` : form.payment_date}
+                                    </Text>
+                                </View>
                             </TouchableOpacity>
                         </View>
                     </View>
+
+                    {/* Period Warning Banner if already paid */}
+                    {isPeriodAlreadyPaid ? (
+                        <View style={styles.periodWarningCard}>
+                            <View style={styles.periodWarningHeader}>
+                                <Ionicons name="warning" size={17} color="#be123c" />
+                                <Text style={styles.periodWarningTitle}>Periode Ini Sudah Lunas!</Text>
+                            </View>
+                            <Text style={styles.periodWarningText}>
+                                Penghuni ini tercatat sudah membayar sewa untuk bulan{' '}
+                                <Text style={{ fontWeight: '700' }}>{formatPeriodIndo(form.period_month)}</Text>.
+                                {selectedTenant?.next_period ? (
+                                    <> Disarankan memilih periode <Text style={{ fontWeight: '700' }}>{formatPeriodIndo(selectedTenant.next_period)}</Text>.</>
+                                ) : null}
+                            </Text>
+                            {selectedTenant?.next_period && selectedTenant.next_period !== form.period_month ? (
+                                <TouchableOpacity
+                                    style={styles.periodWarningActionBtn}
+                                    onPress={() => setForm((prev) => ({ ...prev, period_month: selectedTenant.next_period }))}
+                                    activeOpacity={0.8}
+                                >
+                                    <Ionicons name="refresh-outline" size={15} color="#ffffff" />
+                                    <Text style={styles.periodWarningActionText}>
+                                        Gunakan {formatPeriodIndo(selectedTenant.next_period)}
+                                    </Text>
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
+                    ) : null}
 
                     {/* Amount */}
                     <Text style={styles.fieldLabel}>Nominal Pembayaran (Rp) *</Text>
@@ -437,6 +574,17 @@ export default function CreatePayment() {
                             <Text style={styles.receiptValue}>{selectedTenant?.name || receipt.tenant_name || '-'}</Text>
                         </View>
                         <View style={styles.receiptRow}>
+                            <Text style={styles.receiptLabel}>Periode:</Text>
+                            <Text style={styles.receiptValue}>{receipt.period || formatPeriodIndo(form.period_month)}</Text>
+                        </View>
+                        <View style={styles.receiptRow}>
+                            <Text style={styles.receiptLabel}>Tanggal Bayar:</Text>
+                            <Text style={styles.receiptValue}>
+                                {receipt.formatted_payment_date ||
+                                 formatPaymentDateTime(receipt.payment_date || form.payment_date, receipt.payment_time || form.payment_time)}
+                            </Text>
+                        </View>
+                        <View style={styles.receiptRow}>
                             <Text style={styles.receiptLabel}>Total Bayar:</Text>
                             <Text style={[styles.receiptValue, { color: '#10b981', fontWeight: 'bold' }]}>
                                 {formatRupiah(receipt.total || receipt.amount || form.amount)}
@@ -498,11 +646,14 @@ export default function CreatePayment() {
                             </View>
                             <View style={styles.strukRow}>
                                 <Text style={styles.strukLabel}>Periode</Text>
-                                <Text style={styles.strukVal}>{receipt?.period || form.period_month}</Text>
+                                <Text style={styles.strukVal}>{receipt?.period || formatPeriodIndo(form.period_month)}</Text>
                             </View>
                             <View style={styles.strukRow}>
                                 <Text style={styles.strukLabel}>Tanggal Bayar</Text>
-                                <Text style={styles.strukVal}>{receipt?.payment_date || form.payment_date}</Text>
+                                <Text style={styles.strukVal}>
+                                    {receipt?.formatted_payment_date ||
+                                     formatPaymentDateTime(receipt?.payment_date || form.payment_date, receipt?.payment_time || form.payment_time)}
+                                </Text>
                             </View>
                             <View style={styles.strukDivider} />
                             <View style={styles.strukRow}>
@@ -605,9 +756,18 @@ export default function CreatePayment() {
                                                 {item.name || item.user?.name}
                                             </Text>
                                             <Text style={styles.tenantListSub}>
-                                                Kamar {item.room?.room_number || '-'} • Tarik:{' '}
+                                                Kamar {item.room?.room_number || '-'} • Tarif:{' '}
                                                 {formatRupiah(item.room?.price || 0)}
                                             </Text>
+                                            {item.next_period ? (
+                                                <View style={styles.tenantListNextPeriodBadge}>
+                                                    <Text style={styles.tenantListNextPeriodText}>
+                                                        {item.last_paid_period
+                                                            ? `Terakhir: ${formatPeriodIndo(item.last_paid_period)} → Next: ${formatPeriodIndo(item.next_period)}`
+                                                            : `Periode: ${formatPeriodIndo(item.next_period)}`}
+                                                    </Text>
+                                                </View>
+                                            ) : null}
                                         </View>
                                         <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
                                     </TouchableOpacity>

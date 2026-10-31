@@ -8,13 +8,15 @@ import 'react-native-reanimated';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export const unstable_settings = {
   initialRouteName: 'index',
@@ -52,6 +54,8 @@ export default function Layout() {
   }, []);
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
       if (!data) return;
@@ -73,8 +77,8 @@ export default function Layout() {
     });
 
     return () => {
-      subscription.remove();
-      notificationListener.remove();
+      subscription?.remove?.();
+      notificationListener?.remove?.();
     };
   }, [router]);
 

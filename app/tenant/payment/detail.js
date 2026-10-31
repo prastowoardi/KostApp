@@ -9,7 +9,6 @@ import {
     Linking,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View,
@@ -17,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_URL } from '../../../helpers/api';
 import { formatRupiah, formatDate, formatMonthYear } from '../../../helpers/formatters';
+import styles from '../../../styles/tenantPaymentDetail.styles';
 
 const OWNER_WHATSAPP = 'https://wa.me/6285111203521';
 
@@ -176,172 +176,3 @@ const ReceiptRow = ({ label, value }) => (
         <Text style={styles.receiptValue}>{value}</Text>
     </View>
 );
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8f9fc',
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
-    },
-    loadingText: {
-        marginTop: 10,
-        color: '#64748b',
-        fontSize: 14,
-    },
-    emptyTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#1e293b',
-        marginTop: 12,
-    },
-    backButton: {
-        marginTop: 16,
-        backgroundColor: '#1e3a8a',
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 12,
-    },
-    backButtonText: {
-        color: '#ffffff',
-        fontWeight: 'bold',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingBottom: 36,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-    },
-    headerTop: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#ffffff',
-    },
-    backBtn: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        padding: 8,
-        borderRadius: 12,
-    },
-    statusHeaderWrap: {
-        alignItems: 'center',
-        paddingHorizontal: 20,
-    },
-    statusIconCircle: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    statusHeaderTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#ffffff',
-    },
-    statusHeaderSub: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.85)',
-        textAlign: 'center',
-        marginTop: 4,
-        lineHeight: 18,
-    },
-    scrollContent: {
-        padding: 16,
-    },
-    receiptCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 20,
-        padding: 20,
-        marginTop: -16,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-    },
-    receiptTopRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    invoiceNumber: {
-        fontSize: 15,
-        fontWeight: 'bold',
-        color: '#1e293b',
-    },
-    statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    statusBadgeText: {
-        fontSize: 11,
-        fontWeight: '700',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#f1f5f9',
-        marginVertical: 14,
-    },
-    receiptRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 7,
-    },
-    receiptLabel: {
-        fontSize: 13,
-        color: '#64748b',
-    },
-    receiptValue: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#1e293b',
-    },
-    totalRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: 4,
-    },
-    totalLabel: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#1e293b',
-    },
-    totalValue: {
-        fontSize: 18,
-        fontWeight: '800',
-    },
-    waButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#10b981',
-        paddingVertical: 14,
-        borderRadius: 14,
-        marginTop: 18,
-        gap: 8,
-        elevation: 2,
-        shadowColor: '#10b981',
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 3 },
-    },
-    waButtonText: {
-        color: '#ffffff',
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-});

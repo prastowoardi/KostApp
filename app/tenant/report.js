@@ -13,7 +13,6 @@ import {
     Platform,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
@@ -22,6 +21,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import { API_URL } from '../../helpers/api';
+import styles from '../../styles/tenantReport.styles';
 
 const CATEGORIES = [
     { id: 'facility', label: 'Fasilitas' },
@@ -321,149 +321,3 @@ export default function ReportScreen() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8f9fc',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-    },
-    headerTop: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#ffffff',
-    },
-    backBtn: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        padding: 8,
-        borderRadius: 12,
-    },
-    scrollContent: {
-        padding: 16,
-    },
-    formCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-    },
-    label: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: '#334155',
-        marginTop: 14,
-        marginBottom: 8,
-    },
-    input: {
-        backgroundColor: '#f8fafc',
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        borderRadius: 12,
-        padding: 12,
-        fontSize: 14,
-        color: '#1e293b',
-    },
-    chipGroup: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 4,
-    },
-    chip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-    },
-    chipActive: {
-        backgroundColor: '#1e3a8a',
-        borderColor: '#1e3a8a',
-    },
-    chipText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#64748b',
-    },
-    chipTextActive: {
-        color: '#ffffff',
-        fontWeight: '700',
-    },
-    imageGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 10,
-        marginTop: 4,
-    },
-    imageWrapper: {
-        width: 76,
-        height: 76,
-        borderRadius: 12,
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    imgPreview: {
-        width: '100%',
-        height: '100%',
-    },
-    deleteBadge: {
-        position: 'absolute',
-        top: 4,
-        right: 4,
-        backgroundColor: '#ef4444',
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    addPhotoBtn: {
-        width: 76,
-        height: 76,
-        borderRadius: 12,
-        borderWidth: 1.5,
-        borderColor: '#cbd5e1',
-        borderStyle: 'dashed',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f8fafc',
-    },
-    addPhotoText: {
-        fontSize: 11,
-        fontWeight: '600',
-        color: '#4e73df',
-        marginTop: 2,
-    },
-    submitBtn: {
-        marginTop: 24,
-        borderRadius: 14,
-        overflow: 'hidden',
-    },
-    gradientBtn: {
-        paddingVertical: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    submitBtnText: {
-        color: '#ffffff',
-        fontWeight: 'bold',
-        fontSize: 14,
-        letterSpacing: 0.6,
-    },
-});

@@ -5,13 +5,11 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Dimensions,
     Image,
     Modal,
     Pressable,
     ScrollView,
     StatusBar,
-    StyleSheet,
     Text,
     TouchableOpacity,
     View,
@@ -20,8 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
 import api from '../../../helpers/api';
 import { formatRupiah, formatDate, getStorageUrl } from '../../../helpers/formatters';
-
-const { width, height } = Dimensions.get('window');
+import styles from '../../../styles/adminFinanceDetail.styles';
 
 export default function FinanceDetail() {
     const insets = useSafeAreaInsets();
@@ -221,208 +218,3 @@ const DetailRow = ({ label, value }) => (
         <Text style={styles.rowValue}>{value}</Text>
     </View>
 );
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8f9fc',
-    },
-    centered: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 10,
-        color: '#64748b',
-        fontSize: 14,
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingBottom: 36,
-        alignItems: 'center',
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-    },
-    headerTop: {
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    backBtn: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        padding: 8,
-        borderRadius: 12,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#ffffff',
-    },
-    iconCircle: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        backgroundColor: '#ffffff',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 10,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-    },
-    headerAmount: {
-        fontSize: 26,
-        fontWeight: '800',
-        color: '#ffffff',
-    },
-    headerType: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.9)',
-        marginTop: 2,
-        fontWeight: '600',
-    },
-    detailCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 20,
-        padding: 20,
-        marginHorizontal: 16,
-        marginTop: -18,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-    },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f8fafc',
-    },
-    rowLabel: {
-        fontSize: 13,
-        color: '#64748b',
-    },
-    rowValue: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1e293b',
-        maxWidth: '65%',
-        textAlign: 'right',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#f1f5f9',
-        marginVertical: 16,
-    },
-    label: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: '#334155',
-        marginBottom: 8,
-    },
-    imageWrapper: {
-        height: 180,
-        borderRadius: 14,
-        overflow: 'hidden',
-        position: 'relative',
-        backgroundColor: '#f1f5f9',
-    },
-    evidenceImage: {
-        width: '100%',
-        height: '100%',
-    },
-    zoomOverlay: {
-        position: 'absolute',
-        bottom: 8,
-        right: 8,
-        backgroundColor: 'rgba(0,0,0,0.65)',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    zoomText: {
-        color: '#ffffff',
-        fontSize: 11,
-        fontWeight: '600',
-    },
-    noImage: {
-        height: 90,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        borderStyle: 'dashed',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f8fafc',
-    },
-    noImageText: {
-        color: '#94a3b8',
-        fontSize: 12,
-        marginTop: 6,
-    },
-    noteText: {
-        fontSize: 12,
-        color: '#94a3b8',
-        marginBottom: 4,
-    },
-    actionContainer: {
-        paddingHorizontal: 16,
-        marginTop: 18,
-    },
-    deleteBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 14,
-        backgroundColor: '#fef2f2',
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: '#fecaca',
-        gap: 6,
-    },
-    deleteText: {
-        color: '#ef4444',
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.85)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    modalContent: {
-        width: '100%',
-        backgroundColor: '#ffffff',
-        borderRadius: 20,
-        padding: 16,
-        alignItems: 'center',
-    },
-    modalHeader: {
-        width: '100%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    modalTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#1e293b',
-    },
-    fullImage: {
-        width: width * 0.85,
-        height: height * 0.55,
-    },
-});

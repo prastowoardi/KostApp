@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
-import { API_URL } from "../../helpers/api";
+import api, { API_URL } from "../../helpers/api";
 import { formatRupiah, getInitials } from "../../helpers/formatters";
 import styles from "../../styles/adminDashboard.styles";
 
@@ -28,12 +28,15 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [sendingReminderId, setSendingReminderId] = useState(null);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
         title: "",
         message: "",
         type: "info",
+        confirmText: "OK",
+        cancelText: "Batal",
         onConfirm: () => {},
     });
 
@@ -91,12 +94,8 @@ export default function AdminDashboard() {
         });
     };
 
-    const handleSendReminder = (tenant) => {
-        if (!tenant.phone) {
-            return Alert.alert("Nomor Tidak Ada", "Nomor telepon penghuni ini belum terdaftar.");
-        }
-
-        const cleanPhone = tenant.phone.toString().replace(/\D/g, "");
+    const buildManualWaUrl = (tenant) => {
+        const cleanPhone = tenant.phone ? tenant.phone.toString().replace(/\D/g, "") : "";
         const waPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
         const days = tenant.days_left;
         const dueText =
@@ -113,9 +112,84 @@ export default function AdminDashboard() {
             `Mohon untuk segera melakukan pembayaran atau konfirmasi jika sudah melakukan transfer ya Kak.\n\n` +
             `Terima kasih banyak atas kerjasamanya! 🙏✨`;
 
-        const url = `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
-        Linking.openURL(url).catch(() => {
-            Alert.alert("Error", "Gagal membuka aplikasi WhatsApp.");
+        return `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
+    };
+
+    const executeSendReminder = async (tenant) => {
+        setAlertConfig((p) => ({ ...p, visible: false }));
+        setSendingReminderId(tenant.id);
+
+        try {
+            const res = await api.post("/admin/send-reminder", {
+                tenant_id: tenant.id,
+                due_date: tenant.due_date,
+                days_left: tenant.days_left,
+            });
+
+            if (res.data?.status === "success") {
+                setAlertConfig({
+                    visible: true,
+                    title: "Berhasil Terkirim! 🎉",
+                    message: res.data.message || `Pesan penagihan otomatis berhasil dikirim ke WhatsApp *${tenant.name}*.`,
+                    type: "success",
+                    confirmText: "OK",
+                    onConfirm: () => setAlertConfig((p) => ({ ...p, visible: false })),
+                });
+            } else {
+                throw new Error(res.data?.message || "Gagal mengirim pengingat tagihan.");
+            }
+        } catch (error) {
+            console.log("Send reminder error:", error);
+            const errMsg = error.response?.data?.message || error.message || "Gagal terhubung ke WhatsApp Gateway.";
+            const waUrl = error.response?.data?.wa_url || buildManualWaUrl(tenant);
+
+            setAlertConfig({
+                visible: true,
+                title: "Gateway Tidak Terhubung",
+                message: `${errMsg}\n\nIngin membuka aplikasi WhatsApp secara manual di HP Anda?`,
+                type: "warning",
+                confirmText: "Buka WA Manual",
+                cancelText: "Batal",
+                onConfirm: () => {
+                    setAlertConfig((p) => ({ ...p, visible: false }));
+                    Linking.openURL(waUrl).catch(() => {
+                        Alert.alert("Error", "Gagal membuka aplikasi WhatsApp.");
+                    });
+                },
+            });
+        } finally {
+            setSendingReminderId(null);
+        }
+    };
+
+    const handleSendReminder = (tenant) => {
+        if (!tenant.phone) {
+            return setAlertConfig({
+                visible: true,
+                title: "Nomor Tidak Ada",
+                message: `Nomor telepon penghuni *${tenant.name}* belum terdaftar di sistem.`,
+                type: "error",
+                confirmText: "OK",
+                onConfirm: () => setAlertConfig((p) => ({ ...p, visible: false })),
+            });
+        }
+
+        const days = tenant.days_left;
+        const dueDesc =
+            days < 0
+                ? `telah telat *${Math.abs(days)} hari*`
+                : days === 0
+                ? `jatuh tempo *HARI INI*`
+                : `akan jatuh tempo dalam *${days} hari lagi*`;
+
+        setAlertConfig({
+            visible: true,
+            title: "Kirim Tagihan Otomatis?",
+            message: `Kirim pesan WhatsApp pengingat tagihan otomatis ke *${tenant.name}* (Kamar ${tenant.room})?\n\nStatus: ${dueDesc}\nTotal: *${formatRupiah(tenant.price)}*`,
+            type: "confirmation",
+            confirmText: "Ya",
+            cancelText: "Batal",
+            onConfirm: () => executeSendReminder(tenant),
         });
     };
 
@@ -443,12 +517,19 @@ export default function AdminDashboard() {
 
                                         {/* Direct WhatsApp Reminder Button */}
                                         <TouchableOpacity
-                                            style={styles.remindWaBtn}
+                                            style={[styles.remindWaBtn, sendingReminderId === t.id && { opacity: 0.7 }]}
                                             onPress={() => handleSendReminder(t)}
                                             activeOpacity={0.8}
+                                            disabled={sendingReminderId === t.id}
                                         >
-                                            <Ionicons name="logo-whatsapp" size={16} color="#ffffff" />
-                                            <Text style={styles.remindWaBtnText}>Tagih</Text>
+                                            {sendingReminderId === t.id ? (
+                                                <ActivityIndicator size="small" color="#ffffff" />
+                                            ) : (
+                                                <>
+                                                    <Ionicons name="logo-whatsapp" size={15} color="#ffffff" />
+                                                    <Text style={styles.remindWaBtnText}>Tagih</Text>
+                                                </>
+                                            )}
                                         </TouchableOpacity>
                                     </View>
                                 );
@@ -640,6 +721,8 @@ export default function AdminDashboard() {
                 title={alertConfig.title}
                 message={alertConfig.message}
                 type={alertConfig.type}
+                confirmText={alertConfig.confirmText}
+                cancelText={alertConfig.cancelText}
                 onClose={() => setAlertConfig((p) => ({ ...p, visible: false }))}
                 onConfirm={alertConfig.onConfirm}
             />

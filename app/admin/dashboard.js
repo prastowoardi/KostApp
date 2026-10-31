@@ -516,7 +516,7 @@ export default function AdminDashboard() {
                                                 </View>
                                             </View>
                                             <View style={styles.dueItemSubRow}>
-                                                <Ionicons name="bed-outline" size={12} color="#64748b" />
+                                                <Ionicons name="bed-outline" size={14} color="#64748b" />
                                                 <Text style={styles.dueItemSubText}>Kamar {t.room}</Text>
                                                 <Text style={styles.dueItemDot}>•</Text>
                                                 <Text style={styles.dueItemAmountText}>
@@ -696,7 +696,7 @@ export default function AdminDashboard() {
                                             {pay.name}
                                         </Text>
                                         <View style={styles.paySubRow}>
-                                            <Ionicons name="bed-outline" size={12} color="#64748b" />
+                                            <Ionicons name="bed-outline" size={14} color="#64748b" />
                                             <Text style={styles.paySubText}>Kamar {pay.room}</Text>
                                             <Text style={styles.paySubDot}>•</Text>
                                             <Text style={styles.paySubText}>{pay.date}</Text>
@@ -707,7 +707,7 @@ export default function AdminDashboard() {
                                             {formatRupiah(pay.amount)}
                                         </Text>
                                         <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
-                                            <Ionicons name={statusIcon} size={11} color={statusColor} />
+                                            <Ionicons name={statusIcon} size={13} color={statusColor} />
                                             <Text style={[styles.statusBadgeText, { color: statusColor }]}>
                                                 {statusLabel}
                                             </Text>
@@ -745,7 +745,7 @@ export default function AdminDashboard() {
 const ControlBtn = ({ title, subtitle, icon, color, bgColor, badgeCount = 0, onPress }) => (
     <TouchableOpacity style={styles.menuItemWrap} onPress={onPress} activeOpacity={0.75}>
         <View style={[styles.menuIconContainer, { backgroundColor: bgColor }]}>
-            <Ionicons name={icon} size={22} color={color} />
+            <Ionicons name={icon} size={24} color={color} />
             {badgeCount > 0 ? (
                 <View style={styles.badgePill}>
                     <Text style={styles.badgePillText}>{badgeCount > 99 ? "99+" : badgeCount}</Text>

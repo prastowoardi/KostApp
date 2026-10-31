@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
   container: {
@@ -13,13 +14,16 @@ export default StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: "#64748b",
-    fontSize: 14,
+    fontSize: responsiveFont(14),
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: moderateScale(20),
+    paddingBottom: moderateScale(24),
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   headerTop: {
     flexDirection: "row",
@@ -27,7 +31,7 @@ export default StyleSheet.create({
     justifyContent: "space-between",
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: responsiveFont(18),
     fontWeight: "bold",
     color: "#ffffff",
   },
@@ -37,12 +41,15 @@ export default StyleSheet.create({
     borderRadius: 12,
   },
   listContent: {
-    padding: 16,
+    padding: moderateScale(16),
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 18,
-    padding: 16,
+    padding: moderateScale(16),
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e2e8f0",
@@ -62,7 +69,7 @@ export default StyleSheet.create({
     gap: 6,
   },
   invoiceText: {
-    fontSize: 13,
+    fontSize: responsiveFont(14),
     fontWeight: "bold",
     color: "#1e293b",
   },
@@ -72,7 +79,7 @@ export default StyleSheet.create({
     borderRadius: 8,
   },
   statusBadgeText: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     fontWeight: "700",
   },
   divider: {
@@ -86,26 +93,26 @@ export default StyleSheet.create({
     alignItems: "flex-end",
   },
   periodLabel: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#94a3b8",
   },
   periodValue: {
-    fontSize: 14,
+    fontSize: responsiveFont(15),
     fontWeight: "bold",
     color: "#1e293b",
     marginTop: 2,
   },
   paymentDate: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#64748b",
     marginTop: 4,
   },
   amountLabel: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#94a3b8",
   },
   amountValue: {
-    fontSize: 15,
+    fontSize: responsiveFont(16),
     fontWeight: "800",
     color: "#10b981",
     marginTop: 2,
@@ -116,13 +123,13 @@ export default StyleSheet.create({
     paddingTop: 80,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: responsiveFont(17),
     fontWeight: "bold",
     color: "#1e293b",
     marginTop: 12,
   },
   emptySubtitle: {
-    fontSize: 13,
+    fontSize: responsiveFont(14),
     color: "#94a3b8",
     textAlign: "center",
     marginTop: 4,

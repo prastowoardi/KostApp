@@ -1,4 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -15,14 +16,17 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 36,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(36),
         alignItems: 'center',
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         width: '100%',
@@ -37,7 +41,7 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
@@ -132,7 +136,7 @@ export default StyleSheet.create({
     },
     zoomText: {
         color: '#ffffff',
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '600',
     },
     noImage: {
@@ -147,17 +151,20 @@ export default StyleSheet.create({
     },
     noImageText: {
         color: '#94a3b8',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         marginTop: 6,
     },
     noteText: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         color: '#94a3b8',
         marginBottom: 4,
     },
     actionContainer: {
-        paddingHorizontal: 16,
+        paddingHorizontal: moderateScale(16),
         marginTop: 18,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     deleteBtn: {
         flexDirection: 'row',

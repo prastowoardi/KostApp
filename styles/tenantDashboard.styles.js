@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8fafc" },
@@ -11,15 +12,18 @@ export default StyleSheet.create({
   loadingText: {
     marginTop: 12,
     color: "#64748b",
-    fontSize: 14,
+    fontSize: responsiveFont(14),
   },
 
   /* HEADER */
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 22,
+    paddingHorizontal: moderateScale(20),
+    paddingBottom: moderateScale(22),
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   headerTop: {
     flexDirection: "row",
@@ -38,32 +42,32 @@ export default StyleSheet.create({
     marginBottom: 6,
   },
   brandDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
     backgroundColor: "#38bdf8",
     marginRight: 6,
   },
   brandTagText: {
     color: "#94a3b8",
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     fontWeight: "600",
   },
   greetingText: {
     color: "rgba(255,255,255,0.75)",
-    fontSize: 13,
+    fontSize: responsiveFont(14),
   },
   userName: {
     color: "#ffffff",
-    fontSize: 22,
+    fontSize: responsiveFont(24),
     fontWeight: "bold",
     marginTop: 2,
   },
   logoutBtn: {
     backgroundColor: "rgba(255,255,255,0.15)",
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: moderateScale(42),
+    height: moderateScale(42),
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -72,8 +76,8 @@ export default StyleSheet.create({
   roomHeroCard: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: moderateScale(16),
+    paddingHorizontal: moderateScale(16),
     flexDirection: "row",
     alignItems: "center",
     elevation: 3,
@@ -90,15 +94,15 @@ export default StyleSheet.create({
     flex: 1,
   },
   roomIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: 12,
     backgroundColor: "#eff6ff",
     justifyContent: "center",
     alignItems: "center",
   },
   roomHeroLabel: {
-    fontSize: 10,
+    fontSize: responsiveFont(12),
     color: "#64748b",
     fontWeight: "600",
     textTransform: "uppercase",
@@ -106,7 +110,7 @@ export default StyleSheet.create({
   roomHeroVal: {
     fontWeight: "700",
     color: "#1e293b",
-    fontSize: 14,
+    fontSize: responsiveFont(16),
     marginTop: 2,
   },
   roomHeroDivider: {
@@ -118,8 +122,11 @@ export default StyleSheet.create({
 
   /* CONTENT AREA */
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: moderateScale(20),
     marginTop: 20,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   sectionHeaderRow: {
     flexDirection: "row",
@@ -128,7 +135,7 @@ export default StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: responsiveFont(17),
     fontWeight: "700",
     color: "#0f172a",
   },
@@ -142,7 +149,7 @@ export default StyleSheet.create({
     gap: 4,
   },
   miniStatusBadgePaidText: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#10b981",
     fontWeight: "700",
   },
@@ -185,23 +192,23 @@ export default StyleSheet.create({
   },
   paidBadgeText: {
     color: "#ffffff",
-    fontSize: 10,
+    fontSize: responsiveFont(12),
     fontWeight: "800",
     letterSpacing: 0.4,
   },
   paidSubInfo: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#15803d",
     fontWeight: "500",
   },
   billPaidTitle: {
-    fontSize: 15,
+    fontSize: responsiveFont(17),
     fontWeight: "700",
     color: "#166534",
     marginTop: 2,
   },
   billPaidDesc: {
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     color: "#475569",
     marginTop: 3,
   },
@@ -216,7 +223,7 @@ export default StyleSheet.create({
     paddingVertical: 2,
   },
   billCardPaidActionText: {
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     fontWeight: "700",
     color: "#2563eb",
     marginLeft: 6,
@@ -226,7 +233,7 @@ export default StyleSheet.create({
   billCardPending: {
     backgroundColor: "#fffbeb",
     borderRadius: 16,
-    padding: 16,
+    padding: moderateScale(16),
     borderWidth: 1,
     borderColor: "#fde68a",
     elevation: 2,
@@ -239,9 +246,9 @@ export default StyleSheet.create({
     alignItems: "flex-start",
   },
   billIconCirclePending: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: moderateScale(46),
+    height: moderateScale(46),
+    borderRadius: 23,
     backgroundColor: "#fef3c7",
     justifyContent: "center",
     alignItems: "center",
@@ -256,16 +263,16 @@ export default StyleSheet.create({
   },
   pendingBadgeText: {
     color: "#ffffff",
-    fontSize: 10,
+    fontSize: responsiveFont(12),
     fontWeight: "800",
   },
   billPendingAmount: {
-    fontSize: 20,
+    fontSize: responsiveFont(22),
     fontWeight: "800",
     color: "#92400e",
   },
   billPendingDesc: {
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     color: "#78350f",
     marginTop: 3,
   },
@@ -280,7 +287,7 @@ export default StyleSheet.create({
     paddingVertical: 2,
   },
   billCardPendingActionText: {
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     fontWeight: "700",
     color: "#d97706",
     marginLeft: 6,
@@ -290,7 +297,7 @@ export default StyleSheet.create({
   billCardUnpaid: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
-    padding: 18,
+    padding: moderateScale(18),
     borderWidth: 1.5,
     borderColor: "#fecaca",
     elevation: 3,
@@ -319,30 +326,30 @@ export default StyleSheet.create({
   },
   unpaidBadgeText: {
     color: "#ffffff",
-    fontSize: 10,
+    fontSize: responsiveFont(12),
     fontWeight: "800",
     letterSpacing: 0.4,
   },
   unpaidDaysMsg: {
-    fontSize: 11,
+    fontSize: responsiveFont(13),
     color: "#b91c1c",
     fontWeight: "700",
   },
   billUnpaidLabel: {
     color: "#64748b",
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     fontWeight: "500",
   },
   billUnpaidAmount: {
-    fontSize: 24,
+    fontSize: responsiveFont(26),
     fontWeight: "800",
     color: "#0f172a",
     marginTop: 2,
   },
   billUnpaidIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: moderateScale(46),
+    height: moderateScale(46),
+    borderRadius: 23,
     backgroundColor: "#fee2e2",
     justifyContent: "center",
     alignItems: "center",
@@ -355,12 +362,12 @@ export default StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 13,
+    paddingVertical: moderateScale(14),
   },
   payNowText: {
     color: "#ffffff",
     fontWeight: "800",
-    fontSize: 13,
+    fontSize: responsiveFont(15),
     letterSpacing: 0.5,
   },
 
@@ -374,8 +381,8 @@ export default StyleSheet.create({
   menuItem: {
     width: "48%",
     backgroundColor: "#ffffff",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingVertical: moderateScale(16),
+    paddingHorizontal: moderateScale(12),
     borderRadius: 16,
     alignItems: "center",
     marginBottom: 10,
@@ -387,9 +394,9 @@ export default StyleSheet.create({
     shadowRadius: 6,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: moderateScale(48),
+    height: moderateScale(48),
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
@@ -397,11 +404,11 @@ export default StyleSheet.create({
   menuLabel: {
     fontWeight: "700",
     color: "#1e293b",
-    fontSize: 13,
+    fontSize: responsiveFont(14),
     textAlign: "center",
   },
   menuSubLabel: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#94a3b8",
     marginTop: 2,
     textAlign: "center",
@@ -410,7 +417,7 @@ export default StyleSheet.create({
   /* HELP & WHATSAPP CARD */
   helpCard: {
     backgroundColor: "#ffffff",
-    padding: 16,
+    padding: moderateScale(16),
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#e2e8f0",
@@ -421,37 +428,37 @@ export default StyleSheet.create({
     alignItems: "flex-start",
   },
   helpIconWrap: {
-    width: 40,
-    height: 40,
+    width: moderateScale(42),
+    height: moderateScale(42),
     borderRadius: 12,
     backgroundColor: "#dcfce7",
     justifyContent: "center",
     alignItems: "center",
   },
   helpTitle: {
-    fontSize: 13,
+    fontSize: responsiveFont(15),
     fontWeight: "700",
     color: "#1e293b",
   },
   helpSub: {
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     color: "#64748b",
     marginTop: 3,
-    lineHeight: 17,
+    lineHeight: 18,
   },
   helpWaBtn: {
     backgroundColor: "#16a34a",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 11,
+    paddingVertical: moderateScale(12),
     borderRadius: 10,
     marginTop: 12,
   },
   helpWaBtnText: {
     color: "#ffffff",
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: responsiveFont(14),
   },
 
   /* RULES MODAL */
@@ -464,7 +471,10 @@ export default StyleSheet.create({
     backgroundColor: "#ffffff",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    padding: 24,
+    padding: moderateScale(24),
+    maxWidth: 680,
+    width: "100%",
+    alignSelf: "center",
   },
   modalHeader: {
     flexDirection: "row",
@@ -473,7 +483,7 @@ export default StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: responsiveFont(18),
     fontWeight: "700",
     color: "#1e293b",
   },
@@ -489,7 +499,7 @@ export default StyleSheet.create({
     borderRadius: 8,
   },
   ruleCategoryTitle: {
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     fontWeight: "800",
     color: "#1e3a8a",
     letterSpacing: 0.5,
@@ -502,9 +512,9 @@ export default StyleSheet.create({
     borderBottomColor: "#f1f5f9",
   },
   ruleBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: "#eff6ff",
     justifyContent: "center",
     alignItems: "center",
@@ -513,22 +523,22 @@ export default StyleSheet.create({
   ruleNum: {
     color: "#1e3a8a",
     fontWeight: "bold",
-    fontSize: 12,
+    fontSize: responsiveFont(12),
   },
   ruleHeading: {
-    fontSize: 13,
+    fontSize: responsiveFont(14),
     fontWeight: "700",
     color: "#1e293b",
     marginBottom: 2,
   },
   ruleDesc: {
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     color: "#64748b",
     lineHeight: 18,
   },
   closeRulesBtn: {
     backgroundColor: "#1e3a8a",
-    paddingVertical: 13,
+    paddingVertical: moderateScale(14),
     borderRadius: 12,
     alignItems: "center",
     marginTop: 18,
@@ -536,6 +546,6 @@ export default StyleSheet.create({
   closeRulesText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: responsiveFont(15),
   },
 });

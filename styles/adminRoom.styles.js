@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -13,13 +14,16 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 16,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(16),
         borderBottomLeftRadius: 28,
         borderBottomRightRadius: 28,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -33,13 +37,13 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
     headerSub: {
         color: 'rgba(255,255,255,0.75)',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         marginTop: 2,
     },
     filterRow: {
@@ -59,7 +63,7 @@ export default StyleSheet.create({
     },
     filterTabText: {
         color: 'rgba(255,255,255,0.85)',
-        fontSize: 11,
+        fontSize: responsiveFont(13),
         fontWeight: '600',
     },
     filterTabTextActive: {
@@ -67,11 +71,14 @@ export default StyleSheet.create({
         fontWeight: '700',
     },
     list: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     card: {
         backgroundColor: '#ffffff',
-        padding: 16,
+        padding: moderateScale(16),
         borderRadius: 16,
         marginBottom: 10,
         flexDirection: 'row',
@@ -90,25 +97,25 @@ export default StyleSheet.create({
         flex: 1,
     },
     roomIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: moderateScale(46),
+        height: moderateScale(46),
+        borderRadius: 23,
         backgroundColor: '#eef2ff',
         justifyContent: 'center',
         alignItems: 'center',
     },
     roomNumber: {
-        fontSize: 16,
+        fontSize: responsiveFont(17),
         fontWeight: 'bold',
         color: '#1e293b',
     },
     roomSub: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
         marginTop: 2,
     },
     tenantName: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         fontWeight: '500',
         marginTop: 3,
     },
@@ -118,7 +125,7 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     badgeText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     emptyContainer: {
@@ -294,7 +301,7 @@ export default StyleSheet.create({
         borderColor: '#1e3a8a',
     },
     typeChipText: {
-        fontSize: 11,
+        fontSize: responsiveFont(13),
         fontWeight: '600',
         color: '#64748b',
     },
@@ -303,7 +310,7 @@ export default StyleSheet.create({
     },
     saveBtn: {
         backgroundColor: '#1e3a8a',
-        paddingVertical: 14,
+        paddingVertical: moderateScale(14),
         borderRadius: 14,
         alignItems: 'center',
         marginTop: 24,
@@ -311,6 +318,6 @@ export default StyleSheet.create({
     saveBtnText: {
         color: '#ffffff',
         fontWeight: 'bold',
-        fontSize: 15,
+        fontSize: responsiveFont(16),
     },
 });

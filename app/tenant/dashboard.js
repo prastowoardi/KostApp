@@ -195,7 +195,7 @@ export default function TenantDashboard() {
             <Text style={styles.sectionTitle}>Status Tagihan Kamar</Text>
             {isLunas ? (
               <View style={styles.miniStatusBadgePaid}>
-                <Ionicons name="shield-checkmark" size={12} color="#10b981" />
+                <Ionicons name="shield-checkmark" size={14} color="#10b981" />
                 <Text style={styles.miniStatusBadgePaidText}>Aman</Text>
               </View>
             ) : null}
@@ -396,7 +396,7 @@ export default function TenantDashboard() {
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
               {/* UMUM */}
               <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="location" size={14} color="#1e3a8a" />
+                <Ionicons name="location" size={16} color="#1e3a8a" />
                 <Text style={styles.ruleCategoryTitle}>KETENTUAN UMUM</Text>
               </View>
               <RuleItem
@@ -437,7 +437,7 @@ export default function TenantDashboard() {
 
               {/* JAM KEGIATAN & TAMU */}
               <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="time" size={14} color="#1e3a8a" />
+                <Ionicons name="time" size={16} color="#1e3a8a" />
                 <Text style={styles.ruleCategoryTitle}>JAM KEGIATAN & TAMU</Text>
               </View>
               <RuleItem
@@ -458,7 +458,7 @@ export default function TenantDashboard() {
 
               {/* KEBERSIHAN & KERAPIHAN */}
               <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="sparkles" size={14} color="#1e3a8a" />
+                <Ionicons name="sparkles" size={16} color="#1e3a8a" />
                 <Text style={styles.ruleCategoryTitle}>KEBERSIHAN & KERAPIHAN</Text>
               </View>
               <RuleItem
@@ -479,7 +479,7 @@ export default function TenantDashboard() {
 
               {/* FASILITAS KOST */}
               <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="water" size={14} color="#1e3a8a" />
+                <Ionicons name="water" size={16} color="#1e3a8a" />
                 <Text style={styles.ruleCategoryTitle}>FASILITAS KOST</Text>
               </View>
               <RuleItem
@@ -527,7 +527,7 @@ export default function TenantDashboard() {
 const ActionMenu = ({ icon, title, subtitle, color, bgColor, onPress }) => (
   <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.75}>
     <View style={[styles.iconCircle, { backgroundColor: bgColor }]}>
-      <Ionicons name={icon} size={22} color={color} />
+      <Ionicons name={icon} size={24} color={color} />
     </View>
     <Text style={styles.menuLabel} numberOfLines={1}>{title}</Text>
     {subtitle ? (

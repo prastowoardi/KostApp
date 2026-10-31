@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
   container: {
@@ -13,13 +14,16 @@ export default StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: "#64748b",
-    fontSize: 14,
+    fontSize: responsiveFont(14),
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingHorizontal: moderateScale(20),
+    paddingBottom: moderateScale(16),
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   headerTop: {
     flexDirection: "row",
@@ -34,7 +38,7 @@ export default StyleSheet.create({
   },
   headerTitle: {
     color: "#ffffff",
-    fontSize: 18,
+    fontSize: responsiveFont(18),
     fontWeight: "bold",
   },
   filterRow: {
@@ -54,7 +58,7 @@ export default StyleSheet.create({
   },
   filterTabText: {
     color: "rgba(255,255,255,0.85)",
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     fontWeight: "600",
   },
   filterTabTextActive: {
@@ -62,12 +66,15 @@ export default StyleSheet.create({
     fontWeight: "700",
   },
   listContent: {
-    padding: 16,
+    padding: moderateScale(16),
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 18,
-    padding: 16,
+    padding: moderateScale(16),
     marginBottom: 14,
     borderWidth: 1,
     borderColor: "#e2e8f0",
@@ -89,7 +96,7 @@ export default StyleSheet.create({
     borderRadius: 6,
   },
   categoryText: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     fontWeight: "700",
     color: "#475569",
   },
@@ -99,19 +106,19 @@ export default StyleSheet.create({
     borderRadius: 6,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     fontWeight: "700",
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: responsiveFont(17),
     fontWeight: "bold",
     color: "#1e293b",
     marginBottom: 6,
   },
   cardDesc: {
-    fontSize: 13,
+    fontSize: responsiveFont(14),
     color: "#64748b",
-    lineHeight: 18,
+    lineHeight: 20,
   },
   divider: {
     height: 1,
@@ -124,12 +131,12 @@ export default StyleSheet.create({
     alignItems: "center",
   },
   tenantName: {
-    fontSize: 13,
+    fontSize: responsiveFont(14),
     fontWeight: "700",
     color: "#1e293b",
   },
   roomText: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#94a3b8",
     marginTop: 2,
   },

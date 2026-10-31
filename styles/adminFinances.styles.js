@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -13,13 +14,16 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 16,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(16),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -33,7 +37,7 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
@@ -73,27 +77,27 @@ export default StyleSheet.create({
         flex: 1,
         backgroundColor: '#ffffff',
         borderRadius: 16,
-        padding: 14,
+        padding: moderateScale(14),
         elevation: 2,
         shadowColor: '#000',
         shadowOpacity: 0.04,
         shadowRadius: 6,
     },
     balanceIconCircle: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+        width: moderateScale(32),
+        height: moderateScale(32),
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 6,
     },
     balanceLabel: {
-        fontSize: 11,
+        fontSize: responsiveFont(13),
         color: '#64748b',
         fontWeight: '500',
     },
     balanceVal: {
-        fontSize: 15,
+        fontSize: responsiveFont(17),
         fontWeight: 'bold',
         marginTop: 2,
     },
@@ -114,7 +118,7 @@ export default StyleSheet.create({
     },
     filterTabText: {
         color: 'rgba(255,255,255,0.85)',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         fontWeight: '600',
     },
     filterTabTextActive: {
@@ -122,12 +126,15 @@ export default StyleSheet.create({
         fontWeight: '700',
     },
     listContainer: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     transactionCard: {
         backgroundColor: '#ffffff',
         borderRadius: 16,
-        padding: 14,
+        padding: moderateScale(14),
         marginBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
@@ -151,17 +158,17 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
     transTitle: {
-        fontSize: 14,
+        fontSize: responsiveFont(15),
         fontWeight: 'bold',
         color: '#1e293b',
     },
     transSub: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         color: '#64748b',
         marginTop: 2,
     },
     transAmount: {
-        fontSize: 14,
+        fontSize: responsiveFont(15),
         fontWeight: '700',
     },
     emptyContainer: {
@@ -170,13 +177,13 @@ export default StyleSheet.create({
         paddingTop: 80,
     },
     emptyTitle: {
-        fontSize: 16,
+        fontSize: responsiveFont(17),
         fontWeight: 'bold',
         color: '#1e293b',
         marginTop: 12,
     },
     emptySubtitle: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#94a3b8',
         textAlign: 'center',
         marginTop: 4,
@@ -184,10 +191,13 @@ export default StyleSheet.create({
     activeFilterBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: moderateScale(16),
         paddingTop: 10,
         paddingBottom: 2,
         gap: 8,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     activeFilterChip: {
         flexDirection: 'row',
@@ -199,7 +209,7 @@ export default StyleSheet.create({
         gap: 5,
     },
     activeFilterChipText: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         color: '#1e3a8a',
         fontWeight: '600',
     },
@@ -208,7 +218,7 @@ export default StyleSheet.create({
         paddingHorizontal: 8,
     },
     clearAllText: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         color: '#ef4444',
         fontWeight: '700',
     },
@@ -222,9 +232,12 @@ export default StyleSheet.create({
         backgroundColor: '#ffffff',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        paddingHorizontal: 20,
+        paddingHorizontal: moderateScale(20),
         paddingTop: 16,
         maxHeight: '85%',
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     modalDragHandle: {
         width: 40,
@@ -241,7 +254,7 @@ export default StyleSheet.create({
         marginBottom: 16,
     },
     modalTitle: {
-        fontSize: 17,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#1e293b',
     },
@@ -249,7 +262,7 @@ export default StyleSheet.create({
         marginBottom: 18,
     },
     filterSectionTitle: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         fontWeight: '700',
         color: '#334155',
         marginBottom: 8,
@@ -272,7 +285,7 @@ export default StyleSheet.create({
         borderColor: '#1e3a8a',
     },
     filterChipText: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         color: '#475569',
         fontWeight: '600',
     },
@@ -289,7 +302,7 @@ export default StyleSheet.create({
         flex: 1,
     },
     dateInputLabel: {
-        fontSize: 11,
+        fontSize: responsiveFont(13),
         color: '#64748b',
         fontWeight: '600',
         marginBottom: 4,
@@ -301,7 +314,7 @@ export default StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#1e293b',
     },
     searchInputWrap: {
@@ -312,12 +325,12 @@ export default StyleSheet.create({
         borderColor: '#cbd5e1',
         borderRadius: 12,
         paddingHorizontal: 12,
-        height: 42,
+        height: 44,
     },
     searchInput: {
         flex: 1,
         marginLeft: 8,
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#1e293b',
     },
     modalActions: {
@@ -337,7 +350,7 @@ export default StyleSheet.create({
         borderColor: '#e2e8f0',
     },
     resetFilterText: {
-        fontSize: 14,
+        fontSize: responsiveFont(15),
         fontWeight: 'bold',
         color: '#64748b',
     },
@@ -351,7 +364,7 @@ export default StyleSheet.create({
         elevation: 2,
     },
     applyFilterText: {
-        fontSize: 14,
+        fontSize: responsiveFont(15),
         fontWeight: 'bold',
         color: '#ffffff',
     },

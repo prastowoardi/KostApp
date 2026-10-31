@@ -1,4 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,10 +17,10 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     notFoundText: {
-        fontSize: 16,
+        fontSize: responsiveFont(16),
         color: '#64748b',
         marginTop: 12,
         fontWeight: '500',
@@ -34,12 +35,16 @@ export default StyleSheet.create({
     backButtonText: {
         color: '#ffffff',
         fontWeight: 'bold',
+        fontSize: responsiveFont(14),
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -53,11 +58,14 @@ export default StyleSheet.create({
     },
     headerTitle: {
         color: '#ffffff',
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
     },
     scrollContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     tenantCard: {
         backgroundColor: '#ffffff',
@@ -93,13 +101,13 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     statusBadgeText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     mainCard: {
         backgroundColor: '#ffffff',
         borderRadius: 18,
-        padding: 18,
+        padding: moderateScale(18),
         borderWidth: 1,
         borderColor: '#e2e8f0',
         marginBottom: 14,
@@ -116,7 +124,7 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     categoryText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
         color: '#475569',
     },
@@ -126,11 +134,11 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     priorityText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     complaintTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#1e293b',
         marginBottom: 8,
@@ -232,7 +240,7 @@ export default StyleSheet.create({
         gap: 4,
     },
     statusBtnText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     modalBg: {

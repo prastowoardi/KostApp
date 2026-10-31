@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     },
     footerVersion: {
         color: "#475569",
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: "600",
         marginTop: 4,
     },

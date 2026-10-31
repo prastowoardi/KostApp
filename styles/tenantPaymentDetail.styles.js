@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -14,10 +15,10 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     emptyTitle: {
-        fontSize: 16,
+        fontSize: responsiveFont(17),
         fontWeight: 'bold',
         color: '#1e293b',
         marginTop: 12,
@@ -32,12 +33,16 @@ export default StyleSheet.create({
     backButtonText: {
         color: '#ffffff',
         fontWeight: 'bold',
+        fontSize: responsiveFont(14),
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 36,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(36),
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -46,7 +51,7 @@ export default StyleSheet.create({
         marginBottom: 16,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
@@ -80,12 +85,15 @@ export default StyleSheet.create({
         lineHeight: 18,
     },
     scrollContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     receiptCard: {
         backgroundColor: '#ffffff',
         borderRadius: 20,
-        padding: 20,
+        padding: moderateScale(20),
         marginTop: -16,
         borderWidth: 1,
         borderColor: '#e2e8f0',
@@ -100,7 +108,7 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
     invoiceNumber: {
-        fontSize: 15,
+        fontSize: responsiveFont(16),
         fontWeight: 'bold',
         color: '#1e293b',
     },
@@ -110,7 +118,7 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     statusBadgeText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     divider: {
@@ -124,11 +132,11 @@ export default StyleSheet.create({
         paddingVertical: 7,
     },
     receiptLabel: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
     },
     receiptValue: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         fontWeight: '600',
         color: '#1e293b',
     },

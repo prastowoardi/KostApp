@@ -1,4 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -15,13 +16,16 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -35,16 +39,19 @@ export default StyleSheet.create({
     },
     headerTitle: {
         color: 'white',
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
     },
     listContainer: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     card: {
         backgroundColor: '#ffffff',
         borderRadius: 20,
-        padding: 18,
+        padding: moderateScale(18),
         marginBottom: 16,
         borderWidth: 1,
         borderColor: '#e2e8f0',
@@ -65,20 +72,20 @@ export default StyleSheet.create({
         flex: 1,
     },
     avatarPill: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: moderateScale(40),
+        height: moderateScale(40),
+        borderRadius: 20,
         backgroundColor: '#eef2ff',
         justifyContent: 'center',
         alignItems: 'center',
     },
     tenantName: {
-        fontSize: 15,
+        fontSize: responsiveFont(16),
         fontWeight: '700',
         color: '#1e293b',
     },
     roomBadge: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         color: '#64748b',
         marginTop: 2,
     },
@@ -90,7 +97,7 @@ export default StyleSheet.create({
     },
     statusPillText: {
         color: '#d97706',
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     divider: {
@@ -105,16 +112,16 @@ export default StyleSheet.create({
         marginBottom: 8,
     },
     infoLabel: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
     },
     infoValue: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#1e293b',
         fontWeight: '600',
     },
     amountText: {
-        fontSize: 16,
+        fontSize: responsiveFont(17),
         fontWeight: '800',
         color: '#10b981',
     },
@@ -143,7 +150,7 @@ export default StyleSheet.create({
     },
     zoomText: {
         color: '#ffffff',
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '600',
         marginLeft: 4,
     },
@@ -160,7 +167,7 @@ export default StyleSheet.create({
     },
     noReceiptText: {
         color: '#94a3b8',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         marginTop: 4,
     },
     actionButtons: {
@@ -173,7 +180,7 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 12,
+        paddingVertical: moderateScale(13),
         borderRadius: 12,
         gap: 6,
     },
@@ -185,7 +192,7 @@ export default StyleSheet.create({
     btnTextReject: {
         color: '#ef4444',
         fontWeight: '700',
-        fontSize: 13,
+        fontSize: responsiveFont(14),
     },
     btnApprove: {
         backgroundColor: '#10b981',
@@ -193,7 +200,7 @@ export default StyleSheet.create({
     btnTextApprove: {
         color: '#ffffff',
         fontWeight: '700',
-        fontSize: 13,
+        fontSize: responsiveFont(14),
     },
     emptyContainer: {
         alignItems: 'center',
@@ -202,8 +209,8 @@ export default StyleSheet.create({
         paddingHorizontal: 30,
     },
     emptyIconCircle: {
-        width: 80,
-        height: 80,
+        width: moderateScale(80),
+        height: moderateScale(80),
         borderRadius: 40,
         backgroundColor: '#ecfdf5',
         justifyContent: 'center',
@@ -211,12 +218,12 @@ export default StyleSheet.create({
         marginBottom: 16,
     },
     emptyTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#1e293b',
     },
     emptySubtitle: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
         textAlign: 'center',
         marginTop: 6,

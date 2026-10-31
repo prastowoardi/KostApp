@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -6,10 +7,13 @@ export default StyleSheet.create({
         backgroundColor: '#f8f9fc',
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -17,7 +21,7 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
@@ -27,12 +31,15 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     scrollContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     infoCard: {
         backgroundColor: '#ffffff',
         borderRadius: 20,
-        padding: 20,
+        padding: moderateScale(20),
         borderWidth: 1,
         borderColor: '#e2e8f0',
         elevation: 2,
@@ -42,7 +49,7 @@ export default StyleSheet.create({
         marginBottom: 20,
     },
     infoTitle: {
-        fontSize: 16,
+        fontSize: responsiveFont(16),
         fontWeight: 'bold',
         color: '#1e293b',
         marginBottom: 14,
@@ -54,11 +61,11 @@ export default StyleSheet.create({
         marginBottom: 10,
     },
     label: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
     },
     value: {
-        fontSize: 14,
+        fontSize: responsiveFont(15),
         fontWeight: '600',
         color: '#1e293b',
     },
@@ -68,7 +75,7 @@ export default StyleSheet.create({
         marginVertical: 14,
     },
     bankTitle: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         fontWeight: '700',
         color: '#334155',
         marginBottom: 10,
@@ -76,7 +83,7 @@ export default StyleSheet.create({
     bankCard: {
         backgroundColor: '#ffffff',
         borderRadius: 16,
-        padding: 14,
+        padding: moderateScale(16),
         borderWidth: 1.5,
         borderColor: '#e2e8f0',
         marginBottom: 12,
@@ -95,8 +102,8 @@ export default StyleSheet.create({
         borderBottomColor: '#f1f5f9',
     },
     bankLogoWrap: {
-        height: 26,
-        width: 85,
+        height: 30,
+        width: 95,
         justifyContent: 'center',
     },
     bankLogo: {
@@ -109,7 +116,7 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     bankBadgeText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     bankCardBody: {
@@ -118,20 +125,20 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
     },
     bankHolderLabel: {
-        fontSize: 10,
+        fontSize: responsiveFont(12),
         color: '#94a3b8',
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     bankNumber: {
-        fontSize: 15,
+        fontSize: responsiveFont(18),
         fontWeight: '800',
         letterSpacing: 0.5,
-        marginTop: 1,
+        marginTop: 2,
     },
     bankHolder: {
-        fontSize: 11,
+        fontSize: responsiveFont(13),
         color: '#64748b',
         marginTop: 2,
         fontWeight: '500',
@@ -139,18 +146,18 @@ export default StyleSheet.create({
     copyBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: moderateScale(13),
+        paddingVertical: moderateScale(9),
         borderRadius: 10,
         borderWidth: 1,
         gap: 4,
     },
     copyText: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         fontWeight: '700',
     },
     sectionTitle: {
-        fontSize: 15,
+        fontSize: responsiveFont(16),
         fontWeight: 'bold',
         color: '#1e293b',
         marginBottom: 10,
@@ -161,34 +168,34 @@ export default StyleSheet.create({
         borderWidth: 1.5,
         borderColor: '#cbd5e1',
         borderStyle: 'dashed',
-        padding: 28,
+        padding: moderateScale(28),
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 20,
     },
     uploadIconCircle: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: moderateScale(58),
+        height: moderateScale(58),
+        borderRadius: 29,
         backgroundColor: '#eef2ff',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 12,
     },
     uploadTitle: {
-        fontSize: 14,
+        fontSize: responsiveFont(15),
         fontWeight: '700',
         color: '#1e293b',
     },
     uploadSub: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         color: '#94a3b8',
         marginTop: 4,
     },
     previewCard: {
         backgroundColor: '#ffffff',
         borderRadius: 18,
-        padding: 14,
+        padding: moderateScale(14),
         borderWidth: 1,
         borderColor: '#e2e8f0',
         marginBottom: 20,
@@ -211,13 +218,13 @@ export default StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#eef2ff',
-        paddingVertical: 10,
+        paddingVertical: moderateScale(11),
         borderRadius: 10,
         gap: 6,
     },
     changeBtnText: {
         color: '#4e73df',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         fontWeight: '700',
     },
     removeBtn: {
@@ -226,13 +233,13 @@ export default StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#fef2f2',
-        paddingVertical: 10,
+        paddingVertical: moderateScale(11),
         borderRadius: 10,
         gap: 6,
     },
     removeBtnText: {
         color: '#ef4444',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         fontWeight: '700',
     },
     submitBtn: {
@@ -245,7 +252,7 @@ export default StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
     },
     gradientBtn: {
-        paddingVertical: 16,
+        paddingVertical: moderateScale(16),
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -257,7 +264,7 @@ export default StyleSheet.create({
     btnText: {
         color: 'white',
         fontWeight: 'bold',
-        fontSize: 14,
+        fontSize: responsiveFont(16),
         letterSpacing: 0.5,
     },
 });

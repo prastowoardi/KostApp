@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F9FC" },
@@ -10,13 +11,16 @@ export default StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: "#64748b",
-    fontSize: 14,
+    fontSize: responsiveFont(14),
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 36,
+    paddingHorizontal: moderateScale(20),
+    paddingBottom: moderateScale(36),
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   headerTop: {
     flexDirection: "row",
@@ -25,7 +29,7 @@ export default StyleSheet.create({
     marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: responsiveFont(18),
     fontWeight: "bold",
     color: "#ffffff",
   },
@@ -38,9 +42,9 @@ export default StyleSheet.create({
     alignItems: "center",
   },
   avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: moderateScale(76),
+    height: moderateScale(76),
+    borderRadius: moderateScale(38),
     backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
@@ -51,12 +55,12 @@ export default StyleSheet.create({
     marginBottom: 10,
   },
   avatarInitial: {
-    fontSize: 30,
+    fontSize: responsiveFont(30),
     fontWeight: "bold",
     color: "#1e3a8a",
   },
   heroName: {
-    fontSize: 20,
+    fontSize: responsiveFont(22),
     fontWeight: "bold",
     color: "#ffffff",
   },
@@ -72,17 +76,20 @@ export default StyleSheet.create({
   },
   roomPillText: {
     color: "#ffffff",
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     fontWeight: "600",
   },
   content: {
-    paddingHorizontal: 16,
+    paddingHorizontal: moderateScale(16),
     marginTop: -16,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   infoCard: {
     backgroundColor: "#ffffff",
     borderRadius: 20,
-    padding: 18,
+    padding: moderateScale(18),
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e2e8f0",
@@ -92,7 +99,7 @@ export default StyleSheet.create({
     shadowRadius: 8,
   },
   sectionHeading: {
-    fontSize: 14,
+    fontSize: responsiveFont(14),
     fontWeight: "700",
     color: "#64748b",
     marginBottom: 14,
@@ -107,19 +114,19 @@ export default StyleSheet.create({
     borderBottomColor: "#f8fafc",
   },
   infoIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: moderateScale(38),
+    height: moderateScale(38),
+    borderRadius: 19,
     backgroundColor: "#eef2ff",
     justifyContent: "center",
     alignItems: "center",
   },
   infoLabel: {
-    fontSize: 11,
+    fontSize: responsiveFont(12),
     color: "#94a3b8",
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: responsiveFont(15),
     fontWeight: "600",
     color: "#1e293b",
     marginTop: 2,
@@ -131,7 +138,7 @@ export default StyleSheet.create({
   },
   menuBtnLabel: {
     flex: 1,
-    fontSize: 14,
+    fontSize: responsiveFont(15),
     fontWeight: "600",
   },
   divider: {
@@ -141,7 +148,7 @@ export default StyleSheet.create({
   copyrightText: {
     textAlign: "center",
     color: "#94a3b8",
-    fontSize: 12,
+    fontSize: responsiveFont(13),
     marginTop: 10,
   },
 });

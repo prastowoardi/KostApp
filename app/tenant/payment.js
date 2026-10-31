@@ -25,16 +25,16 @@ import { formatRupiah, formatMonthYear } from '../../helpers/formatters';
 import styles from '../../styles/tenantPayment.styles';
 
 const BANK_ACCOUNTS = [
-    {
-        id: 'mandiri',
-        bankName: 'Bank Mandiri',
-        accountNumber: '1360014406059',
-        displayNumber: '136-001-440-6059',
-        accountHolder: 'Prastowo Ardi Widigdo',
-        badgeColor: '#1e3a8a',
-        badgeBg: '#eff6ff',
-        logo: require('../../assets/images/banks/mandiri.png'),
-    },
+    // {
+    //     id: 'mandiri',
+    //     bankName: 'Bank Mandiri',
+    //     accountNumber: '1360014406059',
+    //     displayNumber: '136-001-440-6059',
+    //     accountHolder: 'Prastowo Ardi Widigdo',
+    //     badgeColor: '#1e3a8a',
+    //     badgeBg: '#eff6ff',
+    //     logo: require('../../assets/images/banks/mandiri.png'),
+    // },
     {
         id: 'jago',
         bankName: 'Bank Jago',

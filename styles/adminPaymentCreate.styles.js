@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -6,10 +7,13 @@ export default StyleSheet.create({
         backgroundColor: '#f8f9fc',
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -23,11 +27,14 @@ export default StyleSheet.create({
     },
     headerTitle: {
         color: '#ffffff',
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
     },
     scrollContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     card: {
         backgroundColor: '#ffffff',
@@ -143,7 +150,7 @@ export default StyleSheet.create({
         borderColor: '#1e3a8a',
     },
     methodChipText: {
-        fontSize: 11,
+        fontSize: responsiveFont(13),
         fontWeight: '600',
         color: '#64748b',
     },
@@ -344,7 +351,7 @@ export default StyleSheet.create({
     },
     lunasBadgeText: {
         color: '#059669',
-        fontSize: 10,
+        fontSize: responsiveFont(12),
         fontWeight: 'bold',
     },
     waButton: {
@@ -353,7 +360,7 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 14,
+        paddingVertical: moderateScale(14),
         borderRadius: 14,
         gap: 8,
         marginBottom: 10,
@@ -362,7 +369,7 @@ export default StyleSheet.create({
     waButtonText: {
         color: '#ffffff',
         fontWeight: 'bold',
-        fontSize: 14,
+        fontSize: responsiveFont(15),
     },
     doneButton: {
         width: '100%',

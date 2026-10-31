@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -13,13 +14,16 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(20),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -33,13 +37,13 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
     headerSub: {
         color: 'rgba(255,255,255,0.75)',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         marginTop: 1,
     },
     addBtn: {
@@ -54,7 +58,7 @@ export default StyleSheet.create({
     addBtnText: {
         color: '#ffffff',
         fontWeight: 'bold',
-        fontSize: 13,
+        fontSize: responsiveFont(14),
     },
     searchWrap: {
         flexDirection: 'row',
@@ -62,16 +66,19 @@ export default StyleSheet.create({
         backgroundColor: '#ffffff',
         borderRadius: 12,
         paddingHorizontal: 12,
-        height: 42,
+        height: 44,
     },
     searchInput: {
         flex: 1,
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#1e293b',
         marginLeft: 8,
     },
     listContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     card: {
         backgroundColor: '#ffffff',
@@ -108,12 +115,12 @@ export default StyleSheet.create({
     },
     name: {
         fontWeight: 'bold',
-        fontSize: 15,
+        fontSize: responsiveFont(16),
         color: '#1e293b',
     },
     sub: {
         color: '#64748b',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         marginTop: 3,
     },
     badge: {
@@ -127,13 +134,13 @@ export default StyleSheet.create({
         paddingTop: 80,
     },
     emptyTitle: {
-        fontSize: 16,
+        fontSize: responsiveFont(17),
         fontWeight: 'bold',
         color: '#1e293b',
         marginTop: 12,
     },
     emptySubtitle: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#94a3b8',
         marginTop: 4,
     },
@@ -146,17 +153,20 @@ export default StyleSheet.create({
         backgroundColor: '#ffffff',
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
-        padding: 24,
+        padding: moderateScale(24),
         maxHeight: '88%',
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     detailHeader: {
         alignItems: 'center',
         marginBottom: 18,
     },
     avatarBig: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         backgroundColor: '#1e3a8a',
         justifyContent: 'center',
         alignItems: 'center',
@@ -164,17 +174,17 @@ export default StyleSheet.create({
     },
     avatarBigText: {
         color: '#ffffff',
-        fontSize: 24,
+        fontSize: responsiveFont(24),
         fontWeight: 'bold',
     },
     detailName: {
-        fontSize: 20,
+        fontSize: responsiveFont(20),
         fontWeight: 'bold',
         color: '#1e293b',
         marginBottom: 6,
     },
     detailSub: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
         marginBottom: 10,
     },
@@ -189,11 +199,11 @@ export default StyleSheet.create({
         borderBottomColor: '#f1f5f9',
     },
     detailLabel: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
     },
     detailValue: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#1e293b',
         fontWeight: '600',
     },
@@ -210,7 +220,7 @@ export default StyleSheet.create({
     detailBtn: {
         flex: 1,
         flexDirection: 'row',
-        paddingVertical: 12,
+        paddingVertical: moderateScale(12),
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
@@ -219,7 +229,7 @@ export default StyleSheet.create({
     detailBtnText: {
         color: '#ffffff',
         fontWeight: 'bold',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
     },
     paymentCard: {
         flexDirection: 'row',
@@ -227,23 +237,23 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
         backgroundColor: '#f8fafc',
         borderRadius: 12,
-        padding: 12,
+        padding: moderateScale(12),
         marginBottom: 8,
         borderWidth: 1,
         borderColor: '#e2e8f0',
     },
     invoiceText: {
         fontWeight: 'bold',
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#1e293b',
     },
     periodText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         color: '#64748b',
         marginTop: 2,
     },
     paymentAmount: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#10b981',
         fontWeight: '700',
         marginTop: 2,
@@ -507,9 +517,9 @@ export default StyleSheet.create({
         fontWeight: '700',
     },
     statusHintText: {
-        fontSize: 11,
+        fontSize: responsiveFont(13),
         color: '#d97706',
         marginTop: 6,
-        lineHeight: 16,
+        lineHeight: 18,
     },
 });

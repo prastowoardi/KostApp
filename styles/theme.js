@@ -1,3 +1,32 @@
+import { Dimensions, PixelRatio } from 'react-native';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Standard mobile baseline guideline: 375 x 812 (iPhone standard)
+const BASE_WIDTH = 375;
+const BASE_HEIGHT = 812;
+
+export const dimensions = {
+  width: SCREEN_WIDTH,
+  height: SCREEN_HEIGHT,
+  isSmallDevice: SCREEN_WIDTH < 360,
+  isLargeDevice: SCREEN_WIDTH >= 412,
+  isTablet: SCREEN_WIDTH >= 600,
+};
+
+// Responsive scaling utilities
+export const scale = (size) => (SCREEN_WIDTH / BASE_WIDTH) * size;
+export const verticalScale = (size) => (SCREEN_HEIGHT / BASE_HEIGHT) * size;
+export const moderateScale = (size, factor = 0.35) => {
+  return Math.round(size + (scale(size) - size) * factor);
+};
+
+// Responsive font size utility - prevents text from being microscopic on large phones or giant on tablets
+export const responsiveFont = (fontSize) => {
+  const scaled = fontSize + (scale(fontSize) - fontSize) * 0.3;
+  return Math.round(PixelRatio.roundToNearestPixel(scaled));
+};
+
 export const colors = {
   // Brand Deep Navy & Royal Blue
   navyDark: '#090d16',

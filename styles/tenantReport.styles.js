@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -6,10 +7,13 @@ export default StyleSheet.create({
         backgroundColor: '#f8f9fc',
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -17,7 +21,7 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
@@ -27,12 +31,15 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     scrollContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     formCard: {
         backgroundColor: '#ffffff',
         borderRadius: 20,
-        padding: 20,
+        padding: moderateScale(20),
         borderWidth: 1,
         borderColor: '#e2e8f0',
         elevation: 2,
@@ -41,7 +48,7 @@ export default StyleSheet.create({
         shadowRadius: 8,
     },
     label: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         fontWeight: '700',
         color: '#334155',
         marginTop: 14,
@@ -53,7 +60,7 @@ export default StyleSheet.create({
         borderColor: '#e2e8f0',
         borderRadius: 12,
         padding: 12,
-        fontSize: 14,
+        fontSize: responsiveFont(15),
         color: '#1e293b',
     },
     chipGroup: {
@@ -75,7 +82,7 @@ export default StyleSheet.create({
         borderColor: '#1e3a8a',
     },
     chipText: {
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         fontWeight: '600',
         color: '#64748b',
     },
@@ -90,8 +97,8 @@ export default StyleSheet.create({
         marginTop: 4,
     },
     imageWrapper: {
-        width: 76,
-        height: 76,
+        width: moderateScale(78),
+        height: moderateScale(78),
         borderRadius: 12,
         overflow: 'hidden',
         position: 'relative',
@@ -112,8 +119,8 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
     addPhotoBtn: {
-        width: 76,
-        height: 76,
+        width: moderateScale(78),
+        height: moderateScale(78),
         borderRadius: 12,
         borderWidth: 1.5,
         borderColor: '#cbd5e1',
@@ -123,7 +130,7 @@ export default StyleSheet.create({
         backgroundColor: '#f8fafc',
     },
     addPhotoText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '600',
         color: '#4e73df',
         marginTop: 2,
@@ -134,14 +141,14 @@ export default StyleSheet.create({
         overflow: 'hidden',
     },
     gradientBtn: {
-        paddingVertical: 16,
+        paddingVertical: moderateScale(16),
         alignItems: 'center',
         justifyContent: 'center',
     },
     submitBtnText: {
         color: '#ffffff',
         fontWeight: 'bold',
-        fontSize: 14,
+        fontSize: responsiveFont(16),
         letterSpacing: 0.6,
     },
 });

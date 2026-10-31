@@ -1,4 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,19 +17,22 @@ export default StyleSheet.create({
     loadingText: {
         marginTop: 10,
         color: '#64748b',
-        fontSize: 14,
+        fontSize: responsiveFont(14),
     },
     emptyTitle: {
-        fontSize: 16,
+        fontSize: responsiveFont(17),
         fontWeight: 'bold',
         color: '#1e293b',
         marginTop: 12,
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -36,7 +40,7 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
@@ -46,7 +50,10 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     scrollContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     mainCard: {
         backgroundColor: '#ffffff',
@@ -72,7 +79,7 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     categoryBadge: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
         color: '#475569',
     },
@@ -82,7 +89,7 @@ export default StyleSheet.create({
         borderRadius: 8,
     },
     statusText: {
-        fontSize: 11,
+        fontSize: responsiveFont(12),
         fontWeight: '700',
     },
     title: {

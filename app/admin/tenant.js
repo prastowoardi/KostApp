@@ -311,7 +311,7 @@ export default function ManageTenant() {
                     </View>
                 </View>
                 <View style={[styles.badge, { backgroundColor: isActive ? '#ecfdf5' : '#fef2f2' }]}>
-                    <Text style={{ color: isActive ? '#10b981' : '#ef4444', fontSize: 11, fontWeight: '700' }}>
+                    <Text style={{ color: isActive ? '#10b981' : '#ef4444', fontSize: 12, fontWeight: '700' }}>
                         {isActive ? 'AKTIF' : 'NONAKTIF'}
                     </Text>
                 </View>
@@ -544,7 +544,7 @@ export default function ManageTenant() {
                                                 >
                                                     <Text
                                                         style={{
-                                                            fontSize: 10,
+                                                            fontSize: 12,
                                                             fontWeight: 'bold',
                                                             color: isPaid ? '#10b981' : '#f59e0b',
                                                         }}

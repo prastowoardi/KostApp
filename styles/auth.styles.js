@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -14,13 +15,16 @@ export default StyleSheet.create({
         alignItems: 'center',
         borderBottomLeftRadius: 40,
         borderBottomRightRadius: 40,
-        paddingHorizontal: 20,
+        paddingHorizontal: moderateScale(20),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     logoCircle: {
-        width: 86,
-        height: 86,
+        width: moderateScale(90),
+        height: moderateScale(90),
         backgroundColor: '#ffffff',
-        borderRadius: 43,
+        borderRadius: moderateScale(45),
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 12,
@@ -37,25 +41,28 @@ export default StyleSheet.create({
     },
     logoText: {
         color: '#ffffff',
-        fontSize: 26,
+        fontSize: responsiveFont(26),
         fontWeight: '800',
         letterSpacing: 0.5,
     },
     tagline: {
         color: 'rgba(255,255,255,0.85)',
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         fontWeight: '500',
         marginTop: 4,
     },
     formContainer: {
         flex: 1,
         marginTop: -35,
-        paddingHorizontal: 24,
+        paddingHorizontal: moderateScale(24),
+        maxWidth: 520,
+        width: '100%',
+        alignSelf: 'center',
     },
     card: {
         backgroundColor: '#ffffff',
         borderRadius: 24,
-        padding: 24,
+        padding: moderateScale(24),
         elevation: 4,
         shadowColor: '#0f172a',
         shadowOpacity: 0.08,
@@ -65,20 +72,20 @@ export default StyleSheet.create({
         borderColor: '#edf2f7',
     },
     welcomeTitle: {
-        fontSize: 20,
+        fontSize: responsiveFont(22),
         fontWeight: '700',
         color: '#1e293b',
         textAlign: 'center',
     },
     welcomeSub: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         color: '#64748b',
         textAlign: 'center',
         marginTop: 4,
         marginBottom: 22,
     },
     inputLabel: {
-        fontSize: 13,
+        fontSize: responsiveFont(14),
         fontWeight: '600',
         color: '#334155',
         marginBottom: 6,
@@ -100,7 +107,7 @@ export default StyleSheet.create({
     input: {
         flex: 1,
         paddingVertical: 14,
-        fontSize: 15,
+        fontSize: responsiveFont(15),
         color: '#1e293b',
     },
     button: {
@@ -114,7 +121,7 @@ export default StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
     },
     gradientBtn: {
-        paddingVertical: 16,
+        paddingVertical: moderateScale(16),
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -126,14 +133,14 @@ export default StyleSheet.create({
     buttonText: {
         color: '#ffffff',
         fontWeight: '700',
-        fontSize: 15,
+        fontSize: responsiveFont(16),
         letterSpacing: 0.8,
     },
     footerText: {
         textAlign: 'center',
         marginTop: 32,
         color: '#94a3b8',
-        fontSize: 12,
+        fontSize: responsiveFont(13),
         fontWeight: '500',
     },
 });

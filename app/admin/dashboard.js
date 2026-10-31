@@ -26,6 +26,7 @@ export default function AdminDashboard() {
     const router = useRouter();
 
     const [stats, setStats] = useState(null);
+    const [adminName, setAdminName] = useState("Admin Kost");
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [sendingReminderId, setSendingReminderId] = useState(null);
@@ -77,6 +78,14 @@ export default function AdminDashboard() {
     }, []);
 
     useEffect(() => {
+        AsyncStorage.getItem("userData").then((userStr) => {
+            if (userStr) {
+                try {
+                    const u = JSON.parse(userStr);
+                    if (u?.name) setAdminName(u.name);
+                } catch {}
+            }
+        });
         fetchAdminData();
     }, [fetchAdminData]);
 
@@ -240,12 +249,15 @@ export default function AdminDashboard() {
                     style={[styles.header, { paddingTop: insets.top + 16 }]}
                 >
                     <View style={styles.headerTop}>
-                        <View>
+                        <View style={{ flex: 1, paddingRight: 10 }}>
                             <View style={styles.tagWrap}>
                                 <View style={styles.tagDot} />
                                 <Text style={styles.adminTag}>Serrata Kost • Pengelola</Text>
                             </View>
-                            <Text style={styles.userName}>Owner Dashboard 👋</Text>
+                            <Text style={styles.greetingText}>Selamat Datang,</Text>
+                            <Text style={styles.userName} numberOfLines={1}>
+                                {stats?.admin_name || adminName || "Admin Kost"} 👋
+                            </Text>
                         </View>
                         <TouchableOpacity
                             onPress={handleLogout}

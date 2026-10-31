@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -22,12 +24,28 @@ import { API_URL } from '../../helpers/api';
 import { formatRupiah, formatMonthYear } from '../../helpers/formatters';
 import styles from '../../styles/tenantPayment.styles';
 
-const BANK_INFO = {
-    bankName: 'Bank Mandiri',
-    accountNumber: '1360014406059',
-    displayNumber: '136-001-440-6059',
-    accountHolder: 'Prastowo Ardi Widigdo',
-};
+const BANK_ACCOUNTS = [
+    {
+        id: 'mandiri',
+        bankName: 'Bank Mandiri',
+        accountNumber: '1360014406059',
+        displayNumber: '136-001-440-6059',
+        accountHolder: 'Prastowo Ardi Widigdo',
+        badgeColor: '#1e3a8a',
+        badgeBg: '#eff6ff',
+        logo: require('../../assets/images/banks/mandiri.png'),
+    },
+    {
+        id: 'jago',
+        bankName: 'Bank Jago',
+        accountNumber: '108528656318',
+        displayNumber: '108-528-656-318',
+        accountHolder: 'Prastowo Ardi Widigdo',
+        badgeColor: '#ea580c',
+        badgeBg: '#fff7ed',
+        logo: require('../../assets/images/banks/jago.png'),
+    },
+];
 
 export default function PaymentScreen() {
     const insets = useSafeAreaInsets();
@@ -36,6 +54,7 @@ export default function PaymentScreen() {
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [billData, setBillData] = useState(null);
+    const [copiedBankId, setCopiedBankId] = useState(null);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -143,8 +162,20 @@ export default function PaymentScreen() {
         }
     };
 
-    const handleCopyAccount = () => {
-        Alert.alert('Info Rekening', `Nomor Rekening ${BANK_INFO.bankName}:\n${BANK_INFO.accountNumber}\na/n ${BANK_INFO.accountHolder}`);
+    const handleCopyAccount = async (bank) => {
+        try {
+            await Clipboard.setStringAsync(bank.accountNumber);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+            setCopiedBankId(bank.id);
+            setTimeout(() => {
+                setCopiedBankId(null);
+            }, 2500);
+        } catch {
+            Alert.alert(
+                `Nomor Rekening ${bank.bankName}`,
+                `No. Rek: ${bank.accountNumber}\na/n ${bank.accountHolder}\n\nSilakan transfer sesuai nominal tagihan sewa.`
+            );
+        }
     };
 
     return (
@@ -190,21 +221,60 @@ export default function PaymentScreen() {
                     <View style={styles.divider} />
 
                     {/* Bank Transfer Destination */}
-                    <Text style={styles.bankTitle}>Tujuan Transfer:</Text>
-                    <View style={styles.bankCard}>
-                        <View style={styles.bankIconWrap}>
-                            <Ionicons name="card" size={22} color="#1e3a8a" />
+                    <Text style={styles.bankTitle}>Pilihan Rekening Tujuan Transfer:</Text>
+                    {BANK_ACCOUNTS.map((bank) => (
+                        <View key={bank.id} style={styles.bankCard}>
+                            <View style={styles.bankCardHeader}>
+                                <View style={styles.bankLogoWrap}>
+                                    <Image
+                                        source={bank.logo}
+                                        style={styles.bankLogo}
+                                        resizeMode="contain"
+                                    />
+                                </View>
+                                <View style={[styles.bankBadge, { backgroundColor: bank.badgeBg }]}>
+                                    <Text style={[styles.bankBadgeText, { color: bank.badgeColor }]}>
+                                        {bank.bankName}
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.bankCardBody}>
+                                <View style={{ flex: 1, paddingRight: 8 }}>
+                                    <Text style={styles.bankHolderLabel}>Nomor Rekening</Text>
+                                    <Text style={[styles.bankNumber, { color: bank.badgeColor }]}>
+                                        {bank.displayNumber}
+                                    </Text>
+                                    <Text style={styles.bankHolder}>a/n {bank.accountHolder}</Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.copyBtn,
+                                        {
+                                            backgroundColor: copiedBankId === bank.id ? '#ecfdf5' : bank.badgeBg,
+                                            borderColor: copiedBankId === bank.id ? '#10b981' : bank.badgeColor + '30',
+                                        },
+                                    ]}
+                                    onPress={() => handleCopyAccount(bank)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons
+                                        name={copiedBankId === bank.id ? 'checkmark-circle' : 'copy-outline'}
+                                        size={15}
+                                        color={copiedBankId === bank.id ? '#10b981' : bank.badgeColor}
+                                    />
+                                    <Text
+                                        style={[
+                                            styles.copyText,
+                                            { color: copiedBankId === bank.id ? '#10b981' : bank.badgeColor },
+                                        ]}
+                                    >
+                                        {copiedBankId === bank.id ? 'Tersalin!' : 'Salin'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                        <View style={{ flex: 1, marginLeft: 12 }}>
-                            <Text style={styles.bankName}>{BANK_INFO.bankName}</Text>
-                            <Text style={styles.bankNumber}>{BANK_INFO.displayNumber}</Text>
-                            <Text style={styles.bankHolder}>a/n {BANK_INFO.accountHolder}</Text>
-                        </View>
-                        <TouchableOpacity style={styles.copyBtn} onPress={handleCopyAccount}>
-                            <Ionicons name="copy-outline" size={16} color="#4e73df" />
-                            <Text style={styles.copyText}>Salin</Text>
-                        </TouchableOpacity>
-                    </View>
+                    ))}
                 </View>
 
                 {/* Upload Section */}

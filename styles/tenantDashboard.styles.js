@@ -477,6 +477,23 @@ export default StyleSheet.create({
     fontWeight: "700",
     color: "#1e293b",
   },
+  ruleCategoryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 14,
+    marginBottom: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "#eff6ff",
+    borderRadius: 8,
+  },
+  ruleCategoryTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#1e3a8a",
+    letterSpacing: 0.5,
+  },
   ruleRow: {
     flexDirection: "row",
     alignItems: "flex-start",

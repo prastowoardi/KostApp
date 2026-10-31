@@ -48,6 +48,13 @@ export default StyleSheet.create({
         textTransform: "uppercase",
         letterSpacing: 0.6,
     },
+    greetingText: {
+        fontSize: 13,
+        color: "rgba(255, 255, 255, 0.75)",
+        fontWeight: "500",
+        marginTop: 2,
+        marginBottom: 2,
+    },
     userName: {
         color: "#ffffff",
         fontSize: 22,

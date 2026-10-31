@@ -29,6 +29,7 @@ export default function TenantDashboard() {
   const router = useRouter();
 
   const [data, setData] = useState(null);
+  const [tenantName, setTenantName] = useState("Penghuni");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
@@ -64,6 +65,14 @@ export default function TenantDashboard() {
   }, []);
 
   useEffect(() => {
+    AsyncStorage.getItem("userData").then((userStr) => {
+      if (userStr) {
+        try {
+          const u = JSON.parse(userStr);
+          if (u?.name) setTenantName(u.name);
+        } catch {}
+      }
+    });
     fetchData();
   }, [fetchData]);
 
@@ -138,7 +147,7 @@ export default function TenantDashboard() {
                 <Text style={styles.brandTagText}>Serrata Kost • Penghuni</Text>
               </View>
               <Text style={styles.greetingText}>Selamat Datang,</Text>
-              <Text style={styles.userName} numberOfLines={1}>{data?.name || "Penghuni"}</Text>
+              <Text style={styles.userName} numberOfLines={1}>{data?.name || tenantName || "Penghuni"}</Text>
             </View>
             <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn} activeOpacity={0.75}>
               <Ionicons name="log-out-outline" size={20} color="#ffffff" />
@@ -384,31 +393,109 @@ export default function TenantDashboard() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+              {/* UMUM */}
+              <View style={styles.ruleCategoryHeader}>
+                <Ionicons name="location" size={14} color="#1e3a8a" />
+                <Text style={styles.ruleCategoryTitle}>KETENTUAN UMUM</Text>
+              </View>
               <RuleItem
                 num="1"
-                title="Jam Kunjungan & Tamu"
-                desc="Tamu lawan jenis dilarang masuk ke dalam kamar tidur. Batas kunjungan tamu hingga pukul 22.00 WIB."
+                title="Ketenangan & Keamanan"
+                desc="Saling menjaga ketenangan dan keamanan ya, biar waktu istirahat makin pol dan nyaman."
               />
               <RuleItem
                 num="2"
-                title="Ketenangan & Privasi"
-                desc="Harap menjaga ketenangan di atas pukul 23.00 WIB. Dilarang menyetel audio dengan suara bervolume tinggi."
+                title="Bebas Miras & Narkoba"
+                desc="Lingkungan Serrata Kost wajib bersih dari Miras, Narkoba, atau barang terlarang lainnya."
               />
               <RuleItem
                 num="3"
-                title="Pembayaran Tepat Waktu"
-                desc="Pembayaran sewa kamar jatuh tempo setiap tanggal yang telah ditentukan. Keterlambatan dikenakan denda sesuai ketentuan."
+                title="No Smoking Inside"
+                desc="Dilarang merokok di dalam kamar. Kamar harus tetap bersih dan wangi tanpa asap rokok."
               />
               <RuleItem
                 num="4"
-                title="Kebersihan & Fasilitas"
-                desc="Wajib menjaga kebersihan kamar dan area bersama (dapur & parkiran). Buang sampah pada tempat yang disediakan."
+                title="Hewan Peliharaan"
+                desc="Mohon maaf, Serrata Kost belum bisa menerima anabul atau hewan peliharaan apa pun."
               />
               <RuleItem
                 num="5"
-                title="Larangan Keras"
-                desc="Dilarang keras membawa, menyimpan, atau mengonsumsi narkoba, miras, senjata berbahaya, atau melakukan tindakan asusila."
+                title="Etika & Norma"
+                desc="Saling menjaga etika bersosialisasi dan menghindari tindakan asusila demi kenyamanan bersama."
+              />
+              <RuleItem
+                num="6"
+                title="Jaga Nama Baik"
+                desc="Mari kita jaga nama baik Serrata Kost bersama-sama di mana pun berada."
+              />
+              <RuleItem
+                num="7"
+                title="Pembayaran Tepat Waktu"
+                desc="Pembayaran sewa kost wajib tepat waktu sesuai tanggal jatuh tempo yang telah disepakati."
+              />
+
+              {/* JAM KEGIATAN & TAMU */}
+              <View style={styles.ruleCategoryHeader}>
+                <Ionicons name="time" size={14} color="#1e3a8a" />
+                <Text style={styles.ruleCategoryTitle}>JAM KEGIATAN & TAMU</Text>
+              </View>
+              <RuleItem
+                num="8"
+                title="Jam Malam (Pukul 22.00 WIB)"
+                desc="Batas jam malam maksimal pukul 22.00 WIB. Jika terpaksa pulang larut, wajib mengabari Ibu Kost terlebih dahulu."
+              />
+              <RuleItem
+                num="9"
+                title="Tamu Lawan Jenis"
+                desc="Khusus tamu laki-laki dilarang masuk ke dalam kamar (bertemu di area teras/tamu saja)."
+              />
+              <RuleItem
+                num="10"
+                title="Keluarga Menginap"
+                desc="Jika ada keluarga yang ingin menginap, wajib konfirmasi dan izin ke Ibu Kost terlebih dahulu (maksimal 2 orang)."
+              />
+
+              {/* KEBERSIHAN & KERAPIHAN */}
+              <View style={styles.ruleCategoryHeader}>
+                <Ionicons name="sparkles" size={14} color="#1e3a8a" />
+                <Text style={styles.ruleCategoryTitle}>KEBERSIHAN & KERAPIHAN</Text>
+              </View>
+              <RuleItem
+                num="11"
+                title="Kamar & Kamar Mandi"
+                desc="Kamar dan kamar mandi pribadi wajib dijaga tetap bersih dan rapi agar semakin betah."
+              />
+              <RuleItem
+                num="12"
+                title="Pembuangan Sampah"
+                desc="Buang sampah pada tempatnya. Dilarang keras membuang sampah, tisu, atau pembalut ke dalam kloset agar tidak mampet."
+              />
+              <RuleItem
+                num="13"
+                title="Tempat Jemuran"
+                desc="Jemur pakaian di area jemuran yang sudah disediakan, jangan menjemur di depan kamar agar lingkungan tetap rapi."
+              />
+
+              {/* FASILITAS KOST */}
+              <View style={styles.ruleCategoryHeader}>
+                <Ionicons name="water" size={14} color="#1e3a8a" />
+                <Text style={styles.ruleCategoryTitle}>FASILITAS KOST</Text>
+              </View>
+              <RuleItem
+                num="14"
+                title="Penggunaan Bijak"
+                desc="Gunakan seluruh fasilitas kost dengan bijak, tertib, dan penuh rasa tanggung jawab."
+              />
+              <RuleItem
+                num="15"
+                title="Tanggung Jawab Kerusakan"
+                desc="Jika terjadi kerusakan fasilitas akibat kelalaian pribadi, biaya perbaikannya ditanggung oleh penghuni."
+              />
+              <RuleItem
+                num="16"
+                title="Hemat Air & Energi"
+                desc="Hemat penggunaan air dan listrik ya Kak, gunakan secukupnya saja sesuai kebutuhan."
               />
             </ScrollView>
 

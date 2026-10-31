@@ -51,6 +51,9 @@ export default function ManageTenant() {
     const [paymentHistory, setPaymentHistory] = useState([]);
     const [paymentLoading, setPaymentLoading] = useState(false);
 
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successTenantData, setSuccessTenantData] = useState(null);
+
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -172,14 +175,29 @@ export default function ManageTenant() {
                 if (!payload.password) delete payload.password;
                 await axios.post(`${API_URL}/admin/tenants/update/${tenantId}`, payload, { headers });
                 showAlert('Berhasil', 'Data penghuni berhasil diperbarui.', 'success');
+                setModalVisible(false);
+                resetForm();
+                fetchData();
             } else {
-                await axios.post(`${API_URL}/admin/tenants/store`, form, { headers });
-                showAlert('Berhasil', 'Penghuni baru berhasil didaftarkan.', 'success');
-            }
+                const res = await axios.post(`${API_URL}/admin/tenants/store`, form, { headers });
+                const created = res.data?.data;
+                const roomObj = rooms.find((r) => (r.uuid || r.id) === form.room_id) || allRooms.find((r) => (r.uuid || r.id) === form.room_id);
+                const roomNumber = created?.room?.room_number || roomObj?.room_number || '-';
 
-            setModalVisible(false);
-            resetForm();
-            fetchData();
+                setSuccessTenantData({
+                    name: created?.name || form.name,
+                    roomNumber,
+                    phone: created?.phone || form.phone,
+                    email: created?.email || form.email,
+                    waUrl: res.data?.wa_url,
+                    messageText: res.data?.message_text,
+                });
+
+                setModalVisible(false);
+                resetForm();
+                fetchData();
+                setShowSuccessModal(true);
+            }
         } catch (e) {
             console.log('Error save tenant:', e.response?.data || e.message);
             const serverMessage = e.response?.data?.message || 'Gagal menyimpan data tenant.';
@@ -732,6 +750,77 @@ export default function ManageTenant() {
                 </View>
             </Modal>
 
+            {/* MODAL SUKSES PENDAFTARAN & WHATSAPP */}
+            <Modal visible={showSuccessModal} transparent animationType="fade">
+                <View style={styles.successModalBg}>
+                    <View style={styles.successModalCard}>
+                        <View style={styles.successIconBadge}>
+                            <Ionicons name="checkmark-circle" size={50} color="#10b981" />
+                        </View>
+                        <Text style={styles.successModalTitle}>Penghuni Berhasil Didaftarkan!</Text>
+                        <Text style={styles.successModalSubtitle}>
+                            Data penghuni telah tersimpan dan bot telah menjadwalkan pesan sambutan.
+                        </Text>
+
+                        <View style={styles.strukContainer}>
+                            <View style={styles.strukRow}>
+                                <Text style={styles.strukLabel}>Nama Penghuni</Text>
+                                <Text style={styles.strukValBold}>{successTenantData?.name || '-'}</Text>
+                            </View>
+                            <View style={styles.strukRow}>
+                                <Text style={styles.strukLabel}>Nomor Kamar</Text>
+                                <Text style={styles.strukVal}>Kamar {successTenantData?.roomNumber || '-'}</Text>
+                            </View>
+                            <View style={styles.strukRow}>
+                                <Text style={styles.strukLabel}>No. WhatsApp</Text>
+                                <Text style={styles.strukVal}>{successTenantData?.phone || '-'}</Text>
+                            </View>
+                            <View style={styles.strukRow}>
+                                <Text style={styles.strukLabel}>Email Login</Text>
+                                <Text style={styles.strukVal}>{successTenantData?.email || '-'}</Text>
+                            </View>
+                        </View>
+
+                        {/* Tombol Kirim WhatsApp */}
+                        <TouchableOpacity
+                            style={styles.waButton}
+                            onPress={() => {
+                                if (successTenantData?.waUrl) {
+                                    Linking.openURL(successTenantData.waUrl).catch(() => {
+                                        Alert.alert('Error', 'Gagal membuka aplikasi WhatsApp.');
+                                    });
+                                } else if (successTenantData?.messageText && successTenantData?.phone) {
+                                    const cleanPhone = successTenantData.phone.replace(/\D/g, '');
+                                    const waPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
+                                    const fallbackUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(successTenantData.messageText)}`;
+                                    Linking.openURL(fallbackUrl).catch(() => {
+                                        Alert.alert('Error', 'Gagal membuka aplikasi WhatsApp.');
+                                    });
+                                } else {
+                                    Alert.alert('Info', 'Tautan WhatsApp tidak tersedia.');
+                                }
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="logo-whatsapp" size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                            <Text style={styles.waButtonText}>Kirim Sambutan via WhatsApp</Text>
+                        </TouchableOpacity>
+
+                        {/* Tombol Selesai */}
+                        <TouchableOpacity
+                            style={styles.doneBtn}
+                            onPress={() => {
+                                setShowSuccessModal(false);
+                                setSuccessTenantData(null);
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.doneBtnText}>Selesai & Tutup</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
             <GlobalAlert
                 visible={alertConfig.visible}
                 title={alertConfig.title}
@@ -1110,5 +1199,101 @@ const styles = StyleSheet.create({
     closeRoomModalText: {
         color: '#64748b',
         fontWeight: 'bold',
+    },
+    successModalBg: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    successModalCard: {
+        backgroundColor: '#ffffff',
+        width: '100%',
+        maxWidth: 380,
+        borderRadius: 24,
+        padding: 24,
+        alignItems: 'center',
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    successIconBadge: {
+        marginBottom: 8,
+    },
+    successModalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#1e293b',
+        textAlign: 'center',
+        marginBottom: 4,
+    },
+    successModalSubtitle: {
+        fontSize: 12,
+        color: '#64748b',
+        textAlign: 'center',
+        marginBottom: 16,
+    },
+    strukContainer: {
+        width: '100%',
+        backgroundColor: '#f8fafc',
+        borderRadius: 16,
+        padding: 14,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        marginBottom: 16,
+    },
+    strukRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 5,
+    },
+    strukLabel: {
+        fontSize: 12,
+        color: '#64748b',
+    },
+    strukVal: {
+        fontSize: 12,
+        color: '#1e293b',
+        fontWeight: '500',
+    },
+    strukValBold: {
+        fontSize: 12,
+        color: '#1e293b',
+        fontWeight: 'bold',
+    },
+    waButton: {
+        width: '100%',
+        backgroundColor: '#16a34a',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 14,
+        marginBottom: 10,
+        elevation: 2,
+    },
+    waButtonText: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
+    doneBtn: {
+        width: '100%',
+        backgroundColor: '#f1f5f9',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        paddingVertical: 13,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    doneBtnText: {
+        color: '#475569',
+        fontWeight: 'bold',
+        fontSize: 14,
     },
 });

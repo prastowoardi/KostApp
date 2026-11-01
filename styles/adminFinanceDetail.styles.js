@@ -228,6 +228,23 @@ export default StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 14,
     },
+    backActionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        backgroundColor: '#f1f5f9',
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        marginTop: 10,
+        gap: 6,
+    },
+    backActionText: {
+        color: '#475569',
+        fontWeight: '700',
+        fontSize: responsiveFont(14),
+    },
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(15, 23, 42, 0.75)',

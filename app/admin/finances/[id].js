@@ -131,8 +131,13 @@ export default function FinanceDetail() {
                     style={[styles.header, { paddingTop: insets.top + 16 }]}
                 >
                     <View style={styles.headerTop}>
-                        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                            <Ionicons name="arrow-back" size={24} color="white" />
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={styles.backBtn}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="chevron-back" size={24} color="white" />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle}>Detail Transaksi</Text>
                         <View style={{ width: 40 }} />
@@ -279,6 +284,15 @@ export default function FinanceDetail() {
                     <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.8}>
                         <Ionicons name="trash-outline" size={18} color="#ef4444" />
                         <Text style={styles.deleteText}>Hapus Catatan Ini</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.backActionBtn}
+                        onPress={() => router.back()}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="arrow-back-outline" size={18} color="#475569" />
+                        <Text style={styles.backActionText}>Kembali</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

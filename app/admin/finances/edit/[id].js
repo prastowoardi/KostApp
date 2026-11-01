@@ -243,7 +243,12 @@ export default function EditTransaction() {
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
             >
                 <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={styles.backBtn}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        activeOpacity={0.7}
+                    >
                         <Ionicons name="chevron-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Edit Transaksi Keuangan</Text>
@@ -496,6 +501,16 @@ export default function EditTransaction() {
                                 </View>
                             )}
                         </LinearGradient>
+                    </TouchableOpacity>
+
+                    {/* Cancel Button */}
+                    <TouchableOpacity
+                        style={styles.cancelBtn}
+                        onPress={() => router.back()}
+                        disabled={submitting}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.cancelBtnText}>Batal</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

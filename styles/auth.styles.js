@@ -1,5 +1,11 @@
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { responsiveFont, moderateScale } from './theme';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Galaxy S23 FE has ~880-900dp screen height, modern tall Android >= 800dp
+const isSmallDevice = SCREEN_HEIGHT < 700;
+const isTallDevice = SCREEN_HEIGHT >= 800;
 
 export default StyleSheet.create({
     container: {
@@ -10,12 +16,14 @@ export default StyleSheet.create({
         flexGrow: 1,
     },
     header: {
-        height: 280,
+        height: isSmallDevice ? 240 : isTallDevice ? Math.min(340, Math.round(SCREEN_HEIGHT * 0.36)) : 280,
+        minHeight: isSmallDevice ? 230 : isTallDevice ? 310 : 270,
         justifyContent: 'center',
         alignItems: 'center',
         borderBottomLeftRadius: 40,
         borderBottomRightRadius: 40,
         paddingHorizontal: moderateScale(20),
+        paddingBottom: isTallDevice ? moderateScale(24) : moderateScale(14),
         maxWidth: 720,
         width: '100%',
         alignSelf: 'center',
@@ -53,11 +61,12 @@ export default StyleSheet.create({
     },
     formContainer: {
         flex: 1,
-        marginTop: -35,
+        marginTop: isTallDevice ? -15 : -35,
         paddingHorizontal: moderateScale(24),
         maxWidth: 520,
         width: '100%',
         alignSelf: 'center',
+        justifyContent: 'space-between',
     },
     card: {
         backgroundColor: '#ffffff',
@@ -138,7 +147,8 @@ export default StyleSheet.create({
     },
     footerText: {
         textAlign: 'center',
-        marginTop: 32,
+        marginTop: isTallDevice ? 36 : 24,
+        marginBottom: 16,
         color: '#94a3b8',
         fontSize: responsiveFont(13),
         fontWeight: '500',

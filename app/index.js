@@ -15,6 +15,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +28,7 @@ import styles from '../styles/auth.styles';
 export default function LoginScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const { height: screenHeight } = useWindowDimensions();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -179,7 +181,7 @@ export default function LoginScreen() {
                     colors={['#0f172a', '#1e293b', '#1e3a8a']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={[styles.header, { paddingTop: insets.top + 30 }]}
+                    style={[styles.header, { paddingTop: insets.top + (screenHeight >= 800 ? 25 : 15) }]}
                 >
                     <View style={styles.logoCircle}>
                         <Image

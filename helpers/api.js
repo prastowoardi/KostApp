@@ -35,4 +35,18 @@ api.interceptors.request.use(async (config) => {
     return config;
 });
 
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            try {
+                await AsyncStorage.multiRemove(['userToken', 'userData']);
+            } catch {
+                // Ignore cleanup errors
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api;

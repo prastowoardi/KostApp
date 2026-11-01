@@ -178,6 +178,21 @@ export default StyleSheet.create({
         fontSize: 14,
         letterSpacing: 0.8,
     },
+    cancelBtn: {
+        marginTop: 10,
+        paddingVertical: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 14,
+        backgroundColor: '#f1f5f9',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    cancelBtnText: {
+        color: '#475569',
+        fontWeight: '700',
+        fontSize: 14,
+    },
     receiptCard: {
         backgroundColor: '#ffffff',
         borderRadius: 18,

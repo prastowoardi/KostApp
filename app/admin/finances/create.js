@@ -155,7 +155,12 @@ export default function CreateTransaction() {
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
             >
                 <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={styles.backBtn}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        activeOpacity={0.7}
+                    >
                         <Ionicons name="chevron-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Catat Transaksi</Text>
@@ -297,6 +302,7 @@ export default function CreateTransaction() {
                         style={[styles.submitButton, loading && { opacity: 0.8 }]}
                         onPress={handleSave}
                         disabled={loading}
+                        activeOpacity={0.8}
                     >
                         <LinearGradient
                             colors={['#0f172a', '#1e3a8a']}
@@ -307,9 +313,22 @@ export default function CreateTransaction() {
                             {loading ? (
                                 <ActivityIndicator color="#ffffff" />
                             ) : (
-                                <Text style={styles.submitText}>SIMPAN TRANSAKSI</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                    <Ionicons name="save-outline" size={18} color="#ffffff" />
+                                    <Text style={styles.submitText}>SIMPAN TRANSAKSI</Text>
+                                </View>
                             )}
                         </LinearGradient>
+                    </TouchableOpacity>
+
+                    {/* Cancel Button */}
+                    <TouchableOpacity
+                        style={styles.cancelBtn}
+                        onPress={() => router.back()}
+                        disabled={loading}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.cancelBtnText}>Batal</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

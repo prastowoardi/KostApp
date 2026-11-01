@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
+import LoadingScreen from '../../components/LoadingScreen';
 import { API_URL } from '../../helpers/api';
 import { formatRupiah, formatDate } from '../../helpers/formatters';
 import styles from '../../styles/adminTenant.styles';
@@ -387,10 +388,12 @@ export default function ManageTenant() {
             </LinearGradient>
 
             {loading ? (
-                <View style={styles.centered}>
-                    <ActivityIndicator size="large" color="#1e3a8a" />
-                    <Text style={styles.loadingText}>Memuat data penghuni...</Text>
-                </View>
+                <LoadingScreen
+                    title="Data Penghuni"
+                    message="Menyiapkan daftar penghuni..."
+                    icon="people-outline"
+                    fullscreen={false}
+                />
             ) : (
                 <FlatList
                     data={filteredTenants}

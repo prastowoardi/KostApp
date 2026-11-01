@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
+    Image,
+    Linking,
     Modal,
+    Pressable,
     RefreshControl,
     ScrollView,
     StatusBar,
@@ -15,8 +18,9 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LoadingScreen from '../../../components/LoadingScreen';
 import api, { API_URL } from '../../../helpers/api';
-import { formatRupiah, formatDate } from '../../../helpers/formatters';
+import { formatRupiah, formatDate, getStorageUrl } from '../../../helpers/formatters';
 import styles from '../../../styles/adminFinances.styles';
 
 export default function FinanceIndex() {
@@ -45,6 +49,8 @@ export default function FinanceIndex() {
 
     const [categories, setCategories] = useState([]);
     const [data, setData] = useState({ transactions: [], totalIncome: 0, totalExpense: 0 });
+    const [previewImage, setPreviewImage] = useState(null);
+    const [previewImageLoading, setPreviewImageLoading] = useState(false);
 
     const FINANCES_URL = `${API_URL}/admin/finances`;
 
@@ -117,9 +123,11 @@ export default function FinanceIndex() {
         }
     }, [FINANCES_URL, filterType, selectedCategory, startDate, endDate, searchQuery]);
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchData();
+        }, [fetchData])
+    );
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -213,6 +221,16 @@ export default function FinanceIndex() {
     const renderItem = ({ item }) => {
         const isIncome = item.type === 'income';
         const targetId = item.uuid || item.id_finance || item.id;
+        const rawReceipt =
+            item.receipt_url ||
+            item.receipt_file ||
+            item.receipt_path ||
+            item.payment?.receipt_file ||
+            item.payment?.proof_of_payment ||
+            item.payment?.receipt_path ||
+            item.payment?.receipt_url;
+        const receiptUri = getStorageUrl(rawReceipt);
+        const hasReceipt = Boolean(receiptUri);
 
         return (
             <TouchableOpacity
@@ -235,9 +253,17 @@ export default function FinanceIndex() {
                         <Text style={styles.transTitle} numberOfLines={1}>
                             {item.description || item.title || 'Transaksi Keuangan'}
                         </Text>
-                        <Text style={styles.transSub}>
-                            {item.category || 'Umum'} • {formatDate(item.transaction_date)}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3, flexWrap: 'wrap', gap: 6 }}>
+                            <Text style={styles.transSub}>
+                                {item.category || 'Umum'} • {formatDate(item.transaction_date)}
+                            </Text>
+                            {hasReceipt && (
+                                <View style={styles.receiptTag}>
+                                    <Ionicons name="receipt-outline" size={11} color="#059669" />
+                                    <Text style={styles.receiptTagText}>Bukti</Text>
+                                </View>
+                            )}
+                        </View>
                     </View>
                     <Text
                         style={[
@@ -248,17 +274,44 @@ export default function FinanceIndex() {
                         {isIncome ? '+' : '-'} {formatRupiah(item.amount)}
                     </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
+                {hasReceipt && (
+                    <TouchableOpacity
+                        style={styles.cardReceiptBtn}
+                        onPress={() => {
+                            if (receiptUri.toLowerCase().includes('.pdf')) {
+                                Linking.openURL(receiptUri);
+                            } else {
+                                setPreviewImage(receiptUri);
+                            }
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="image-outline" size={17} color="#059669" />
+                    </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                    style={styles.cardEditBtn}
+                    onPress={() => {
+                        if (targetId) {
+                            router.push(`/admin/finances/edit/${targetId}`);
+                        }
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <Ionicons name="create-outline" size={17} color="#4e73df" />
+                </TouchableOpacity>
             </TouchableOpacity>
         );
     };
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#2563eb" />
-                <Text style={styles.loadingText}>Memuat pembukuan keuangan...</Text>
-            </View>
+            <LoadingScreen
+                title="Laporan Keuangan"
+                message="Menyiapkan data kas dan transaksi..."
+                icon="wallet-outline"
+            />
         );
     }
 
@@ -625,6 +678,62 @@ export default function FinanceIndex() {
                         </View>
                     </View>
                 </View>
+            </Modal>
+
+            {/* Quick Receipt Preview Modal */}
+            <Modal
+                visible={Boolean(previewImage)}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setPreviewImage(null)}
+            >
+                <Pressable style={styles.receiptModalOverlay} onPress={() => setPreviewImage(null)}>
+                    <View style={styles.receiptModalContent} onStartShouldSetResponder={() => true}>
+                        <View style={styles.receiptModalHeader}>
+                            <Text style={styles.receiptModalTitle}>Bukti Transaksi</Text>
+                            <TouchableOpacity onPress={() => setPreviewImage(null)}>
+                                <Ionicons name="close" size={24} color="#334155" />
+                            </TouchableOpacity>
+                        </View>
+                        {previewImage ? (
+                            <View style={{ position: 'relative', width: '100%', alignItems: 'center' }}>
+                                <Image
+                                    source={{ uri: previewImage }}
+                                    style={styles.receiptModalImage}
+                                    resizeMode="contain"
+                                    onLoadStart={() => setPreviewImageLoading(true)}
+                                    onLoadEnd={() => setPreviewImageLoading(false)}
+                                />
+                                {previewImageLoading && (
+                                    <View
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            right: 0,
+                                            bottom: 0,
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                        }}
+                                    >
+                                        <ActivityIndicator size="large" color="#2563eb" />
+                                    </View>
+                                )}
+                            </View>
+                        ) : null}
+                        {previewImage ? (
+                            <TouchableOpacity
+                                style={styles.receiptModalFooterBtn}
+                                onPress={() => Linking.openURL(previewImage)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="open-outline" size={16} color="#334155" />
+                                <Text style={styles.receiptModalFooterBtnText}>Buka di Browser</Text>
+                            </TouchableOpacity>
+                        ) : null}
+                    </View>
+                </Pressable>
             </Modal>
         </View>
     );

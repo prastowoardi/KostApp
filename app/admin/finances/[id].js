@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
     Image,
+    Linking,
     Modal,
     Pressable,
     ScrollView,
@@ -16,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
+import LoadingScreen from '../../../components/LoadingScreen';
 import api from '../../../helpers/api';
 import { formatRupiah, formatDate, getStorageUrl } from '../../../helpers/formatters';
 import styles from '../../../styles/adminFinanceDetail.styles';
@@ -28,6 +30,9 @@ export default function FinanceDetail() {
     const [loading, setLoading] = useState(true);
     const [item, setItem] = useState(null);
     const [isImageModalVisible, setImageModalVisible] = useState(false);
+    const [imageLoading, setImageLoading] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [modalImageLoading, setModalImageLoading] = useState(false);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -44,6 +49,8 @@ export default function FinanceDetail() {
         if (!id || id === 'undefined') return;
         try {
             setLoading(true);
+            setImageError(false);
+            setImageLoading(false);
             const response = await api.get(`/admin/finances/${id}`);
             setItem(response.data?.data || response.data);
         } catch (error) {
@@ -56,8 +63,15 @@ export default function FinanceDetail() {
     }, [id, router]);
 
     useEffect(() => {
-        fetchDetail();
-    }, [fetchDetail]);
+        setImageError(false);
+        setImageLoading(false);
+    }, [id]);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchDetail();
+        }, [fetchDetail])
+    );
 
     const handleDelete = () => {
         setAlertConfig({
@@ -82,17 +96,27 @@ export default function FinanceDetail() {
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#4e73df" />
-                <Text style={styles.loadingText}>Memuat detail transaksi...</Text>
-            </View>
+            <LoadingScreen
+                title="Detail Transaksi"
+                message="Memuat rincian transaksi..."
+                icon="receipt-outline"
+            />
         );
     }
 
     if (!item) return null;
 
     const isIncome = item.type === 'income';
-    const receiptUri = getStorageUrl(item.receipt_file);
+    const rawReceipt =
+        item.receipt_url ||
+        item.receipt_file ||
+        item.receipt_path ||
+        item.payment?.receipt_file ||
+        item.payment?.proof_of_payment ||
+        item.payment?.receipt_path ||
+        item.payment?.receipt_url;
+    const receiptUri = getStorageUrl(rawReceipt);
+    const isPdf = typeof receiptUri === 'string' && receiptUri.toLowerCase().includes('.pdf');
 
     return (
         <View style={styles.container}>
@@ -141,17 +165,83 @@ export default function FinanceDetail() {
                     {/* Receipt Evidence */}
                     <Text style={styles.label}>Bukti Struk / Lampiran</Text>
                     {receiptUri ? (
-                        <TouchableOpacity
-                            activeOpacity={0.9}
-                            onPress={() => setImageModalVisible(true)}
-                            style={styles.imageWrapper}
-                        >
-                            <Image source={{ uri: receiptUri }} style={styles.evidenceImage} resizeMode="cover" />
-                            <View style={styles.zoomOverlay}>
-                                <Ionicons name="expand" size={16} color="white" />
-                                <Text style={styles.zoomText}>Ketuk untuk perbesar</Text>
+                        isPdf ? (
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => Linking.openURL(receiptUri)}
+                                style={styles.pdfWrapper}
+                            >
+                                <View style={styles.pdfIconContainer}>
+                                    <Ionicons name="document-text" size={28} color="#ef4444" />
+                                </View>
+                                <View style={styles.pdfInfo}>
+                                    <Text style={styles.pdfTitle} numberOfLines={1}>Dokumen Bukti Transaksi (PDF)</Text>
+                                    <Text style={styles.pdfSub}>Ketuk untuk membuka atau mengunduh</Text>
+                                </View>
+                                <Ionicons name="open-outline" size={20} color="#64748b" />
+                            </TouchableOpacity>
+                        ) : imageError ? (
+                            <View style={styles.imageErrorContainer}>
+                                <Ionicons name="alert-circle-outline" size={32} color="#f59e0b" />
+                                <Text style={styles.imageErrorText}>Foto bukti tidak dapat dimuat</Text>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 4 }}>
+                                    <TouchableOpacity
+                                        style={styles.openExternalBtn}
+                                        onPress={() => {
+                                            setImageError(false);
+                                            setImageLoading(true);
+                                        }}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons name="refresh-outline" size={15} color="#2563eb" />
+                                        <Text style={styles.openExternalText}>Coba Lagi</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.openExternalBtn}
+                                        onPress={() => router.push(`/admin/finances/edit/${id}`)}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons name="create-outline" size={15} color="#2563eb" />
+                                        <Text style={styles.openExternalText}>Unggah Foto Baru</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.openExternalBtn}
+                                        onPress={() => Linking.openURL(receiptUri)}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons name="open-outline" size={15} color="#2563eb" />
+                                        <Text style={styles.openExternalText}>Buka Tautan</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                        </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity
+                                activeOpacity={0.9}
+                                onPress={() => setImageModalVisible(true)}
+                                style={styles.imageWrapper}
+                            >
+                                <Image
+                                    source={{ uri: receiptUri }}
+                                    style={styles.evidenceImage}
+                                    resizeMode="cover"
+                                    onLoadStart={() => setImageLoading(true)}
+                                    onLoadEnd={() => setImageLoading(false)}
+                                    onError={() => {
+                                        setImageLoading(false);
+                                        setImageError(true);
+                                    }}
+                                />
+                                {imageLoading && (
+                                    <View style={styles.imageLoadingOverlay}>
+                                        <ActivityIndicator size="small" color="#2563eb" />
+                                    </View>
+                                )}
+                                <View style={styles.zoomOverlay}>
+                                    <Ionicons name="expand" size={16} color="white" />
+                                    <Text style={styles.zoomText}>Ketuk untuk perbesar</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )
                     ) : (
                         <View style={styles.noImage}>
                             <Ionicons name="image-outline" size={28} color="#cbd5e1" />
@@ -166,9 +256,25 @@ export default function FinanceDetail() {
                     <Text style={styles.noteText}>Waktu Input: {formatDate(item.created_at, true)}</Text>
                 </View>
 
-                {/* Action Button */}
+                {/* Action Buttons */}
                 <View style={styles.actionContainer}>
-                    <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+                    <TouchableOpacity
+                        style={styles.editBtn}
+                        onPress={() => router.push(`/admin/finances/edit/${id}`)}
+                        activeOpacity={0.8}
+                    >
+                        <LinearGradient
+                            colors={['#0f172a', '#1e3a8a']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.editGradient}
+                        >
+                            <Ionicons name="create-outline" size={18} color="#ffffff" />
+                            <Text style={styles.editText}>Edit Transaksi</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.8}>
                         <Ionicons name="trash-outline" size={18} color="#ef4444" />
                         <Text style={styles.deleteText}>Hapus Catatan Ini</Text>
                     </TouchableOpacity>
@@ -183,7 +289,7 @@ export default function FinanceDetail() {
                 onRequestClose={() => setImageModalVisible(false)}
             >
                 <Pressable style={styles.modalOverlay} onPress={() => setImageModalVisible(false)}>
-                    <View style={styles.modalContent}>
+                    <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Bukti Transaksi</Text>
                             <TouchableOpacity onPress={() => setImageModalVisible(false)}>
@@ -191,8 +297,31 @@ export default function FinanceDetail() {
                             </TouchableOpacity>
                         </View>
                         {receiptUri ? (
-                            <Image source={{ uri: receiptUri }} style={styles.fullImage} resizeMode="contain" />
+                            <View style={{ position: 'relative', alignItems: 'center' }}>
+                                <Image
+                                    source={{ uri: receiptUri }}
+                                    style={styles.fullImage}
+                                    resizeMode="contain"
+                                    onLoadStart={() => setModalImageLoading(true)}
+                                    onLoadEnd={() => setModalImageLoading(false)}
+                                />
+                                {modalImageLoading && (
+                                    <View style={styles.imageLoadingOverlay}>
+                                        <ActivityIndicator size="large" color="#2563eb" />
+                                    </View>
+                                )}
+                            </View>
                         ) : null}
+                        {receiptUri && (
+                            <TouchableOpacity
+                                style={styles.modalFooterBtn}
+                                onPress={() => Linking.openURL(receiptUri)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="open-outline" size={16} color="#334155" />
+                                <Text style={styles.modalFooterBtnText}>Buka Ukuran Penuh di Browser</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </Pressable>
             </Modal>

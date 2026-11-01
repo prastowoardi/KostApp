@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
+import LoadingScreen from "../../components/LoadingScreen";
 import api, { API_URL } from "../../helpers/api";
 import { formatRupiah, getInitials } from "../../helpers/formatters";
 import styles from "../../styles/adminDashboard.styles";
@@ -204,11 +205,11 @@ export default function AdminDashboard() {
 
     if (loading) {
         return (
-            <View style={styles.loadingWrap}>
-                <StatusBar barStyle="dark-content" />
-                <ActivityIndicator size="large" color="#1e3a8a" />
-                <Text style={styles.loadingText}>Memuat Dashboard...</Text>
-            </View>
+            <LoadingScreen
+                title="Dashboard Admin"
+                message="Memuat statistik & aktivitas kos..."
+                icon="home-outline"
+            />
         );
     }
 

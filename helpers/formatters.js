@@ -1,7 +1,7 @@
 /**
  * Utility functions for formatting currencies, dates, text, and asset URLs.
  */
-import { STORAGE_URL } from './api';
+import { BASE_URL, STORAGE_URL } from './api';
 
 /**
  * Format a number to Indonesian Rupiah currency string.
@@ -73,15 +73,43 @@ export const getEntityId = (entity) => {
 /**
  * Resolve full storage URL for uploaded files/receipts.
  * Correctly handles relative paths, paths with/without 'storage/' prefix,
- * and already absolute URLs.
+ * and already absolute URLs (normalizing localhost/127.0.0.1 to active BASE_URL).
  */
 export const getStorageUrl = (path) => {
     if (!path) return null;
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-        return path;
+    if (typeof path === 'object') {
+        if (path.uri) return getStorageUrl(path.uri);
+        if (path.url) return getStorageUrl(path.url);
+        return null;
     }
-    const cleanPath = path.replace(/^\/?storage\/?/, '').replace(/^\/+/, '');
-    return `${STORAGE_URL}/${cleanPath}`;
+    const cleanPath = String(path).trim();
+    if (!cleanPath || cleanPath === '[object Object]' || cleanPath === 'undefined' || cleanPath === 'null') {
+        return null;
+    }
+
+    // If it contains /storage/, extract relative path to ensure valid host
+    if (cleanPath.includes('/storage/')) {
+        const parts = cleanPath.split('/storage/');
+        const relative = parts[parts.length - 1].replace(/^\/+/, '');
+        return `${STORAGE_URL}/${relative}`;
+    }
+
+    // If it's an absolute URL with localhost or 127.0.0.1, rewrite host with BASE_URL
+    if (
+        cleanPath.startsWith('http://localhost') ||
+        cleanPath.startsWith('http://127.0.0.1') ||
+        cleanPath.startsWith('https://localhost') ||
+        cleanPath.startsWith('https://127.0.0.1')
+    ) {
+        return cleanPath.replace(/^https?:\/\/[^/]+/, BASE_URL);
+    }
+
+    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+        return cleanPath;
+    }
+
+    const stripped = cleanPath.replace(/^\/?storage\/?/, '').replace(/^\/+/, '');
+    return `${STORAGE_URL}/${stripped}`;
 };
 
 /**

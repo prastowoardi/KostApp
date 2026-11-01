@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
+import LoadingScreen from '../../components/LoadingScreen';
 import { API_URL } from '../../helpers/api';
 import { formatRupiah, formatDate, getStorageUrl } from '../../helpers/formatters';
 import styles from '../../styles/adminVerify.styles';
@@ -241,10 +242,12 @@ export default function VerifyPayment() {
             </LinearGradient>
 
             {loading ? (
-                <View style={styles.centered}>
-                    <ActivityIndicator size="large" color="#2563eb" />
-                    <Text style={styles.loadingText}>Memuat tagihan pending...</Text>
-                </View>
+                <LoadingScreen
+                    title="Verifikasi Tagihan"
+                    message="Memuat tagihan menunggu verifikasi..."
+                    icon="checkmark-circle-outline"
+                    fullscreen={false}
+                />
             ) : (
                 <FlatList
                     data={payments}

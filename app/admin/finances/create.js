@@ -16,9 +16,11 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
 import api from '../../../helpers/api';
+import { formatDate, getLocalDateString } from '../../../helpers/formatters';
 import styles from '../../../styles/adminFinanceCreate.styles';
 
 export default function CreateTransaction() {
@@ -28,13 +30,14 @@ export default function CreateTransaction() {
     const [loading, setLoading] = useState(false);
     const [image, setImage] = useState(null);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [categories, setCategories] = useState({ income: [], expense: [] });
 
     const [form, setForm] = useState({
         type: 'expense',
         category: '',
         amount: '',
-        transaction_date: new Date().toISOString().split('T')[0],
+        transaction_date: getLocalDateString(),
         description: '',
     });
 
@@ -246,13 +249,18 @@ export default function CreateTransaction() {
 
                     {/* Date */}
                     <Text style={styles.fieldLabel}>Tanggal Transaksi *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="YYYY-MM-DD"
-                        placeholderTextColor="#94a3b8"
-                        value={form.transaction_date}
-                        onChangeText={(date) => setForm({ ...form, transaction_date: date })}
-                    />
+                    <TouchableOpacity
+                        style={styles.dateBox}
+                        onPress={() => setShowDatePicker(true)}
+                    >
+                        <Ionicons name="calendar-outline" size={18} color="#4e73df" />
+                        <Text style={styles.dateBoxText}>
+                            {formatDate(form.transaction_date)}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#94a3b8', marginLeft: 'auto' }}>
+                            ({form.transaction_date})
+                        </Text>
+                    </TouchableOpacity>
 
                     {/* Description */}
                     <Text style={styles.fieldLabel}>Keterangan / Catatan</Text>
@@ -305,6 +313,18 @@ export default function CreateTransaction() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            {/* Date Picker Modal */}
+            <DateTimePickerModal
+                isVisible={showDatePicker}
+                mode="date"
+                date={new Date(form.transaction_date || new Date())}
+                onConfirm={(date) => {
+                    setForm((prev) => ({ ...prev, transaction_date: getLocalDateString(date) }));
+                    setShowDatePicker(false);
+                }}
+                onCancel={() => setShowDatePicker(false)}
+            />
 
             {/* Category Selector Modal */}
             <Modal visible={showCategoryModal} transparent animationType="fade">

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
     container: {
@@ -6,10 +7,13 @@ export default StyleSheet.create({
         backgroundColor: '#f8f9fc',
     },
     header: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: moderateScale(20),
+        paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
@@ -22,12 +26,15 @@ export default StyleSheet.create({
         borderRadius: 12,
     },
     headerTitle: {
-        fontSize: 18,
+        fontSize: responsiveFont(18),
         fontWeight: 'bold',
         color: '#ffffff',
     },
     scrollContent: {
-        padding: 16,
+        padding: moderateScale(16),
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     card: {
         backgroundColor: '#ffffff',
@@ -126,6 +133,21 @@ export default StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e2e8f0',
     },
+    dateBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        borderRadius: 12,
+        padding: 12,
+        gap: 8,
+    },
+    dateBoxText: {
+        fontSize: 14,
+        color: '#1e293b',
+        fontWeight: '600',
+    },
     uploadBtn: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -144,7 +166,7 @@ export default StyleSheet.create({
         fontWeight: '600',
     },
     imagePreviewWrap: {
-        height: 140,
+        height: 150,
         borderRadius: 12,
         overflow: 'hidden',
         position: 'relative',
@@ -160,6 +182,60 @@ export default StyleSheet.create({
         right: 8,
         backgroundColor: '#ffffff',
         borderRadius: 12,
+        elevation: 2,
+    },
+    receiptBadge: {
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    receiptBadgeText: {
+        color: '#ffffff',
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    existingReceiptActions: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 8,
+    },
+    receiptActionBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        borderRadius: 10,
+        backgroundColor: '#eff6ff',
+        borderWidth: 1,
+        borderColor: '#bfdbfe',
+        gap: 6,
+    },
+    receiptActionText: {
+        fontSize: 12,
+        color: '#2563eb',
+        fontWeight: '700',
+    },
+    removeReceiptBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        backgroundColor: '#fef2f2',
+        borderWidth: 1,
+        borderColor: '#fecaca',
+        gap: 4,
+    },
+    removeReceiptText: {
+        fontSize: 12,
+        color: '#ef4444',
+        fontWeight: '700',
     },
     submitButton: {
         marginTop: 24,

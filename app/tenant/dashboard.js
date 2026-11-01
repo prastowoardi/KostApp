@@ -5,7 +5,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
     Alert,
     Linking,
     Modal,
@@ -18,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
+import LoadingScreen from "../../components/LoadingScreen";
 import { API_URL } from "../../helpers/api";
 import { formatRupiah } from "../../helpers/formatters";
 import styles from "../../styles/tenantDashboard.styles";
@@ -105,10 +105,11 @@ export default function TenantDashboard() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1e3a8a" />
-        <Text style={styles.loadingText}>Memuat Informasi Penghuni...</Text>
-      </View>
+      <LoadingScreen
+        title="Dashboard Penghuni"
+        message="Memuat informasi sewa & kamar..."
+        icon="home-outline"
+      />
     );
   }
 

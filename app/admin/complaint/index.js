@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../../components/GlobalAlert";
+import LoadingScreen from "../../../components/LoadingScreen";
 import { API_URL } from "../../../helpers/api";
 import { formatDate } from "../../../helpers/formatters";
 import styles from "../../../styles/adminComplaint.styles";
@@ -255,10 +256,12 @@ export default function AdminComplaints() {
       </LinearGradient>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#2563eb" />
-          <Text style={styles.loadingText}>Memuat komplain...</Text>
-        </View>
+        <LoadingScreen
+          title="Komplain Penghuni"
+          message="Memuat daftar laporan & komplain..."
+          icon="chatbox-ellipses-outline"
+          fullscreen={false}
+        />
       ) : (
         <FlatList
           data={filteredComplaints}

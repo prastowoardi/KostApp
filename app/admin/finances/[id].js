@@ -215,37 +215,39 @@ export default function FinanceDetail() {
                                 </View>
                             </View>
                         ) : (
-                            <TouchableOpacity
-                                activeOpacity={0.9}
-                                onPress={() => setImageModalVisible(true)}
-                                style={styles.imageWrapper}
-                            >
-                                <Image
-                                    source={{ uri: receiptUri }}
-                                    style={styles.evidenceImage}
-                                    resizeMode="cover"
-                                    onLoadStart={() => setImageLoading(true)}
-                                    onLoadEnd={() => setImageLoading(false)}
-                                    onError={() => {
-                                        setImageLoading(false);
-                                        setImageError(true);
-                                    }}
-                                />
-                                {imageLoading && (
-                                    <View style={styles.imageLoadingOverlay}>
-                                        <ActivityIndicator size="small" color="#2563eb" />
+                            <View>
+                                <TouchableOpacity
+                                    activeOpacity={0.9}
+                                    onPress={() => setImageModalVisible(true)}
+                                    style={styles.imageWrapper}
+                                >
+                                    <Image
+                                        source={{ uri: receiptUri }}
+                                        style={styles.evidenceImage}
+                                        resizeMode="contain"
+                                        onLoadStart={() => setImageLoading(true)}
+                                        onLoadEnd={() => setImageLoading(false)}
+                                        onError={() => {
+                                            setImageLoading(false);
+                                            setImageError(true);
+                                        }}
+                                    />
+                                    {imageLoading && (
+                                        <View style={styles.imageLoadingOverlay}>
+                                            <ActivityIndicator size="small" color="#2563eb" />
+                                        </View>
+                                    )}
+                                    <View style={styles.zoomOverlay}>
+                                        <Ionicons name="expand" size={16} color="white" />
+                                        <Text style={styles.zoomText}>Ketuk untuk perbesar</Text>
                                     </View>
-                                )}
-                                <View style={styles.zoomOverlay}>
-                                    <Ionicons name="expand" size={16} color="white" />
-                                    <Text style={styles.zoomText}>Ketuk untuk perbesar</Text>
-                                </View>
-                            </TouchableOpacity>
+                                </TouchableOpacity>
+                            </View>
                         )
                     ) : (
                         <View style={styles.noImage}>
                             <Ionicons name="image-outline" size={28} color="#cbd5e1" />
-                            <Text style={styles.noImageText}>Tidak ada foto bukti transaksi</Text>
+                            <Text style={styles.noImageText}>Tidak ada bukti transaksi yang diunggah.</Text>
                         </View>
                     )}
 
@@ -291,37 +293,65 @@ export default function FinanceDetail() {
                 <Pressable style={styles.modalOverlay} onPress={() => setImageModalVisible(false)}>
                     <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Bukti Transaksi</Text>
-                            <TouchableOpacity onPress={() => setImageModalVisible(false)}>
-                                <Ionicons name="close" size={24} color="#334155" />
+                            <View style={styles.modalHeaderLeft}>
+                                <View style={styles.modalBadge}>
+                                    <Text style={styles.modalBadgeText}>Serrata Kost</Text>
+                                </View>
+                                <View style={styles.modalTitleRow}>
+                                    <Text style={styles.modalTitle}>Detail Kwitansi</Text>
+                                    <View style={styles.modalInvoiceBadge}>
+                                        <Text style={styles.modalInvoiceText}>
+                                            {item.payment?.invoice_number || `INV-${item.id || ''}`}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => setImageModalVisible(false)}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Ionicons name="close" size={24} color="#94a3b8" />
                             </TouchableOpacity>
                         </View>
-                        {receiptUri ? (
-                            <View style={{ position: 'relative', alignItems: 'center' }}>
-                                <Image
-                                    source={{ uri: receiptUri }}
-                                    style={styles.fullImage}
-                                    resizeMode="contain"
-                                    onLoadStart={() => setModalImageLoading(true)}
-                                    onLoadEnd={() => setModalImageLoading(false)}
-                                />
-                                {modalImageLoading && (
-                                    <View style={styles.imageLoadingOverlay}>
-                                        <ActivityIndicator size="large" color="#2563eb" />
-                                    </View>
-                                )}
+
+                        <View style={styles.modalDashedWrap}>
+                            <View style={styles.modalImageInner}>
+                                {receiptUri ? (
+                                    <>
+                                        <Image
+                                            source={{ uri: receiptUri }}
+                                            style={styles.fullImage}
+                                            resizeMode="contain"
+                                            onLoadStart={() => setModalImageLoading(true)}
+                                            onLoadEnd={() => setModalImageLoading(false)}
+                                        />
+                                        {modalImageLoading && (
+                                            <View style={styles.imageLoadingOverlay}>
+                                                <ActivityIndicator size="large" color="#2563eb" />
+                                            </View>
+                                        )}
+                                    </>
+                                ) : null}
                             </View>
-                        ) : null}
-                        {receiptUri && (
+                        </View>
+
+                        <View style={styles.modalFooterActions}>
                             <TouchableOpacity
-                                style={styles.modalFooterBtn}
+                                style={styles.btnDownload}
                                 onPress={() => Linking.openURL(receiptUri)}
                                 activeOpacity={0.8}
                             >
-                                <Ionicons name="open-outline" size={16} color="#334155" />
-                                <Text style={styles.modalFooterBtnText}>Buka Ukuran Penuh di Browser</Text>
+                                <Ionicons name="download-outline" size={16} color="#ffffff" />
+                                <Text style={styles.btnDownloadText}>Download Kwitansi</Text>
                             </TouchableOpacity>
-                        )}
+                            <TouchableOpacity
+                                style={styles.btnClose}
+                                onPress={() => setImageModalVisible(false)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={styles.btnCloseText}>Tutup</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </Pressable>
             </Modal>

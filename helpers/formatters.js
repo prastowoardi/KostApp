@@ -1,7 +1,7 @@
 /**
  * Utility functions for formatting currencies, dates, text, and asset URLs.
  */
-import { BASE_URL, STORAGE_URL } from './api';
+import { BASE_URL, FILES_URL, IS_PROD, STORAGE_URL } from './api.js';
 
 /**
  * Format a number to Indonesian Rupiah currency string.
@@ -72,8 +72,11 @@ export const getEntityId = (entity) => {
 
 /**
  * Resolve full storage URL for uploaded files/receipts.
- * Correctly handles relative paths, paths with/without 'storage/' prefix,
- * and already absolute URLs (normalizing localhost/127.0.0.1 to active BASE_URL).
+ * Correctly handles:
+ * - Production Cloudflare R2 / S3 URLs (mapping serrata.xyz/storage to files.serrata.xyz)
+ * - Already absolute files.serrata.xyz URLs
+ * - Relative paths with/without 'storage/' prefix
+ * - Localhost/127.0.0.1 normalization to active BASE_URL
  */
 export const getStorageUrl = (path) => {
     if (!path) return null;
@@ -87,28 +90,52 @@ export const getStorageUrl = (path) => {
         return null;
     }
 
-    // If it contains /storage/, extract relative path to ensure valid host
+    // If pointing to serrata.xyz/storage/ (in prod, files are hosted on files.serrata.xyz without /storage)
+    if (cleanPath.includes('serrata.xyz/storage/')) {
+        const parts = cleanPath.split('/storage/');
+        const relative = parts[parts.length - 1].replace(/^\/+/, '');
+        return `${FILES_URL}/${relative}`;
+    }
+
+    // Already full URL on files.serrata.xyz
+    if (cleanPath.startsWith('https://files.serrata.xyz') || cleanPath.startsWith('http://files.serrata.xyz')) {
+        return cleanPath;
+    }
+
+    // If it contains /storage/ on another host (e.g. localhost or dev server)
     if (cleanPath.includes('/storage/')) {
         const parts = cleanPath.split('/storage/');
         const relative = parts[parts.length - 1].replace(/^\/+/, '');
+        if (IS_PROD) {
+            return `${FILES_URL}/${relative}`;
+        }
         return `${STORAGE_URL}/${relative}`;
     }
 
-    // If it's an absolute URL with localhost or 127.0.0.1, rewrite host with BASE_URL
+    // If it's an absolute URL with localhost or 127.0.0.1
     if (
         cleanPath.startsWith('http://localhost') ||
         cleanPath.startsWith('http://127.0.0.1') ||
         cleanPath.startsWith('https://localhost') ||
         cleanPath.startsWith('https://127.0.0.1')
     ) {
+        if (IS_PROD) {
+            const stripped = cleanPath.replace(/^https?:\/\/[^/]+\/?(storage\/)?/, '');
+            return `${FILES_URL}/${stripped}`;
+        }
         return cleanPath.replace(/^https?:\/\/[^/]+/, BASE_URL);
     }
 
+    // 5. If it's any other full HTTP/HTTPS URL
     if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
         return cleanPath;
     }
 
+    // 6. Relative path (e.g. "receipts/xxx.jpg" or "proofs/xxx.jpg")
     const stripped = cleanPath.replace(/^\/?storage\/?/, '').replace(/^\/+/, '');
+    if (IS_PROD) {
+        return `${FILES_URL}/${stripped}`;
+    }
     return `${STORAGE_URL}/${stripped}`;
 };
 

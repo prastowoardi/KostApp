@@ -49,7 +49,7 @@ export default function FinanceIndex() {
 
     const [categories, setCategories] = useState([]);
     const [data, setData] = useState({ transactions: [], totalIncome: 0, totalExpense: 0 });
-    const [previewImage, setPreviewImage] = useState(null);
+    const [selectedReceipt, setSelectedReceipt] = useState(null);
     const [previewImageLoading, setPreviewImageLoading] = useState(false);
 
     const FINANCES_URL = `${API_URL}/admin/finances`;
@@ -281,13 +281,16 @@ export default function FinanceIndex() {
                             if (receiptUri.toLowerCase().includes('.pdf')) {
                                 Linking.openURL(receiptUri);
                             } else {
-                                setPreviewImage(receiptUri);
+                                setSelectedReceipt({
+                                    invoice_number: item.payment?.invoice_number || `INV-${item.id_finance || item.id || ''}`,
+                                    file_url: receiptUri,
+                                });
                             }
                         }}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="image-outline" size={17} color="#059669" />
+                        <Ionicons name="receipt-outline" size={17} color="#059669" />
                     </TouchableOpacity>
                 )}
                 <TouchableOpacity
@@ -682,56 +685,73 @@ export default function FinanceIndex() {
 
             {/* Quick Receipt Preview Modal */}
             <Modal
-                visible={Boolean(previewImage)}
+                visible={Boolean(selectedReceipt)}
                 transparent={true}
                 animationType="fade"
-                onRequestClose={() => setPreviewImage(null)}
+                onRequestClose={() => setSelectedReceipt(null)}
             >
-                <Pressable style={styles.receiptModalOverlay} onPress={() => setPreviewImage(null)}>
+                <Pressable style={styles.receiptModalOverlay} onPress={() => setSelectedReceipt(null)}>
                     <View style={styles.receiptModalContent} onStartShouldSetResponder={() => true}>
                         <View style={styles.receiptModalHeader}>
-                            <Text style={styles.receiptModalTitle}>Bukti Transaksi</Text>
-                            <TouchableOpacity onPress={() => setPreviewImage(null)}>
-                                <Ionicons name="close" size={24} color="#334155" />
+                            <View style={styles.receiptModalHeaderLeft}>
+                                <View style={styles.receiptModalBadge}>
+                                    <Text style={styles.receiptModalBadgeText}>Serrata Kost</Text>
+                                </View>
+                                <View style={styles.receiptModalTitleRow}>
+                                    <Text style={styles.receiptModalTitle}>Detail Kwitansi</Text>
+                                    <View style={styles.receiptModalInvoiceBadge}>
+                                        <Text style={styles.receiptModalInvoiceText}>
+                                            {selectedReceipt?.invoice_number}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => setSelectedReceipt(null)}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Ionicons name="close" size={24} color="#94a3b8" />
                             </TouchableOpacity>
                         </View>
-                        {previewImage ? (
-                            <View style={{ position: 'relative', width: '100%', alignItems: 'center' }}>
-                                <Image
-                                    source={{ uri: previewImage }}
-                                    style={styles.receiptModalImage}
-                                    resizeMode="contain"
-                                    onLoadStart={() => setPreviewImageLoading(true)}
-                                    onLoadEnd={() => setPreviewImageLoading(false)}
-                                />
-                                {previewImageLoading && (
-                                    <View
-                                        style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            right: 0,
-                                            bottom: 0,
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                        }}
-                                    >
-                                        <ActivityIndicator size="large" color="#2563eb" />
-                                    </View>
-                                )}
+
+                        <View style={styles.receiptModalDashedWrap}>
+                            <View style={styles.receiptModalImageInner}>
+                                {selectedReceipt?.file_url ? (
+                                    <>
+                                        <Image
+                                            source={{ uri: selectedReceipt.file_url }}
+                                            style={styles.receiptModalImage}
+                                            resizeMode="contain"
+                                            onLoadStart={() => setPreviewImageLoading(true)}
+                                            onLoadEnd={() => setPreviewImageLoading(false)}
+                                        />
+                                        {previewImageLoading && (
+                                            <View style={styles.receiptModalLoadingOverlay}>
+                                                <ActivityIndicator size="large" color="#2563eb" />
+                                            </View>
+                                        )}
+                                    </>
+                                ) : null}
                             </View>
-                        ) : null}
-                        {previewImage ? (
+                        </View>
+
+                        <View style={styles.receiptModalFooterActions}>
                             <TouchableOpacity
-                                style={styles.receiptModalFooterBtn}
-                                onPress={() => Linking.openURL(previewImage)}
+                                style={styles.receiptModalDownloadBtn}
+                                onPress={() => selectedReceipt?.file_url && Linking.openURL(selectedReceipt.file_url)}
                                 activeOpacity={0.8}
                             >
-                                <Ionicons name="open-outline" size={16} color="#334155" />
-                                <Text style={styles.receiptModalFooterBtnText}>Buka di Browser</Text>
+                                <Ionicons name="download-outline" size={16} color="#ffffff" />
+                                <Text style={styles.receiptModalDownloadText}>Download Kwitansi</Text>
                             </TouchableOpacity>
-                        ) : null}
+                            <TouchableOpacity
+                                style={styles.receiptModalCloseBtn}
+                                onPress={() => setSelectedReceipt(null)}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={styles.receiptModalCloseText}>Tutup</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </Pressable>
             </Modal>

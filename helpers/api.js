@@ -6,7 +6,13 @@ const rawUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000').trim
 // Strip trailing /api or trailing slashes to obtain the clean base origin
 export const BASE_URL = rawUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
 export const API_URL = `${BASE_URL}/api`;
-export const STORAGE_URL = `${BASE_URL}/storage`;
+
+// Cloudflare R2 / S3 custom files domain in production
+export const FILES_URL = (process.env.EXPO_PUBLIC_FILES_URL || 'https://files.serrata.xyz').replace(/\/+$/, '');
+
+// If BASE_URL is production serrata.xyz, default files storage is FILES_URL
+export const IS_PROD = BASE_URL.includes('serrata.xyz');
+export const STORAGE_URL = IS_PROD ? FILES_URL : `${BASE_URL}/storage`;
 
 const api = axios.create({
     baseURL: API_URL,

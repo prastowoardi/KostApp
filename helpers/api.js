@@ -37,14 +37,9 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
     (response) => response,
-    async (error) => {
-        if (error.response?.status === 401) {
-            try {
-                await AsyncStorage.multiRemove(['userToken', 'userData']);
-            } catch {
-                // Ignore cleanup errors
-            }
-        }
+    (error) => {
+        // Do NOT automatically wipe user credentials on transient errors.
+        // Let explicit auth handlers / guards manage logout with proper feedback.
         return Promise.reject(error);
     }
 );

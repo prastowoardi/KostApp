@@ -58,7 +58,9 @@ export default function LoginScreen() {
                     AsyncStorage.getItem('userData'),
                 ]);
 
-                if (token && userData && isMounted) {
+                const cleanToken = token ? token.replace(/"/g, '').trim() : '';
+
+                if (cleanToken && userData && isMounted) {
                     const parsedUser = JSON.parse(userData);
                     const target =
                         parsedUser?.role === 'admin' || parsedUser?.role === 'staff'
@@ -66,9 +68,12 @@ export default function LoginScreen() {
                             : '/tenant/dashboard';
                     setAuthResult({ isLoggedIn: true, target });
                     return;
+                } else if (!cleanToken && isMounted) {
+                    await AsyncStorage.multiRemove(['userToken', 'userData']).catch(() => {});
                 }
             } catch {
                 // If parsing fails, allow user to log in again
+                await AsyncStorage.multiRemove(['userToken', 'userData']).catch(() => {});
             }
             if (isMounted) setAuthResult({ isLoggedIn: false });
         };

@@ -46,6 +46,11 @@ export default function AdminDashboard() {
         try {
             const token = await AsyncStorage.getItem("userToken");
             const cleanToken = token ? token.replace(/"/g, "").trim() : "";
+            if (!cleanToken) {
+                await AsyncStorage.multiRemove(["userToken", "userData"]);
+                router.replace("/");
+                return;
+            }
             const response = await axios.get(`${API_URL}/admin/stats`, {
                 headers: {
                     Authorization: `Bearer ${cleanToken}`,
@@ -55,7 +60,12 @@ export default function AdminDashboard() {
             });
             setStats(response.data);
         } catch (error) {
-            console.log("Error Fetch Admin Stats:", error.message);
+            console.log("Error Fetch Admin Stats:", error.response?.status, error.message);
+            if (error.response?.status === 401) {
+                await AsyncStorage.multiRemove(["userToken", "userData"]);
+                router.replace("/");
+                return;
+            }
             setStats({
                 total_rooms: 0,
                 occupied_rooms: 0,
@@ -76,7 +86,7 @@ export default function AdminDashboard() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         AsyncStorage.getItem("userData").then((userStr) => {
@@ -206,8 +216,8 @@ export default function AdminDashboard() {
     if (loading) {
         return (
             <LoadingScreen
-                title="Dashboard Admin"
-                message="Memuat statistik & aktivitas kos..."
+                title="Dashboard"
+                message="Memuat data..."
                 icon="home-outline"
             />
         );

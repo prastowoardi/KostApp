@@ -62,6 +62,7 @@ export default function AdminComplaints() {
       }
     } catch (error) {
       if (error.response?.status === 401) {
+        await AsyncStorage.multiRemove(["userToken", "userData"]);
         router.replace("/");
       }
     } finally {

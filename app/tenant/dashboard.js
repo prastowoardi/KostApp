@@ -46,6 +46,11 @@ export default function TenantDashboard() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       const cleanToken = token ? token.replace(/"/g, "").trim() : "";
+      if (!cleanToken) {
+        await AsyncStorage.multiRemove(["userToken", "userData"]);
+        router.replace("/");
+        return;
+      }
 
       const response = await axios.get(`${API_URL}/me`, {
         headers: {
@@ -57,12 +62,16 @@ export default function TenantDashboard() {
 
       setData(response.data);
     } catch (error) {
-      console.log("Error Fetch Tenant Dashboard:", error?.message);
+      console.log("Error Fetch Tenant Dashboard:", error?.response?.status, error?.message);
+      if (error?.response?.status === 401) {
+        await AsyncStorage.multiRemove(["userToken", "userData"]);
+        router.replace("/");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     AsyncStorage.getItem("userData").then((userStr) => {

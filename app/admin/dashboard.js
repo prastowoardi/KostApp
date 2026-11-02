@@ -1,9 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -18,8 +17,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
 import LoadingScreen from "../../components/LoadingScreen";
-import api, { API_URL } from "../../helpers/api";
+import api, { clearAuthSession, getCleanToken } from "../../helpers/api";
 import { formatRupiah, getInitials } from "../../helpers/formatters";
+import { useAppStateResume } from "../../helpers/useAppStateResume";
 import styles from "../../styles/adminDashboard.styles";
 
 export default function AdminDashboard() {
@@ -31,6 +31,12 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [sendingReminderId, setSendingReminderId] = useState(null);
+    const statsRef = useRef(null);
+
+    // Keep ref in sync for callbacks
+    useEffect(() => {
+        statsRef.current = stats;
+    }, [stats]);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -42,63 +48,105 @@ export default function AdminDashboard() {
         onConfirm: () => {},
     });
 
-    const fetchAdminData = useCallback(async () => {
+    const fetchAdminData = useCallback(async ({ silent = false } = {}) => {
         try {
-            const token = await AsyncStorage.getItem("userToken");
-            const cleanToken = token ? token.replace(/"/g, "").trim() : "";
+            if (!silent && !statsRef.current) {
+                setLoading(true);
+            }
+
+            const cleanToken = await getCleanToken();
             if (!cleanToken) {
-                await AsyncStorage.multiRemove(["userToken", "userData"]);
+                await clearAuthSession();
                 router.replace("/");
                 return;
             }
-            const response = await axios.get(`${API_URL}/admin/stats`, {
-                headers: {
-                    Authorization: `Bearer ${cleanToken}`,
-                    Accept: "application/json",
-                },
-                timeout: 10000,
-            });
-            setStats(response.data);
+
+            const response = await api.get('/admin/stats');
+            if (response.data) {
+                setStats(response.data);
+                statsRef.current = response.data;
+                AsyncStorage.setItem("cached_admin_stats", JSON.stringify(response.data)).catch(() => {});
+            }
         } catch (error) {
             console.log("Error Fetch Admin Stats:", error.response?.status, error.message);
             if (error.response?.status === 401) {
-                await AsyncStorage.multiRemove(["userToken", "userData"]);
+                await clearAuthSession();
                 router.replace("/");
                 return;
             }
-            setStats({
-                total_rooms: 0,
-                occupied_rooms: 0,
-                vacant_rooms: 0,
-                vacant_rooms_list: [],
-                pending_payments: 0,
-                pending_complaints: 0,
-                monthly_income: 0,
-                monthly_expense: 0,
-                net_profit: 0,
-                total_arrears: 0,
-                unpaid_tenants_count: 0,
-                due_tenants: [],
-                active_complaints_list: [],
-                payment_history: [],
-            });
+
+            // If we don't have stats yet, set fallback structure so UI can render
+            if (!statsRef.current) {
+                setStats({
+                    total_rooms: 0,
+                    occupied_rooms: 0,
+                    vacant_rooms: 0,
+                    vacant_rooms_list: [],
+                    pending_payments: 0,
+                    pending_complaints: 0,
+                    monthly_income: 0,
+                    monthly_expense: 0,
+                    net_profit: 0,
+                    total_arrears: 0,
+                    unpaid_tenants_count: 0,
+                    due_tenants: [],
+                    active_complaints_list: [],
+                    payment_history: [],
+                });
+            }
+            // If stats already exists from cache or previous fetch, preserve it!
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
     }, [router]);
 
+    // Initial mount: load cached data immediately for instant UI, then revalidate in background
     useEffect(() => {
+        let isMounted = true;
+
         AsyncStorage.getItem("userData").then((userStr) => {
-            if (userStr) {
+            if (userStr && isMounted) {
                 try {
                     const u = JSON.parse(userStr);
                     if (u?.name) setAdminName(u.name);
                 } catch {}
             }
         });
-        fetchAdminData();
+
+        AsyncStorage.getItem("cached_admin_stats").then((cachedStr) => {
+            if (cachedStr && isMounted) {
+                try {
+                    const parsed = JSON.parse(cachedStr);
+                    if (parsed && typeof parsed === "object") {
+                        setStats(parsed);
+                        statsRef.current = parsed;
+                        setLoading(false);
+                    }
+                } catch {}
+            }
+            // Revalidate latest data
+            fetchAdminData({ silent: Boolean(cachedStr) });
+        }).catch(() => {
+            fetchAdminData({ silent: false });
+        });
+
+        return () => {
+            isMounted = false;
+        };
     }, [fetchAdminData]);
+
+    // Auto-refresh when app resumes from background / inactivity
+    useAppStateResume(() => {
+        fetchAdminData({ silent: true });
+    });
+
+    // Auto-refresh when screen gains focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchAdminData({ silent: true });
+        }, [fetchAdminData])
+    );
 
     const handleLogout = () => {
         setAlertConfig({
@@ -107,7 +155,7 @@ export default function AdminDashboard() {
             message: "Apakah Anda yakin ingin keluar dari akun administrator?",
             type: "confirmation",
             onConfirm: async () => {
-                await AsyncStorage.multiRemove(["userToken", "userData"]);
+                await clearAuthSession();
                 setAlertConfig((p) => ({ ...p, visible: false }));
                 router.replace("/");
             },

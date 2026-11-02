@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -20,7 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
-import { API_URL } from '../../helpers/api';
+import api from '../../helpers/api';
 import styles from '../../styles/tenantReport.styles';
 
 const CATEGORIES = [
@@ -126,8 +124,6 @@ export default function ReportScreen() {
 
         setLoading(true);
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
             const formData = new FormData();
 
             formData.append('title', title.trim());
@@ -150,11 +146,9 @@ export default function ReportScreen() {
                 });
             }
 
-            await axios.post(`${API_URL}/complaints`, formData, {
+            await api.post('/complaints', formData, {
                 headers: {
-                    Authorization: `Bearer ${cleanToken}`,
                     'Content-Type': 'multipart/form-data',
-                    Accept: 'application/json',
                 },
             });
 

@@ -1,6 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -18,7 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../../components/GlobalAlert";
 import LoadingScreen from "../../../components/LoadingScreen";
-import { API_URL } from "../../../helpers/api";
+import api, { clearAuthSession } from "../../../helpers/api";
 import { formatDate } from "../../../helpers/formatters";
 import styles from "../../../styles/adminComplaint.styles";
 
@@ -48,21 +46,13 @@ export default function AdminComplaints() {
 
   const fetchComplaints = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
-      const response = await axios.get(`${API_URL}/admin/complaints`, {
-        headers: {
-          Authorization: `Bearer ${cleanToken}`,
-          Accept: "application/json",
-        },
-      });
-
+      const response = await api.get('/admin/complaints');
       if (response.data && response.data.data) {
         setComplaints(response.data.data);
       }
     } catch (error) {
       if (error.response?.status === 401) {
-        await AsyncStorage.multiRemove(["userToken", "userData"]);
+        await clearAuthSession();
         router.replace("/");
       }
     } finally {
@@ -95,21 +85,10 @@ export default function AdminComplaints() {
 
     setSubmitting(true);
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
-      await axios.post(
-        `${API_URL}/admin/complaints/${targetId}/respond`,
-        {
-          status: dbStatus,
-          response: reply,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${cleanToken}`,
-            Accept: "application/json",
-          },
-        },
-      );
+      await api.post(`/admin/complaints/${targetId}/respond`, {
+        status: dbStatus,
+        response: reply,
+      });
 
       showAlert("Berhasil", "Laporan berhasil diperbarui.", "success");
       setModalVisible(false);

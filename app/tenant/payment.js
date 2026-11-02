@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,7 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
-import { API_URL } from '../../helpers/api';
+import api, { clearAuthSession } from '../../helpers/api';
 import { formatRupiah, formatMonthYear } from '../../helpers/formatters';
 import styles from '../../styles/tenantPayment.styles';
 
@@ -79,19 +77,16 @@ export default function PaymentScreen() {
 
     const fetchBillDetail = useCallback(async () => {
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-            const response = await axios.get(`${API_URL}/me`, {
-                headers: {
-                    Authorization: `Bearer ${cleanToken}`,
-                    Accept: 'application/json',
-                },
-            });
+            const response = await api.get('/me');
             setBillData(response.data);
         } catch (error) {
             console.log('Error Fetch Bill Detail:', error.message);
+            if (error.response?.status === 401) {
+                await clearAuthSession();
+                router.replace('/');
+            }
         }
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         fetchBillDetail();
@@ -121,9 +116,6 @@ export default function PaymentScreen() {
 
         setLoading(true);
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-
             const formData = new FormData();
             const filename = `proof_${Date.now()}.jpg`;
 
@@ -139,11 +131,9 @@ export default function PaymentScreen() {
                 });
             }
 
-            await axios.post(`${API_URL}/payments/upload`, formData, {
+            await api.post('/payments/upload', formData, {
                 headers: {
-                    Authorization: `Bearer ${cleanToken}`,
                     'Content-Type': 'multipart/form-data',
-                    Accept: 'application/json',
                 },
             });
 

@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -18,7 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import LoadingScreen from '../../components/LoadingScreen';
-import { API_URL } from '../../helpers/api';
+import api, { clearAuthSession } from '../../helpers/api';
 import { formatRupiah, formatDate, getStorageUrl } from '../../helpers/formatters';
 import styles from '../../styles/adminVerify.styles';
 
@@ -55,22 +53,19 @@ export default function VerifyPayment() {
 
     const fetchPendingPayments = useCallback(async () => {
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-            const response = await axios.get(`${API_URL}/admin/payments/pending`, {
-                headers: {
-                    Authorization: `Bearer ${cleanToken}`,
-                    Accept: 'application/json',
-                },
-            });
+            const response = await api.get('/admin/payments/pending');
             setPayments(response.data || []);
         } catch (error) {
             console.log('Error Fetch Pending Payments:', error.message);
+            if (error.response?.status === 401) {
+                await clearAuthSession();
+                router.replace('/');
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         fetchPendingPayments();
@@ -94,20 +89,7 @@ export default function VerifyPayment() {
                 setProcessingId(targetId);
 
                 try {
-                    const token = await AsyncStorage.getItem('userToken');
-                    const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-                    const url = `${API_URL}/admin/payments/${targetId}/verify`;
-
-                    await axios.post(
-                        url,
-                        { status: apiStatus },
-                        {
-                            headers: {
-                                Authorization: `Bearer ${cleanToken}`,
-                                Accept: 'application/json',
-                            },
-                        }
-                    );
+                    await api.post(`/admin/payments/${targetId}/verify`, { status: apiStatus });
 
                     showAlert(
                         'Berhasil',

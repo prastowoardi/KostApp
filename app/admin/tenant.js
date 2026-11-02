@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -20,7 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import LoadingScreen from '../../components/LoadingScreen';
-import { API_URL } from '../../helpers/api';
+import api, { clearAuthSession } from '../../helpers/api';
 import { formatRupiah, formatDate } from '../../helpers/formatters';
 import styles from '../../styles/adminTenant.styles';
 
@@ -86,17 +84,10 @@ export default function ManageTenant() {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-            const headers = {
-                Authorization: `Bearer ${cleanToken}`,
-                Accept: 'application/json',
-            };
-
             const [resTenants, resRooms, resAllRooms] = await Promise.all([
-                axios.get(`${API_URL}/admin/tenants`, { headers }),
-                axios.get(`${API_URL}/admin/rooms/available`, { headers }),
-                axios.get(`${API_URL}/admin/rooms`, { headers }).catch(() => null),
+                api.get('/admin/tenants'),
+                api.get('/admin/rooms/available'),
+                api.get('/admin/rooms').catch(() => null),
             ]);
 
             setTenants(resTenants.data?.data || resTenants.data || []);
@@ -104,11 +95,16 @@ export default function ManageTenant() {
             if (resAllRooms) setAllRooms(resAllRooms.data?.data || resAllRooms.data || []);
         } catch (error) {
             console.log('Error fetch tenants:', error);
+            if (error.response?.status === 401) {
+                await clearAuthSession();
+                router.replace('/');
+                return;
+            }
             Alert.alert('Error', 'Gagal mengambil data dari server');
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         fetchData();
@@ -168,12 +164,6 @@ export default function ManageTenant() {
 
         try {
             setLoading(true);
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-            const headers = {
-                Authorization: `Bearer ${cleanToken}`,
-                Accept: 'application/json',
-            };
 
             if (editMode) {
                 // Must use UUID for update/{uuid}
@@ -185,13 +175,13 @@ export default function ManageTenant() {
                 } else if (payload.status === 'active') {
                     delete payload.exit_date;
                 }
-                await axios.post(`${API_URL}/admin/tenants/update/${tenantId}`, payload, { headers });
+                await api.post(`/admin/tenants/update/${tenantId}`, payload);
                 showAlert('Berhasil', 'Data penghuni berhasil diperbarui.', 'success');
                 setModalVisible(false);
                 resetForm();
                 fetchData();
             } else {
-                const res = await axios.post(`${API_URL}/admin/tenants/store`, form, { headers });
+                const res = await api.post('/admin/tenants/store', form);
                 const created = res.data?.data;
                 const roomObj = rooms.find((r) => (r.uuid || r.id) === form.room_id) || allRooms.find((r) => (r.uuid || r.id) === form.room_id);
                 const roomNumber = created?.room?.room_number || roomObj?.room_number || '-';
@@ -228,19 +218,8 @@ export default function ManageTenant() {
             type: 'confirmation',
             onConfirm: async () => {
                 try {
-                    const token = await AsyncStorage.getItem('userToken');
-                    const cleanToken = token ? token.replace(/"/g, '').trim() : '';
                     const tenantId = tenant.uuid || tenant.id;
-                    await axios.post(
-                        `${API_URL}/admin/tenants/delete/${tenantId}`,
-                        {},
-                        {
-                            headers: {
-                                Authorization: `Bearer ${cleanToken}`,
-                                Accept: 'application/json',
-                            },
-                        }
-                    );
+                    await api.post(`/admin/tenants/delete/${tenantId}`);
                     setDetailVisible(false);
                     setSelectedTenant(null);
                     showAlert('Berhasil', 'Data penghuni berhasil dihapus.', 'success', fetchData);
@@ -257,15 +236,8 @@ export default function ManageTenant() {
         setPaymentLoading(true);
         setPaymentModalVisible(true);
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
             const tenantId = tenant.uuid || tenant.id;
-            const res = await axios.get(`${API_URL}/admin/tenants/${tenantId}/payments`, {
-                headers: {
-                    Authorization: `Bearer ${cleanToken}`,
-                    Accept: 'application/json',
-                },
-            });
+            const res = await api.get(`/admin/tenants/${tenantId}/payments`);
             setPaymentHistory(res.data?.data || []);
         } catch (e) {
             console.log('Error fetch payments:', e);

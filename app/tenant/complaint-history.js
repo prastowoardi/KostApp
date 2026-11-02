@@ -1,6 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -15,7 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
-import { API_URL } from "../../helpers/api";
+import api, { clearAuthSession } from "../../helpers/api";
 import { formatDate } from "../../helpers/formatters";
 import styles from "../../styles/tenantComplaintHistory.styles";
 
@@ -37,17 +35,14 @@ export default function ComplaintHistoryScreen() {
 
   const fetchComplaints = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
-      const response = await axios.get(`${API_URL}/complaints`, {
-        headers: {
-          Authorization: `Bearer ${cleanToken}`,
-          Accept: "application/json",
-        },
-      });
-
+      const response = await api.get('/complaints');
       setComplaints(response.data?.data || response.data || []);
     } catch (e) {
+      if (e.response?.status === 401) {
+        await clearAuthSession();
+        router.replace("/");
+        return;
+      }
       setAlertConfig({
         visible: true,
         title: "Gagal Memuat",
@@ -61,7 +56,7 @@ export default function ComplaintHistoryScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchComplaints();

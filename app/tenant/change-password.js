@@ -1,6 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -17,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
-import { API_URL } from "../../helpers/api";
+import api from "../../helpers/api";
 import styles from "../../styles/tenantChangePassword.styles";
 
 export default function ChangePasswordScreen() {
@@ -81,15 +79,7 @@ export default function ChangePasswordScreen() {
 
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
-
-      await axios.post(`${API_URL}/change-password`, form, {
-        headers: {
-          Authorization: `Bearer ${cleanToken}`,
-          Accept: "application/json",
-        },
-      });
+      await api.post('/change-password', form);
 
       showAlert(
         "Berhasil",

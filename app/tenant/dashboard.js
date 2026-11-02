@@ -1,9 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Alert,
     Linking,
@@ -18,8 +17,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
 import LoadingScreen from "../../components/LoadingScreen";
-import { API_URL } from "../../helpers/api";
+import api, { clearAuthSession, getCleanToken } from "../../helpers/api";
 import { formatRupiah } from "../../helpers/formatters";
+import { useAppStateResume } from "../../helpers/useAppStateResume";
 import styles from "../../styles/tenantDashboard.styles";
 
 const OWNER_WHATSAPP = "https://wa.me/6285111203521";
@@ -33,6 +33,11 @@ export default function TenantDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [rulesModalVisible, setRulesModalVisible] = useState(false);
+  const dataRef = useRef(null);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
@@ -42,52 +47,88 @@ export default function TenantDashboard() {
     onConfirm: () => {},
   });
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async ({ silent = false } = {}) => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
+      if (!silent && !dataRef.current) {
+        setLoading(true);
+      }
+
+      const cleanToken = await getCleanToken();
       if (!cleanToken) {
-        await AsyncStorage.multiRemove(["userToken", "userData"]);
+        await clearAuthSession();
         router.replace("/");
         return;
       }
 
-      const response = await axios.get(`${API_URL}/me`, {
-        headers: {
-          Authorization: `Bearer ${cleanToken}`,
-          Accept: "application/json",
-          "Cache-Control": "no-cache",
-        },
-      });
-
-      setData(response.data);
+      const response = await api.get('/me');
+      if (response.data) {
+        setData(response.data);
+        dataRef.current = response.data;
+        AsyncStorage.setItem("cached_tenant_data", JSON.stringify(response.data)).catch(() => {});
+      }
     } catch (error) {
       console.log("Error Fetch Tenant Dashboard:", error?.response?.status, error?.message);
       if (error?.response?.status === 401) {
-        await AsyncStorage.multiRemove(["userToken", "userData"]);
+        await clearAuthSession();
         router.replace("/");
+        return;
       }
+      // If error occurs, keep existing cached/fetched data
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, [router]);
 
+  // Initial mount: load cached data immediately for instant display, then revalidate
   useEffect(() => {
+    let isMounted = true;
+
     AsyncStorage.getItem("userData").then((userStr) => {
-      if (userStr) {
+      if (userStr && isMounted) {
         try {
           const u = JSON.parse(userStr);
           if (u?.name) setTenantName(u.name);
         } catch {}
       }
     });
-    fetchData();
+
+    AsyncStorage.getItem("cached_tenant_data").then((cachedStr) => {
+      if (cachedStr && isMounted) {
+        try {
+          const parsed = JSON.parse(cachedStr);
+          if (parsed && typeof parsed === "object") {
+            setData(parsed);
+            dataRef.current = parsed;
+            setLoading(false);
+          }
+        } catch {}
+      }
+      fetchData({ silent: Boolean(cachedStr) });
+    }).catch(() => {
+      fetchData({ silent: false });
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, [fetchData]);
+
+  // Auto-refresh when app resumes from background / inactivity
+  useAppStateResume(() => {
+    fetchData({ silent: true });
+  });
+
+  // Auto-refresh when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchData({ silent: true });
+    }, [fetchData])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchData();
+    fetchData({ silent: false });
   };
 
   const handleLogout = () => {
@@ -97,7 +138,7 @@ export default function TenantDashboard() {
       message: "Apakah Anda yakin ingin keluar dari akun penghuni?",
       type: "confirmation",
       onConfirm: async () => {
-        await AsyncStorage.multiRemove(["userToken", "userData"]);
+        await clearAuthSession();
         setAlertConfig((prev) => ({ ...prev, visible: false }));
         router.replace("/");
       },

@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomSplashScreen from '../components/CustomSplashScreen';
 import GlobalAlert from '../components/GlobalAlert';
 import { registerForPushNotificationsAsync } from '../helpers/notificationHelper';
-import { API_URL } from '../helpers/api';
+import { API_URL, clearAuthSession } from '../helpers/api';
 import styles from '../styles/auth.styles';
 
 export default function LoginScreen() {
@@ -69,11 +69,11 @@ export default function LoginScreen() {
                     setAuthResult({ isLoggedIn: true, target });
                     return;
                 } else if (!cleanToken && isMounted) {
-                    await AsyncStorage.multiRemove(['userToken', 'userData']).catch(() => {});
+                    await clearAuthSession();
                 }
             } catch {
                 // If parsing fails, allow user to log in again
-                await AsyncStorage.multiRemove(['userToken', 'userData']).catch(() => {});
+                await clearAuthSession();
             }
             if (isMounted) setAuthResult({ isLoggedIn: false });
         };

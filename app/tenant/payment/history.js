@@ -1,6 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -14,7 +12,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { API_URL } from "../../../helpers/api";
+import api, { clearAuthSession } from "../../../helpers/api";
 import { formatRupiah, formatDate, formatMonthYear } from "../../../helpers/formatters";
 import styles from "../../../styles/tenantPaymentHistory.styles";
 
@@ -28,16 +26,7 @@ export default function PaymentHistory() {
 
   const fetchHistory = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
-
-      const response = await axios.get(`${API_URL}/tenant/payments`, {
-        headers: {
-          Authorization: `Bearer ${cleanToken}`,
-          Accept: "application/json",
-        },
-      });
-
+      const response = await api.get('/tenant/payments');
       const arrayData = response.data?.data || response.data || [];
       if (Array.isArray(arrayData)) {
         setPayments(arrayData);
@@ -46,11 +35,15 @@ export default function PaymentHistory() {
       }
     } catch (error) {
       console.log("Error fetch payment history:", error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        await clearAuthSession();
+        router.replace("/");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchHistory();

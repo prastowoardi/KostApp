@@ -1,10 +1,8 @@
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -19,7 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
-import { API_URL } from '../../../helpers/api';
+import api, { clearAuthSession } from '../../../helpers/api';
 import {
     addMonthsToPeriod,
     formatDate,
@@ -84,28 +82,26 @@ export default function CreatePayment() {
         });
     };
 
-    useEffect(() => {
-        fetchTenants();
-    }, []);
-
-    const fetchTenants = async () => {
+    const fetchTenants = useCallback(async () => {
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-            const res = await axios.get(`${API_URL}/admin/tenants/active`, {
-                headers: {
-                    Authorization: `Bearer ${cleanToken}`,
-                    Accept: 'application/json',
-                },
-            });
+            const res = await api.get('/admin/tenants/active');
             setTenants(res.data?.data || res.data || []);
         } catch (e) {
             console.log('Error fetch tenants:', e.response?.data || e.message);
+            if (e.response?.status === 401) {
+                await clearAuthSession();
+                router.replace('/');
+                return;
+            }
             Alert.alert('Error', 'Gagal mengambil data penghuni kost.');
         } finally {
             setFetchingTenants(false);
         }
-    };
+    }, [router]);
+
+    useEffect(() => {
+        fetchTenants();
+    }, [fetchTenants]);
 
     const calculateNextPeriod = (tenant) => {
         if (!tenant) return new Date().toISOString().slice(0, 7);
@@ -181,9 +177,6 @@ export default function CreatePayment() {
 
         setSubmitting(true);
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-
             // MUST USE UUID for backend where('uuid', ...)
             const payload = {
                 tenant_id: selectedTenant.uuid || selectedTenant.id,
@@ -195,12 +188,7 @@ export default function CreatePayment() {
                 notes: form.notes || 'Pembayaran via Admin Mobile',
             };
 
-            const res = await axios.post(`${API_URL}/admin/payments/store`, payload, {
-                headers: {
-                    Authorization: `Bearer ${cleanToken}`,
-                    Accept: 'application/json',
-                },
-            });
+            const res = await api.post('/admin/payments/store', payload);
 
             const savedData = res.data?.data || res.data;
             setReceipt(savedData);

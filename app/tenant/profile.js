@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -16,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
-import { API_URL } from "../../helpers/api";
+import api, { clearAuthSession } from "../../helpers/api";
 import styles from "../../styles/tenantProfile.styles";
 
 const OWNER_WHATSAPP = "https://wa.me/6285111203521";
@@ -39,28 +38,26 @@ export default function ProfileScreen() {
 
   const fetchProfile = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const cleanToken = token ? token.replace(/"/g, "").trim() : "";
-
-      const response = await axios.get(`${API_URL}/me`, {
-        headers: {
-          Authorization: `Bearer ${cleanToken}`,
-          Accept: "application/json",
-        },
-      });
-
+      const response = await api.get('/me');
       const userData = response.data?.user || response.data;
-      setUser(userData);
-      await AsyncStorage.setItem("userData", JSON.stringify(userData));
+      if (userData) {
+        setUser(userData);
+        await AsyncStorage.setItem("userData", JSON.stringify(userData));
+      }
     } catch (error) {
       console.log("Fetch Profile Error:", error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        await clearAuthSession();
+        router.replace("/");
+        return;
+      }
       const localData = await AsyncStorage.getItem("userData");
       if (localData) setUser(JSON.parse(localData));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchProfile();
@@ -90,7 +87,7 @@ export default function ProfileScreen() {
       "Apakah Anda yakin ingin keluar dari aplikasi?",
       "confirmation",
       async () => {
-        await AsyncStorage.multiRemove(["userToken", "userData"]);
+        await clearAuthSession();
         router.replace("/");
       }
     );

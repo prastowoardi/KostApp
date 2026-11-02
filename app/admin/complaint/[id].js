@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -17,7 +15,7 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { API_URL } from '../../../helpers/api';
+import api, { clearAuthSession } from '../../../helpers/api';
 import { formatDate, getStorageUrl } from '../../../helpers/formatters';
 import styles from '../../../styles/adminComplaintDetail.styles';
 
@@ -42,26 +40,23 @@ export default function AdminComplaintDetail() {
 
     const fetchDetail = useCallback(async () => {
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-            // Correct plural route
-            const res = await axios.get(`${API_URL}/admin/complaints/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${cleanToken}`,
-                    Accept: 'application/json',
-                },
-            });
+            const res = await api.get(`/admin/complaints/${id}`);
             if (res.data?.data) {
                 setComplaint(res.data.data);
                 setAdminResponse(res.data.data.response || '');
             }
         } catch (e) {
             console.log('Error fetch complaint detail:', e.response?.data || e.message);
+            if (e.response?.status === 401) {
+                await clearAuthSession();
+                router.replace('/');
+                return;
+            }
             Alert.alert('Error', 'Gagal memuat detail laporan.');
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, router]);
 
     useEffect(() => {
         fetchDetail();
@@ -70,23 +65,10 @@ export default function AdminComplaintDetail() {
     const handleUpdate = async (newStatus) => {
         setUpdating(true);
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-
-            // Using respondent endpoint to send notification to tenant
-            await axios.post(
-                `${API_URL}/admin/complaints/${id}/respond`,
-                {
-                    status: newStatus,
-                    response: adminResponse,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${cleanToken}`,
-                        Accept: 'application/json',
-                    },
-                }
-            );
+            await api.post(`/admin/complaints/${id}/respond`, {
+                status: newStatus,
+                response: adminResponse,
+            });
 
             Alert.alert('Berhasil', 'Status laporan telah diperbarui.');
             fetchDetail();

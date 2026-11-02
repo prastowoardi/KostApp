@@ -1,6 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -19,7 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import LoadingScreen from '../../components/LoadingScreen';
-import { API_URL } from '../../helpers/api';
+import api, { clearAuthSession } from '../../helpers/api';
 import { formatRupiah } from '../../helpers/formatters';
 import styles from '../../styles/adminRoom.styles';
 
@@ -79,28 +77,23 @@ export default function RoomManagement() {
         });
     };
 
-    const getHeaders = async () => {
-        const token = await AsyncStorage.getItem('userToken');
-        const cleanToken = token ? token.replace(/"/g, '').trim() : '';
-        return {
-            Authorization: `Bearer ${cleanToken}`,
-            Accept: 'application/json',
-        };
-    };
-
     const fetchRooms = useCallback(async () => {
         try {
-            const headers = await getHeaders();
-            const res = await axios.get(`${API_URL}/admin/rooms`, { headers });
+            const res = await api.get('/admin/rooms');
             setRooms(res.data?.data || res.data || []);
         } catch (error) {
             console.log('Error fetch rooms:', error);
+            if (error.response?.status === 401) {
+                await clearAuthSession();
+                router.replace('/');
+                return;
+            }
             Alert.alert('Error', 'Gagal mengambil data kamar');
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [router]);
 
     useEffect(() => {
         fetchRooms();
@@ -115,9 +108,8 @@ export default function RoomManagement() {
         setSelectedRoom(room);
         setDetailVisible(true);
         try {
-            const headers = await getHeaders();
             const roomId = room.uuid || room.id;
-            const res = await axios.get(`${API_URL}/admin/rooms/${roomId}`, { headers });
+            const res = await api.get(`/admin/rooms/${roomId}`);
             if (res.data?.data) {
                 setSelectedRoom(res.data.data);
             }
@@ -147,19 +139,14 @@ export default function RoomManagement() {
         }
 
         try {
-            const headers = await getHeaders();
             const roomId = selectedRoom?.uuid || selectedRoom?.id;
 
-            await axios.post(
-                `${API_URL}/admin/rooms/${roomId}`,
-                {
-                    ...form,
-                    price: parseInt(form.price.toString().replace(/\D/g, '')),
-                    capacity: parseInt(form.capacity) || 1,
-                    size: form.size ? parseFloat(form.size) : null,
-                },
-                { headers }
-            );
+            await api.post(`/admin/rooms/${roomId}`, {
+                ...form,
+                price: parseInt(form.price.toString().replace(/\D/g, '')),
+                capacity: parseInt(form.capacity) || 1,
+                size: form.size ? parseFloat(form.size) : null,
+            });
 
             showAlert('Berhasil', 'Data kamar berhasil diperbarui.', 'success', fetchRooms);
             setEditVisible(false);
@@ -172,9 +159,8 @@ export default function RoomManagement() {
 
     const handleStatusChange = async (room, newStatus) => {
         try {
-            const headers = await getHeaders();
             const roomId = room.uuid || room.id;
-            await axios.put(`${API_URL}/admin/rooms/${roomId}/status`, { status: newStatus }, { headers });
+            await api.put(`/admin/rooms/${roomId}/status`, { status: newStatus });
 
             showAlert('Berhasil', `Status kamar diubah ke ${STATUS_CONFIG[newStatus]?.label || newStatus}`, 'success', () => {
                 fetchRooms();

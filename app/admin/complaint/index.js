@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
-    Modal,
     RefreshControl,
     StatusBar,
     Text,
@@ -16,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../../components/GlobalAlert";
 import LoadingScreen from "../../../components/LoadingScreen";
+import SmoothModal from "../../../components/SmoothModal";
 import api, { clearAuthSession } from "../../../helpers/api";
 import { formatDate } from "../../../helpers/formatters";
 import styles from "../../../styles/adminComplaint.styles";
@@ -270,59 +270,60 @@ export default function AdminComplaints() {
       )}
 
       {/* Quick Respond Modal */}
-      <Modal visible={modalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Tanggapi Komplain</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.modalSub}>
-              {selectedItem?.title} • {selectedItem?.tenant?.name}
-            </Text>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Tulis pesan/respon untuk penghuni..."
-              placeholderTextColor="#94a3b8"
-              multiline
-              numberOfLines={4}
-              value={reply}
-              onChangeText={setReply}
-              textAlignVertical="top"
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }]}
-                onPress={() => handleUpdateStatus("process")}
-                disabled={submitting}
-              >
-                <Ionicons name="time" size={16} color="#2563eb" />
-                <Text style={[styles.modalBtnText, { color: "#2563eb" }]}>Proses</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#10b981", borderColor: "#10b981" }]}
-                onPress={() => handleUpdateStatus("resolved")}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
-                    <Text style={[styles.modalBtnText, { color: "#ffffff" }]}>Selesaikan</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
+      <SmoothModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        type="bottom"
+        contentStyle={{ paddingHorizontal: 22, paddingTop: 6, paddingBottom: insets.bottom + 20 }}
+      >
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Tanggapi Komplain</Text>
+          <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="close" size={24} color="#64748b" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        <Text style={styles.modalSub}>
+          {selectedItem?.title} • {selectedItem?.tenant?.name}
+        </Text>
+
+        <TextInput
+          style={styles.modalInput}
+          placeholder="Tulis pesan/respon untuk penghuni..."
+          placeholderTextColor="#94a3b8"
+          multiline
+          numberOfLines={4}
+          value={reply}
+          onChangeText={setReply}
+          textAlignVertical="top"
+        />
+
+        <View style={styles.modalActions}>
+          <TouchableOpacity
+            style={[styles.modalBtn, { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }]}
+            onPress={() => handleUpdateStatus("process")}
+            disabled={submitting}
+          >
+            <Ionicons name="time" size={16} color="#2563eb" />
+            <Text style={[styles.modalBtnText, { color: "#2563eb" }]}>Proses</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.modalBtn, { backgroundColor: "#10b981", borderColor: "#10b981" }]}
+            onPress={() => handleUpdateStatus("resolved")}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={16} color="#ffffff" />
+                <Text style={[styles.modalBtnText, { color: "#ffffff" }]}>Selesaikan</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </SmoothModal>
 
       <GlobalAlert
         visible={alertConfig.visible}

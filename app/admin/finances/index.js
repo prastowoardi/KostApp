@@ -7,8 +7,6 @@ import {
     FlatList,
     Image,
     Linking,
-    Modal,
-    Pressable,
     RefreshControl,
     ScrollView,
     StatusBar,
@@ -19,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LoadingScreen from '../../../components/LoadingScreen';
+import SmoothModal from '../../../components/SmoothModal';
 import api, { API_URL } from '../../../helpers/api';
 import { formatRupiah, formatDate, getStorageUrl } from '../../../helpers/formatters';
 import styles from '../../../styles/adminFinances.styles';
@@ -491,21 +490,18 @@ export default function FinanceIndex() {
             />
 
             {/* FILTER BOTTOM SHEET MODAL */}
-            <Modal
+            <SmoothModal
                 visible={filterModalVisible}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setFilterModalVisible(false)}
+                onClose={() => setFilterModalVisible(false)}
+                type="bottom"
+                contentStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: insets.bottom + 16, maxHeight: '85%' }}
             >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContainer, { paddingBottom: insets.bottom + 16 }]}>
-                        <View style={styles.modalDragHandle} />
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Filter Laporan Keuangan</Text>
-                            <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                                <Ionicons name="close" size={24} color="#64748b" />
-                            </TouchableOpacity>
-                        </View>
+                <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Filter Laporan Keuangan</Text>
+                    <TouchableOpacity onPress={() => setFilterModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <Ionicons name="close" size={24} color="#64748b" />
+                    </TouchableOpacity>
+                </View>
 
                         <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                             {/* Filter Tipe Transaksi */}
@@ -684,82 +680,76 @@ export default function FinanceIndex() {
                                 <Text style={styles.applyFilterText}>Terapkan Filter</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
-                </View>
-            </Modal>
+            </SmoothModal>
 
             {/* Quick Receipt Preview Modal */}
-            <Modal
+            <SmoothModal
                 visible={Boolean(selectedReceipt)}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setSelectedReceipt(null)}
+                onClose={() => setSelectedReceipt(null)}
+                type="center"
+                contentStyle={{ padding: 18, maxWidth: 440, borderRadius: 22 }}
             >
-                <Pressable style={styles.receiptModalOverlay} onPress={() => setSelectedReceipt(null)}>
-                    <View style={styles.receiptModalContent} onStartShouldSetResponder={() => true}>
-                        <View style={styles.receiptModalHeader}>
-                            <View style={styles.receiptModalHeaderLeft}>
-                                <View style={styles.receiptModalBadge}>
-                                    <Text style={styles.receiptModalBadgeText}>Serrata Kost</Text>
-                                </View>
-                                <View style={styles.receiptModalTitleRow}>
-                                    <Text style={styles.receiptModalTitle}>Detail Kwitansi</Text>
-                                    <View style={styles.receiptModalInvoiceBadge}>
-                                        <Text style={styles.receiptModalInvoiceText}>
-                                            {selectedReceipt?.invoice_number}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </View>
-                            <TouchableOpacity
-                                onPress={() => setSelectedReceipt(null)}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <Ionicons name="close" size={24} color="#94a3b8" />
-                            </TouchableOpacity>
+                <View style={styles.receiptModalHeader}>
+                    <View style={styles.receiptModalHeaderLeft}>
+                        <View style={styles.receiptModalBadge}>
+                            <Text style={styles.receiptModalBadgeText}>Serrata Kost</Text>
                         </View>
-
-                        <View style={styles.receiptModalDashedWrap}>
-                            <View style={styles.receiptModalImageInner}>
-                                {selectedReceipt?.file_url ? (
-                                    <>
-                                        <Image
-                                            source={{ uri: selectedReceipt.file_url }}
-                                            style={styles.receiptModalImage}
-                                            resizeMode="contain"
-                                            onLoadStart={() => setPreviewImageLoading(true)}
-                                            onLoadEnd={() => setPreviewImageLoading(false)}
-                                        />
-                                        {previewImageLoading && (
-                                            <View style={styles.receiptModalLoadingOverlay}>
-                                                <ActivityIndicator size="large" color="#2563eb" />
-                                            </View>
-                                        )}
-                                    </>
-                                ) : null}
+                        <View style={styles.receiptModalTitleRow}>
+                            <Text style={styles.receiptModalTitle}>Detail Kwitansi</Text>
+                            <View style={styles.receiptModalInvoiceBadge}>
+                                <Text style={styles.receiptModalInvoiceText}>
+                                    {selectedReceipt?.invoice_number}
+                                </Text>
                             </View>
-                        </View>
-
-                        <View style={styles.receiptModalFooterActions}>
-                            <TouchableOpacity
-                                style={styles.receiptModalDownloadBtn}
-                                onPress={() => selectedReceipt?.file_url && Linking.openURL(selectedReceipt.file_url)}
-                                activeOpacity={0.8}
-                            >
-                                <Ionicons name="download-outline" size={16} color="#ffffff" />
-                                <Text style={styles.receiptModalDownloadText}>Download Kwitansi</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.receiptModalCloseBtn}
-                                onPress={() => setSelectedReceipt(null)}
-                                activeOpacity={0.8}
-                            >
-                                <Text style={styles.receiptModalCloseText}>Tutup</Text>
-                            </TouchableOpacity>
                         </View>
                     </View>
-                </Pressable>
-            </Modal>
+                    <TouchableOpacity
+                        onPress={() => setSelectedReceipt(null)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Ionicons name="close" size={24} color="#94a3b8" />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.receiptModalDashedWrap}>
+                    <View style={styles.receiptModalImageInner}>
+                        {selectedReceipt?.file_url ? (
+                            <>
+                                <Image
+                                    source={{ uri: selectedReceipt.file_url }}
+                                    style={styles.receiptModalImage}
+                                    resizeMode="contain"
+                                    onLoadStart={() => setPreviewImageLoading(true)}
+                                    onLoadEnd={() => setPreviewImageLoading(false)}
+                                />
+                                {previewImageLoading && (
+                                    <View style={styles.receiptModalLoadingOverlay}>
+                                        <ActivityIndicator size="large" color="#2563eb" />
+                                    </View>
+                                )}
+                            </>
+                        ) : null}
+                    </View>
+                </View>
+
+                <View style={styles.receiptModalFooterActions}>
+                    <TouchableOpacity
+                        style={styles.receiptModalDownloadBtn}
+                        onPress={() => selectedReceipt?.file_url && Linking.openURL(selectedReceipt.file_url)}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="download-outline" size={16} color="#ffffff" />
+                        <Text style={styles.receiptModalDownloadText}>Download Kwitansi</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.receiptModalCloseBtn}
+                        onPress={() => setSelectedReceipt(null)}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.receiptModalCloseText}>Tutup</Text>
+                    </TouchableOpacity>
+                </View>
+            </SmoothModal>
         </View>
     );
 }

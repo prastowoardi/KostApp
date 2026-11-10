@@ -7,7 +7,6 @@ import {
     ActivityIndicator,
     Alert,
     Linking,
-    Modal,
     ScrollView,
     StatusBar,
     Text,
@@ -17,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
+import SmoothModal from '../../../components/SmoothModal';
 import api, { clearAuthSession } from '../../../helpers/api';
 import {
     addMonthsToPeriod,
@@ -615,9 +615,7 @@ export default function CreatePayment() {
             </ScrollView>
 
             {/* Modal Sukses & Kwitansi */}
-            <Modal visible={showSuccessModal} transparent={true} animationType="fade">
-                <View style={styles.successModalBg}>
-                    <View style={styles.successModalCard}>
+            <SmoothModal visible={showSuccessModal} onClose={() => setShowSuccessModal(false)} type="center" contentStyle={{ padding: 22, maxWidth: 440 }}>
                         {/* Icon & Title */}
                         <View style={styles.successIconBadge}>
                             <Ionicons name="checkmark-circle" size={48} color="#10b981" />
@@ -709,9 +707,7 @@ export default function CreatePayment() {
                             <Ionicons name="add-circle-outline" size={16} color="#64748b" />
                             <Text style={styles.recordAnotherText}>Catat Transaksi Lain</Text>
                         </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+            </SmoothModal>
 
             {/* Date Picker Modal */}
             <DateTimePickerModal
@@ -722,15 +718,18 @@ export default function CreatePayment() {
             />
 
             {/* Tenant Picker Modal */}
-            <Modal visible={tenantPickerVisible} transparent={true} animationType="slide">
-                <View style={styles.modalBg}>
-                    <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Pilih Penghuni Kost</Text>
-                            <TouchableOpacity onPress={() => setTenantPickerVisible(false)}>
-                                <Ionicons name="close" size={24} color="#64748b" />
-                            </TouchableOpacity>
-                        </View>
+            <SmoothModal
+                visible={tenantPickerVisible}
+                onClose={() => setTenantPickerVisible(false)}
+                type="bottom"
+                contentStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: insets.bottom + 20 }}
+            >
+                <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Pilih Penghuni Kost</Text>
+                    <TouchableOpacity onPress={() => setTenantPickerVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <Ionicons name="close" size={24} color="#64748b" />
+                    </TouchableOpacity>
+                </View>
 
                         <View style={styles.searchBar}>
                             <Ionicons name="search" size={18} color="#94a3b8" />
@@ -781,9 +780,7 @@ export default function CreatePayment() {
                                 </View>
                             )}
                         </ScrollView>
-                    </View>
-                </View>
-            </Modal>
+            </SmoothModal>
 
             <GlobalAlert
                 visible={alertConfig.visible}

@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import LoadingScreen from '../../components/LoadingScreen';
+import SmoothModal from '../../components/SmoothModal';
 import api, { clearAuthSession } from '../../helpers/api';
 import { formatRupiah, formatDate } from '../../helpers/formatters';
 import styles from '../../styles/adminTenant.styles';
@@ -388,10 +389,13 @@ export default function ManageTenant() {
             )}
 
             {/* DETAIL MODAL */}
-            <Modal visible={detailVisible} animationType="slide" transparent>
-                <View style={styles.detailOverlay}>
-                    <View style={[styles.detailContainer, { paddingBottom: insets.bottom + 16 }]}>
-                        <ScrollView showsVerticalScrollIndicator={false}>
+            <SmoothModal
+                visible={detailVisible}
+                onClose={() => setDetailVisible(false)}
+                type="bottom"
+                contentStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: insets.bottom + 16, maxHeight: '85%' }}
+            >
+                <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={styles.detailHeader}>
                                 <View style={styles.avatarBig}>
                                     <Text style={styles.avatarBigText}>
@@ -472,15 +476,16 @@ export default function ManageTenant() {
                                 <Text style={styles.detailBtnText}>Tutup</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
-                </View>
-            </Modal>
+            </SmoothModal>
 
             {/* PAYMENT HISTORY MODAL */}
-            <Modal visible={paymentModalVisible} animationType="slide" transparent>
-                <View style={styles.detailOverlay}>
-                    <View style={[styles.detailContainer, { minHeight: '55%', paddingBottom: insets.bottom + 16 }]}>
-                        <View style={styles.detailHeader}>
+            <SmoothModal
+                visible={paymentModalVisible}
+                onClose={() => setPaymentModalVisible(false)}
+                type="bottom"
+                contentStyle={{ paddingHorizontal: 20, paddingTop: 6, minHeight: '55%', maxHeight: '85%', paddingBottom: insets.bottom + 16 }}
+            >
+                <View style={styles.detailHeader}>
                             <Ionicons name="receipt-outline" size={32} color="#1e3a8a" />
                             <Text style={styles.detailName}>Riwayat Pembayaran</Text>
                             <Text style={styles.detailSub}>
@@ -540,9 +545,7 @@ export default function ManageTenant() {
                         >
                             <Text style={styles.saveBtnText}>Tutup</Text>
                         </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+            </SmoothModal>
 
             {/* ADD / EDIT MODAL */}
             <Modal visible={modalVisible} animationType="slide">
@@ -813,75 +816,79 @@ export default function ManageTenant() {
             </Modal>
 
             {/* MODAL SUKSES PENDAFTARAN & WHATSAPP */}
-            <Modal visible={showSuccessModal} transparent animationType="fade">
-                <View style={styles.successModalBg}>
-                    <View style={styles.successModalCard}>
-                        <View style={styles.successIconBadge}>
-                            <Ionicons name="checkmark-circle" size={50} color="#10b981" />
-                        </View>
-                        <Text style={styles.successModalTitle}>Penghuni Berhasil Didaftarkan!</Text>
-                        <Text style={styles.successModalSubtitle}>
-                            Data penghuni telah tersimpan dan bot telah menjadwalkan pesan sambutan.
-                        </Text>
+            <SmoothModal
+                visible={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    setSuccessTenantData(null);
+                }}
+                type="center"
+                contentStyle={{ padding: 22, maxWidth: 440 }}
+            >
+                <View style={styles.successIconBadge}>
+                    <Ionicons name="checkmark-circle" size={50} color="#10b981" />
+                </View>
+                <Text style={styles.successModalTitle}>Penghuni Berhasil Didaftarkan!</Text>
+                <Text style={styles.successModalSubtitle}>
+                    Data penghuni telah tersimpan dan bot telah menjadwalkan pesan sambutan.
+                </Text>
 
-                        <View style={styles.strukContainer}>
-                            <View style={styles.strukRow}>
-                                <Text style={styles.strukLabel}>Nama Penghuni</Text>
-                                <Text style={styles.strukValBold}>{successTenantData?.name || '-'}</Text>
-                            </View>
-                            <View style={styles.strukRow}>
-                                <Text style={styles.strukLabel}>Nomor Kamar</Text>
-                                <Text style={styles.strukVal}>Kamar {successTenantData?.roomNumber || '-'}</Text>
-                            </View>
-                            <View style={styles.strukRow}>
-                                <Text style={styles.strukLabel}>No. WhatsApp</Text>
-                                <Text style={styles.strukVal}>{successTenantData?.phone || '-'}</Text>
-                            </View>
-                            <View style={styles.strukRow}>
-                                <Text style={styles.strukLabel}>Email Login</Text>
-                                <Text style={styles.strukVal}>{successTenantData?.email || '-'}</Text>
-                            </View>
-                        </View>
-
-                        {/* Tombol Kirim WhatsApp */}
-                        <TouchableOpacity
-                            style={styles.waButton}
-                            onPress={() => {
-                                if (successTenantData?.waUrl) {
-                                    Linking.openURL(successTenantData.waUrl).catch(() => {
-                                        Alert.alert('Error', 'Gagal membuka aplikasi WhatsApp.');
-                                    });
-                                } else if (successTenantData?.messageText && successTenantData?.phone) {
-                                    const cleanPhone = successTenantData.phone.replace(/\D/g, '');
-                                    const waPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
-                                    const fallbackUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(successTenantData.messageText)}`;
-                                    Linking.openURL(fallbackUrl).catch(() => {
-                                        Alert.alert('Error', 'Gagal membuka aplikasi WhatsApp.');
-                                    });
-                                } else {
-                                    Alert.alert('Info', 'Tautan WhatsApp tidak tersedia.');
-                                }
-                            }}
-                            activeOpacity={0.8}
-                        >
-                            <Ionicons name="logo-whatsapp" size={18} color="#ffffff" style={{ marginRight: 8 }} />
-                            <Text style={styles.waButtonText}>Kirim Sambutan via WhatsApp</Text>
-                        </TouchableOpacity>
-
-                        {/* Tombol Selesai */}
-                        <TouchableOpacity
-                            style={styles.doneBtn}
-                            onPress={() => {
-                                setShowSuccessModal(false);
-                                setSuccessTenantData(null);
-                            }}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={styles.doneBtnText}>Selesai & Tutup</Text>
-                        </TouchableOpacity>
+                <View style={styles.strukContainer}>
+                    <View style={styles.strukRow}>
+                        <Text style={styles.strukLabel}>Nama Penghuni</Text>
+                        <Text style={styles.strukValBold}>{successTenantData?.name || '-'}</Text>
+                    </View>
+                    <View style={styles.strukRow}>
+                        <Text style={styles.strukLabel}>Nomor Kamar</Text>
+                        <Text style={styles.strukVal}>Kamar {successTenantData?.roomNumber || '-'}</Text>
+                    </View>
+                    <View style={styles.strukRow}>
+                        <Text style={styles.strukLabel}>No. WhatsApp</Text>
+                        <Text style={styles.strukVal}>{successTenantData?.phone || '-'}</Text>
+                    </View>
+                    <View style={styles.strukRow}>
+                        <Text style={styles.strukLabel}>Email Login</Text>
+                        <Text style={styles.strukVal}>{successTenantData?.email || '-'}</Text>
                     </View>
                 </View>
-            </Modal>
+
+                {/* Tombol Kirim WhatsApp */}
+                <TouchableOpacity
+                    style={styles.waButton}
+                    onPress={() => {
+                        if (successTenantData?.waUrl) {
+                            Linking.openURL(successTenantData.waUrl).catch(() => {
+                                Alert.alert('Error', 'Gagal membuka aplikasi WhatsApp.');
+                            });
+                        } else if (successTenantData?.messageText && successTenantData?.phone) {
+                            const cleanPhone = successTenantData.phone.replace(/\D/g, '');
+                            const waPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
+                            const fallbackUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(successTenantData.messageText)}`;
+                            Linking.openURL(fallbackUrl).catch(() => {
+                                Alert.alert('Error', 'Gagal membuka aplikasi WhatsApp.');
+                            });
+                        } else {
+                            Alert.alert('Info', 'Tautan WhatsApp tidak tersedia.');
+                        }
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons name="logo-whatsapp" size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                    <Text style={styles.waButtonText}>Kirim Sambutan via WhatsApp</Text>
+                </TouchableOpacity>
+
+                {/* Tombol Selesai */}
+                <TouchableOpacity
+                    style={styles.doneBtn}
+                    onPress={() => {
+                        setShowSuccessModal(false);
+                        setSuccessTenantData(null);
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.doneBtnText}>Selesai & Tutup</Text>
+                </TouchableOpacity>
+            </SmoothModal>
 
             <GlobalAlert
                 visible={alertConfig.visible}

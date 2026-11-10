@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import LoadingScreen from '../../components/LoadingScreen';
+import SmoothModal from '../../components/SmoothModal';
 import api, { clearAuthSession } from '../../helpers/api';
 import { formatRupiah } from '../../helpers/formatters';
 import styles from '../../styles/adminRoom.styles';
@@ -288,10 +289,13 @@ export default function RoomManagement() {
             )}
 
             {/* DETAIL MODAL */}
-            <Modal visible={detailVisible} animationType="slide" transparent>
-                <View style={styles.overlay}>
-                    <View style={[styles.detailContainer, { paddingBottom: insets.bottom + 16 }]}>
-                        <ScrollView showsVerticalScrollIndicator={false}>
+            <SmoothModal
+                visible={detailVisible}
+                onClose={() => setDetailVisible(false)}
+                type="bottom"
+                contentStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: insets.bottom + 16, maxHeight: '85%' }}
+            >
+                <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={styles.detailHeader}>
                                 <View style={styles.roomIconBig}>
                                     <Ionicons name="business" size={28} color="#1e3a8a" />
@@ -388,9 +392,7 @@ export default function RoomManagement() {
                                 <Text style={styles.detailBtnText}>Tutup</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
-                </View>
-            </Modal>
+            </SmoothModal>
 
             {/* EDIT MODAL */}
             <Modal visible={editVisible} animationType="slide">

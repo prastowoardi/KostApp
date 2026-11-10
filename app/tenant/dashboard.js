@@ -7,7 +7,6 @@ import {
     Alert,
     BackHandler,
     Linking,
-    Modal,
     Platform,
     RefreshControl,
     ScrollView,
@@ -20,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
 import LoadingScreen from "../../components/LoadingScreen";
+import SmoothModal from "../../components/SmoothModal";
 import api, { clearAuthSession, getCleanToken } from "../../helpers/api";
 import { formatRupiah } from "../../helpers/formatters";
 import { useAppStateResume } from "../../helpers/useAppStateResume";
@@ -484,135 +484,136 @@ export default function TenantDashboard() {
       </ScrollView>
 
       {/* MODAL TATA TERTIB KOST */}
-      <Modal visible={rulesModalVisible} transparent animationType="slide">
-        <View style={styles.modalBg}>
-          <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
-            <View style={styles.modalHeader}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Ionicons name="shield-checkmark" size={22} color="#1e3a8a" style={{ marginRight: 8 }} />
-                <Text style={styles.modalTitle}>Tata Tertib Serrata Kost</Text>
-              </View>
-              <TouchableOpacity onPress={() => setRulesModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Ionicons name="close" size={24} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
-              {/* UMUM */}
-              <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="location" size={16} color="#1e3a8a" />
-                <Text style={styles.ruleCategoryTitle}>KETENTUAN UMUM</Text>
-              </View>
-              <RuleItem
-                num="1"
-                title="Ketenangan & Keamanan"
-                desc="Saling menjaga ketenangan dan keamanan ya, biar waktu istirahat makin pol dan nyaman."
-              />
-              <RuleItem
-                num="2"
-                title="Bebas Miras & Narkoba"
-                desc="Lingkungan Serrata Kost wajib bersih dari Miras, Narkoba, atau barang terlarang lainnya."
-              />
-              <RuleItem
-                num="3"
-                title="No Smoking Inside"
-                desc="Dilarang merokok di dalam kamar. Kamar harus tetap bersih dan wangi tanpa asap rokok."
-              />
-              <RuleItem
-                num="4"
-                title="Hewan Peliharaan"
-                desc="Mohon maaf, Serrata Kost belum bisa menerima anabul atau hewan peliharaan apa pun."
-              />
-              <RuleItem
-                num="5"
-                title="Etika & Norma"
-                desc="Saling menjaga etika bersosialisasi dan menghindari tindakan asusila demi kenyamanan bersama."
-              />
-              <RuleItem
-                num="6"
-                title="Jaga Nama Baik"
-                desc="Mari kita jaga nama baik Serrata Kost bersama-sama di mana pun berada."
-              />
-              <RuleItem
-                num="7"
-                title="Pembayaran Tepat Waktu"
-                desc="Pembayaran sewa kost wajib tepat waktu sesuai tanggal jatuh tempo yang telah disepakati."
-              />
-
-              {/* JAM KEGIATAN & TAMU */}
-              <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="time" size={16} color="#1e3a8a" />
-                <Text style={styles.ruleCategoryTitle}>JAM KEGIATAN & TAMU</Text>
-              </View>
-              <RuleItem
-                num="8"
-                title="Jam Malam (Pukul 22.00 WIB)"
-                desc="Batas jam malam maksimal pukul 22.00 WIB. Jika terpaksa pulang larut, wajib mengabari Ibu Kost terlebih dahulu."
-              />
-              <RuleItem
-                num="9"
-                title="Tamu Lawan Jenis"
-                desc="Khusus tamu laki-laki dilarang masuk ke dalam kamar (bertemu di area teras/tamu saja)."
-              />
-              <RuleItem
-                num="10"
-                title="Keluarga Menginap"
-                desc="Jika ada keluarga yang ingin menginap, wajib konfirmasi dan izin ke Ibu Kost terlebih dahulu (maksimal 2 orang)."
-              />
-
-              {/* KEBERSIHAN & KERAPIHAN */}
-              <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="sparkles" size={16} color="#1e3a8a" />
-                <Text style={styles.ruleCategoryTitle}>KEBERSIHAN & KERAPIHAN</Text>
-              </View>
-              <RuleItem
-                num="11"
-                title="Kamar & Kamar Mandi"
-                desc="Kamar dan kamar mandi pribadi wajib dijaga tetap bersih dan rapi agar semakin betah."
-              />
-              <RuleItem
-                num="12"
-                title="Pembuangan Sampah"
-                desc="Buang sampah pada tempatnya. Dilarang keras membuang sampah, tisu, atau pembalut ke dalam kloset agar tidak mampet."
-              />
-              <RuleItem
-                num="13"
-                title="Tempat Jemuran"
-                desc="Jemur pakaian di area jemuran yang sudah disediakan, jangan menjemur di depan kamar agar lingkungan tetap rapi."
-              />
-
-              {/* FASILITAS KOST */}
-              <View style={styles.ruleCategoryHeader}>
-                <Ionicons name="water" size={16} color="#1e3a8a" />
-                <Text style={styles.ruleCategoryTitle}>FASILITAS KOST</Text>
-              </View>
-              <RuleItem
-                num="14"
-                title="Penggunaan Bijak"
-                desc="Gunakan seluruh fasilitas kost dengan bijak, tertib, dan penuh rasa tanggung jawab."
-              />
-              <RuleItem
-                num="15"
-                title="Tanggung Jawab Kerusakan"
-                desc="Jika terjadi kerusakan fasilitas akibat kelalaian pribadi, biaya perbaikannya ditanggung oleh penghuni."
-              />
-              <RuleItem
-                num="16"
-                title="Hemat Air & Energi"
-                desc="Hemat penggunaan air dan listrik ya Kak, gunakan secukupnya saja sesuai kebutuhan."
-              />
-            </ScrollView>
-
-            <TouchableOpacity
-              style={styles.closeRulesBtn}
-              onPress={() => setRulesModalVisible(false)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.closeRulesText}>Saya Mengerti & Patuh</Text>
-            </TouchableOpacity>
+      <SmoothModal
+        visible={rulesModalVisible}
+        onClose={() => setRulesModalVisible(false)}
+        type="bottom"
+        contentStyle={{ paddingHorizontal: 22, paddingTop: 6, paddingBottom: insets.bottom + 20 }}
+      >
+        <View style={styles.modalHeader}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Ionicons name="shield-checkmark" size={22} color="#1e3a8a" style={{ marginRight: 8 }} />
+            <Text style={styles.modalTitle}>Tata Tertib Serrata Kost</Text>
           </View>
+          <TouchableOpacity onPress={() => setRulesModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="close" size={24} color="#64748b" />
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 460 }}>
+          {/* UMUM */}
+          <View style={styles.ruleCategoryHeader}>
+            <Ionicons name="location" size={16} color="#1e3a8a" />
+            <Text style={styles.ruleCategoryTitle}>KETENTUAN UMUM</Text>
+          </View>
+          <RuleItem
+            num="1"
+            title="Ketenangan & Keamanan"
+            desc="Saling menjaga ketenangan dan keamanan ya, biar waktu istirahat makin pol dan nyaman."
+          />
+          <RuleItem
+            num="2"
+            title="Bebas Miras & Narkoba"
+            desc="Lingkungan Serrata Kost wajib bersih dari Miras, Narkoba, atau barang terlarang lainnya."
+          />
+          <RuleItem
+            num="3"
+            title="No Smoking Inside"
+            desc="Dilarang merokok di dalam kamar. Kamar harus tetap bersih dan wangi tanpa asap rokok."
+          />
+          <RuleItem
+            num="4"
+            title="Hewan Peliharaan"
+            desc="Mohon maaf, Serrata Kost belum bisa menerima anabul atau hewan peliharaan apa pun."
+          />
+          <RuleItem
+            num="5"
+            title="Etika & Norma"
+            desc="Saling menjaga etika bersosialisasi dan menghindari tindakan asusila demi kenyamanan bersama."
+          />
+          <RuleItem
+            num="6"
+            title="Jaga Nama Baik"
+            desc="Mari kita jaga nama baik Serrata Kost bersama-sama di mana pun berada."
+          />
+          <RuleItem
+            num="7"
+            title="Pembayaran Tepat Waktu"
+            desc="Pembayaran sewa kost wajib tepat waktu sesuai tanggal jatuh tempo yang telah disepakati."
+          />
+
+          {/* JAM KEGIATAN & TAMU */}
+          <View style={styles.ruleCategoryHeader}>
+            <Ionicons name="time" size={16} color="#1e3a8a" />
+            <Text style={styles.ruleCategoryTitle}>JAM KEGIATAN & TAMU</Text>
+          </View>
+          <RuleItem
+            num="8"
+            title="Jam Malam (Pukul 22.00 WIB)"
+            desc="Batas jam malam maksimal pukul 22.00 WIB. Jika terpaksa pulang larut, wajib mengabari Ibu Kost terlebih dahulu."
+          />
+          <RuleItem
+            num="9"
+            title="Tamu Lawan Jenis"
+            desc="Khusus tamu laki-laki dilarang masuk ke dalam kamar (bertemu di area teras/tamu saja)."
+          />
+          <RuleItem
+            num="10"
+            title="Keluarga Menginap"
+            desc="Jika ada keluarga yang ingin menginap, wajib konfirmasi dan izin ke Ibu Kost terlebih dahulu (maksimal 2 orang)."
+          />
+
+          {/* KEBERSIHAN & KERAPIHAN */}
+          <View style={styles.ruleCategoryHeader}>
+            <Ionicons name="sparkles" size={16} color="#1e3a8a" />
+            <Text style={styles.ruleCategoryTitle}>KEBERSIHAN & KERAPIHAN</Text>
+          </View>
+          <RuleItem
+            num="11"
+            title="Kamar & Kamar Mandi"
+            desc="Kamar dan kamar mandi pribadi wajib dijaga tetap bersih dan rapi agar semakin betah."
+          />
+          <RuleItem
+            num="12"
+            title="Pembuangan Sampah"
+            desc="Buang sampah pada tempatnya. Dilarang keras membuang sampah, tisu, atau pembalut ke dalam kloset agar tidak mampet."
+          />
+          <RuleItem
+            num="13"
+            title="Tempat Jemuran"
+            desc="Jemur pakaian di area jemuran yang sudah disediakan, jangan menjemur di depan kamar agar lingkungan tetap rapi."
+          />
+
+          {/* FASILITAS KOST */}
+          <View style={styles.ruleCategoryHeader}>
+            <Ionicons name="water" size={16} color="#1e3a8a" />
+            <Text style={styles.ruleCategoryTitle}>FASILITAS KOST</Text>
+          </View>
+          <RuleItem
+            num="14"
+            title="Penggunaan Bijak"
+            desc="Gunakan seluruh fasilitas kost dengan bijak, tertib, dan penuh rasa tanggung jawab."
+          />
+          <RuleItem
+            num="15"
+            title="Tanggung Jawab Kerusakan"
+            desc="Jika terjadi kerusakan fasilitas akibat kelalaian pribadi, biaya perbaikannya ditanggung oleh penghuni."
+          />
+          <RuleItem
+            num="16"
+            title="Hemat Air & Energi"
+            desc="Hemat penggunaan air dan listrik ya Kak, gunakan secukupnya saja sesuai kebutuhan."
+          />
+        </ScrollView>
+
+        <TouchableOpacity
+          style={styles.closeRulesBtn}
+          onPress={() => setRulesModalVisible(false)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.closeRulesText}>Saya Mengerti & Patuh</Text>
+        </TouchableOpacity>
+      </SmoothModal>
 
       <GlobalAlert
         visible={alertConfig.visible}

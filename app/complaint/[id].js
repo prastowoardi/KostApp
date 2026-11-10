@@ -86,7 +86,7 @@ export default function ComplaintDetailScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            <StatusBar barStyle="light-content" translucent backgroundColor="#0f172a" />
 
             {/* Modal Image Zoom */}
             <Modal visible={modalVisible} transparent={true} animationType="fade">

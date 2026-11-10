@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState, Platform, StatusBar } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import 'react-native-reanimated';
 import { setupNotificationChannelAsync, syncPushTokenWithBackend } from '../helpers/notificationHelper';
@@ -26,10 +26,12 @@ export const unstable_settings = {
 export default function Layout() {
   const router = useRouter();
 
-  // Set system navigation bar to always visible & dark navy with light icons (Android)
+  // Set system status bar & navigation bar to dark navy with light icons (Android)
   useEffect(() => {
-    const setupSystemNavBar = async () => {
+    const setupSystemBars = async () => {
+      StatusBar.setBarStyle('light-content');
       if (Platform.OS === 'android') {
+        StatusBar.setBackgroundColor('#0f172a');
         try {
           await NavigationBar.setVisibilityAsync('visible');
           await NavigationBar.setBackgroundColorAsync('#0f172a');
@@ -40,11 +42,11 @@ export default function Layout() {
       }
     };
 
-    setupSystemNavBar();
+    setupSystemBars();
 
     const appStateSub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        setupSystemNavBar();
+        setupSystemBars();
       }
     });
 
@@ -93,15 +95,18 @@ export default function Layout() {
   }, [router]);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        autoHideHomeIndicator: false,
-      }}
-    >
-      <Stack.Screen name="index" options={{ autoHideHomeIndicator: false }} />
-      <Stack.Screen name="admin" options={{ gestureEnabled: false, autoHideHomeIndicator: false }} />
-      <Stack.Screen name="tenant/dashboard" options={{ gestureEnabled: false, autoHideHomeIndicator: false }} />
-    </Stack>
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#0f172a" translucent />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          autoHideHomeIndicator: false,
+        }}
+      >
+        <Stack.Screen name="index" options={{ autoHideHomeIndicator: false }} />
+        <Stack.Screen name="admin" options={{ gestureEnabled: false, autoHideHomeIndicator: false }} />
+        <Stack.Screen name="tenant/dashboard" options={{ gestureEnabled: false, autoHideHomeIndicator: false }} />
+      </Stack>
+    </>
   );
 }

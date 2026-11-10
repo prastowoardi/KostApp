@@ -103,7 +103,7 @@ export default function ChangePasswordScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.container}
     >
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="#0f172a" />
 
       {/* Header */}
       <LinearGradient

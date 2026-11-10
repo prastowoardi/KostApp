@@ -222,7 +222,7 @@ export default function TenantDashboard() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="#0f172a" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

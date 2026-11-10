@@ -84,7 +84,7 @@ export default function PaymentDetail() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            <StatusBar barStyle="light-content" translucent backgroundColor="#0f172a" />
 
             {/* Header */}
             <LinearGradient

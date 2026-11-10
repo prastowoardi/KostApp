@@ -6,11 +6,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    BackHandler,
     Linking,
+    Platform,
     RefreshControl,
     ScrollView,
     StatusBar,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -146,6 +149,46 @@ export default function AdminDashboard() {
         useCallback(() => {
             fetchAdminData({ silent: true });
         }, [fetchAdminData])
+    );
+
+    // Double-tap Back to exit on Android with safety for alerts
+    useFocusEffect(
+        useCallback(() => {
+            let backPressCount = 0;
+            let backTimer = null;
+
+            const onBackPress = () => {
+                if (Platform.OS !== "android") return false;
+
+                if (alertConfig.visible) {
+                    setAlertConfig((p) => ({ ...p, visible: false }));
+                    return true;
+                }
+
+                if (backPressCount === 0) {
+                    backPressCount += 1;
+                    ToastAndroid.show("Tekan sekali lagi untuk keluar", ToastAndroid.SHORT);
+                    backTimer = setTimeout(() => {
+                        backPressCount = 0;
+                    }, 2000);
+                    return true;
+                } else {
+                    if (backTimer) clearTimeout(backTimer);
+                    BackHandler.exitApp();
+                    return true;
+                }
+            };
+
+            const subscription = BackHandler.addEventListener(
+                "hardwareBackPress",
+                onBackPress
+            );
+
+            return () => {
+                if (backTimer) clearTimeout(backTimer);
+                subscription.remove();
+            };
+        }, [alertConfig.visible])
     );
 
     const handleLogout = () => {

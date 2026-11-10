@@ -5,12 +5,15 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Alert,
+    BackHandler,
     Linking,
     Modal,
+    Platform,
     RefreshControl,
     ScrollView,
     StatusBar,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -124,6 +127,52 @@ export default function TenantDashboard() {
     useCallback(() => {
       fetchData({ silent: true });
     }, [fetchData])
+  );
+
+  // Double-tap Back to exit on Android with safety for open modals
+  useFocusEffect(
+    useCallback(() => {
+      let backPressCount = 0;
+      let backTimer = null;
+
+      const onBackPress = () => {
+        if (Platform.OS !== "android") return false;
+
+        // If rules modal or alert is open, dismiss it first
+        if (rulesModalVisible) {
+          setRulesModalVisible(false);
+          return true;
+        }
+
+        if (alertConfig.visible) {
+          setAlertConfig((prev) => ({ ...prev, visible: false }));
+          return true;
+        }
+
+        if (backPressCount === 0) {
+          backPressCount += 1;
+          ToastAndroid.show("Tekan sekali lagi untuk keluar", ToastAndroid.SHORT);
+          backTimer = setTimeout(() => {
+            backPressCount = 0;
+          }, 2000);
+          return true;
+        } else {
+          if (backTimer) clearTimeout(backTimer);
+          BackHandler.exitApp();
+          return true;
+        }
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      return () => {
+        if (backTimer) clearTimeout(backTimer);
+        subscription.remove();
+      };
+    }, [rulesModalVisible, alertConfig.visible])
   );
 
   const onRefresh = () => {

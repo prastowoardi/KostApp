@@ -26,6 +26,14 @@ export default function PaymentDetail() {
     const [payment, setPayment] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const handleBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            router.replace('/tenant/dashboard');
+        }
+    };
+
     const fetchDetail = useCallback(async () => {
         try {
             const response = await api.get(`/tenant/payments/${id}`);
@@ -59,7 +67,7 @@ export default function PaymentDetail() {
             <View style={styles.center}>
                 <Ionicons name="receipt-outline" size={56} color="#cbd5e1" />
                 <Text style={styles.emptyTitle}>Data Pembayaran Tidak Ditemukan</Text>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
                     <Text style={styles.backButtonText}>Kembali</Text>
                 </TouchableOpacity>
             </View>
@@ -86,7 +94,7 @@ export default function PaymentDetail() {
                 style={[styles.header, { paddingTop: insets.top + 16 }]}
             >
                 <View style={styles.headerTop}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                    <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
                         <Ionicons name="chevron-back" size={24} color="white" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Detail Bukti Bayar</Text>

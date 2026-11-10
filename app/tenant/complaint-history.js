@@ -25,6 +25,14 @@ export default function ComplaintHistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/tenant/dashboard");
+    }
+  };
+
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
     title: "",
@@ -142,7 +150,7 @@ export default function ComplaintHistoryScreen() {
         style={[styles.header, { paddingTop: insets.top + 16 }]}
       >
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Riwayat Komplain</Text>

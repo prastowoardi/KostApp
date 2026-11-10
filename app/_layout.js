@@ -25,26 +25,25 @@ export const unstable_settings = {
 export default function Layout() {
   const router = useRouter();
 
-  // Hide system navigation bar (Android) & keep hidden on resume
+  // Set system navigation bar to always visible & dark navy with light icons (Android)
   useEffect(() => {
-    const hideSystemNavBar = async () => {
+    const setupSystemNavBar = async () => {
       if (Platform.OS === 'android') {
         try {
-          await NavigationBar.setPositionAsync('absolute');
-          await NavigationBar.setBackgroundColorAsync('#ffffff00');
-          await NavigationBar.setVisibilityAsync('hidden');
-          await NavigationBar.setBehaviorAsync('inset-swipe');
+          await NavigationBar.setVisibilityAsync('visible');
+          await NavigationBar.setBackgroundColorAsync('#0f172a');
+          await NavigationBar.setButtonStyleAsync('light');
         } catch {
           // Graceful fallback for non-supported device/emulators
         }
       }
     };
 
-    hideSystemNavBar();
+    setupSystemNavBar();
 
     const appStateSub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        hideSystemNavBar();
+        setupSystemNavBar();
       }
     });
 
@@ -86,12 +85,12 @@ export default function Layout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        autoHideHomeIndicator: true,
+        autoHideHomeIndicator: false,
       }}
     >
-      <Stack.Screen name="index" options={{ autoHideHomeIndicator: true }} />
-      <Stack.Screen name="admin" options={{ gestureEnabled: false, autoHideHomeIndicator: true }} />
-      <Stack.Screen name="tenant/dashboard" options={{ gestureEnabled: false, autoHideHomeIndicator: true }} />
+      <Stack.Screen name="index" options={{ autoHideHomeIndicator: false }} />
+      <Stack.Screen name="admin" options={{ gestureEnabled: false, autoHideHomeIndicator: false }} />
+      <Stack.Screen name="tenant/dashboard" options={{ gestureEnabled: false, autoHideHomeIndicator: false }} />
     </Stack>
   );
 }

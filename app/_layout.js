@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import 'react-native-reanimated';
+import { setupNotificationChannelAsync, syncPushTokenWithBackend } from '../helpers/notificationHelper';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -55,6 +56,15 @@ export default function Layout() {
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
+    setupNotificationChannelAsync();
+    syncPushTokenWithBackend();
+
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        syncPushTokenWithBackend();
+      }
+    });
+
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
       if (!data) return;
@@ -76,6 +86,7 @@ export default function Layout() {
     });
 
     return () => {
+      appStateSub.remove();
       subscription?.remove?.();
       notificationListener?.remove?.();
     };

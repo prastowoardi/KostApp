@@ -30,6 +30,7 @@ export const clearAuthSession = async () => {
             "userData",
             "cached_admin_stats",
             "cached_tenant_data",
+            "last_synced_push_token",
         ]);
     } catch {
         // Ignore cleanup errors

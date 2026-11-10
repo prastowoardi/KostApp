@@ -23,6 +23,7 @@ import LoadingScreen from "../../components/LoadingScreen";
 import api, { clearAuthSession, getCleanToken } from "../../helpers/api";
 import { formatRupiah } from "../../helpers/formatters";
 import { useAppStateResume } from "../../helpers/useAppStateResume";
+import { syncPushTokenWithBackend } from "../../helpers/notificationHelper";
 import styles from "../../styles/tenantDashboard.styles";
 
 const OWNER_WHATSAPP = "https://wa.me/6285111203521";
@@ -111,6 +112,9 @@ export default function TenantDashboard() {
     }).catch(() => {
       fetchData({ silent: false });
     });
+
+    // Sync push notification token in background
+    syncPushTokenWithBackend().catch(() => {});
 
     return () => {
       isMounted = false;

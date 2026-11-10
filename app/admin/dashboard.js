@@ -23,6 +23,7 @@ import LoadingScreen from "../../components/LoadingScreen";
 import api, { clearAuthSession, getCleanToken } from "../../helpers/api";
 import { formatRupiah, getInitials } from "../../helpers/formatters";
 import { useAppStateResume } from "../../helpers/useAppStateResume";
+import { syncPushTokenWithBackend } from "../../helpers/notificationHelper";
 import styles from "../../styles/adminDashboard.styles";
 
 export default function AdminDashboard() {
@@ -133,6 +134,9 @@ export default function AdminDashboard() {
         }).catch(() => {
             fetchAdminData({ silent: false });
         });
+
+        // Sync push notification token in background
+        syncPushTokenWithBackend().catch(() => {});
 
         return () => {
             isMounted = false;

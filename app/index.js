@@ -21,7 +21,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomSplashScreen from '../components/CustomSplashScreen';
 import GlobalAlert from '../components/GlobalAlert';
-import { registerForPushNotificationsAsync } from '../helpers/notificationHelper';
+import { registerForPushNotificationsAsync, syncPushTokenWithBackend } from '../helpers/notificationHelper';
 import { API_URL, clearAuthSession } from '../helpers/api';
 import styles from '../styles/auth.styles';
 
@@ -67,6 +67,8 @@ export default function LoginScreen() {
                             ? '/admin/dashboard'
                             : '/tenant/dashboard';
                     setAuthResult({ isLoggedIn: true, target });
+                    // Sync push token silently in background on auto-login
+                    syncPushTokenWithBackend().catch(() => {});
                     return;
                 } else if (!cleanToken && isMounted) {
                     await clearAuthSession();
@@ -144,6 +146,9 @@ export default function LoginScreen() {
 
                 await AsyncStorage.setItem('userToken', cleanToken);
                 await AsyncStorage.setItem('userData', JSON.stringify(user));
+                if (pushToken) {
+                    await AsyncStorage.setItem('last_synced_push_token', pushToken);
+                }
 
                 if (user.role === 'admin' || user.role === 'staff') {
                     router.replace('/admin/dashboard');

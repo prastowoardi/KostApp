@@ -21,7 +21,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomSplashScreen from '../components/CustomSplashScreen';
 import GlobalAlert from '../components/GlobalAlert';
-import { registerForPushNotificationsAsync, syncPushTokenWithBackend } from '../helpers/notificationHelper';
+import {
+    registerForPushNotificationsAsync,
+    requestNotificationPermissionsAsync,
+    syncPushTokenWithBackend,
+} from '../helpers/notificationHelper';
 import { API_URL, clearAuthSession } from '../helpers/api';
 import styles from '../styles/auth.styles';
 
@@ -91,6 +95,7 @@ export default function LoginScreen() {
                 router.replace(authResult.target);
             } else {
                 setCheckingAuth(false);
+                requestNotificationPermissionsAsync().catch(() => {});
             }
         }
     }, [splashFinished, authResult, router]);

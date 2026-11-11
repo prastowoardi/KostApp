@@ -31,14 +31,46 @@ export async function setupNotificationChannelAsync() {
 }
 
 /**
+ * Request notification permissions from user on OS level.
+ * Prompts the system dialog (iOS / Android 13+) if not yet determined.
+ * Can be called anytime, including during first app launch before login.
+ */
+export async function requestNotificationPermissionsAsync() {
+    if (Platform.OS === 'web') return false;
+
+    if (Platform.OS === 'android') {
+        await setupNotificationChannelAsync();
+    }
+
+    try {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+
+        const isGranted = finalStatus === 'granted';
+        if (!isGranted) {
+            console.log('Push notification permission denied/not granted:', finalStatus);
+        }
+        return isGranted;
+    } catch (e) {
+        console.log('Push notification permission request error:', e?.message || e);
+        return false;
+    }
+}
+
+/**
  * Request notification permissions and fetch the Expo Push Token.
  */
 export async function registerForPushNotificationsAsync() {
     if (Platform.OS === 'web') return null;
 
-    // Always ensure channel exists on Android before requesting or receiving tokens
-    if (Platform.OS === 'android') {
-        await setupNotificationChannelAsync();
+    const hasPermission = await requestNotificationPermissionsAsync();
+    if (!hasPermission) {
+        return null;
     }
 
     if (!Device.isDevice) {
@@ -52,19 +84,6 @@ export async function registerForPushNotificationsAsync() {
     }
 
     try {
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-
-        if (existingStatus !== 'granted') {
-            const { status } = await Notifications.requestPermissionsAsync();
-            finalStatus = status;
-        }
-
-        if (finalStatus !== 'granted') {
-            console.log('Push notification permission denied:', finalStatus);
-            return null;
-        }
-
         const projectId =
             Constants?.easConfig?.projectId ??
             Constants?.expoConfig?.extra?.eas?.projectId ??

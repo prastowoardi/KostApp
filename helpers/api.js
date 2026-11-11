@@ -89,6 +89,16 @@ api.interceptors.response.use(
         }
 
         config.__isRetryExhausted = true;
+
+        if (
+            error.response?.status === 401 ||
+            (error.response?.status === 403 &&
+                typeof error.response?.data?.message === 'string' &&
+                error.response.data.message.toLowerCase().includes('dinonaktifkan'))
+        ) {
+            await clearAuthSession();
+        }
+
         return Promise.reject(error);
     }
 );

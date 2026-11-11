@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -8,6 +10,7 @@ import {
     FlatList,
     Linking,
     Modal,
+    Platform,
     ScrollView,
     StatusBar,
     Text,
@@ -19,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import LoadingScreen from '../../components/LoadingScreen';
 import SmoothModal from '../../components/SmoothModal';
-import api, { clearAuthSession } from '../../helpers/api';
+import api, { BASE_URL, clearAuthSession, getCleanToken } from '../../helpers/api';
 import { formatRupiah, formatDate } from '../../helpers/formatters';
 import styles from '../../styles/adminTenant.styles';
 
@@ -40,6 +43,12 @@ export default function ManageTenant() {
     const [allRooms, setAllRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+
+    const [photo, setPhoto] = useState(null);
+    const [currentPhotoUrl, setCurrentPhotoUrl] = useState(null);
+    const [fullPhotoUrl, setFullPhotoUrl] = useState(null);
+    const [authToken, setAuthToken] = useState('');
 
     const [modalVisible, setModalVisible] = useState(false);
     const [roomModalVisible, setRoomModalVisible] = useState(false);
@@ -109,7 +118,59 @@ export default function ManageTenant() {
 
     useEffect(() => {
         fetchData();
+        getCleanToken().then((t) => {
+            if (t) setAuthToken(t);
+        });
     }, [fetchData]);
+
+    const getPhotoUri = (tenant) => {
+        if (!tenant || !tenant.photo) return null;
+        const base = `${BASE_URL}/api/admin/tenants/${tenant.uuid || tenant.id}/photo`;
+        return authToken ? `${base}?token=${authToken}` : base;
+    };
+
+    const pickImageFromGallery = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                return showAlert('Izin Galeri', 'Aplikasi memerlukan izin untuk mengakses galeri foto KTP.', 'warning');
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setPhoto(result.assets[0].uri);
+            }
+        } catch (e) {
+            console.log('Error pick gallery:', e);
+            showAlert('Error', 'Gagal memilih foto dari galeri.', 'error');
+        }
+    };
+
+    const takePhotoWithCamera = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+                return showAlert('Izin Kamera', 'Aplikasi memerlukan izin untuk mengambil foto KTP via kamera.', 'warning');
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setPhoto(result.assets[0].uri);
+            }
+        } catch (e) {
+            console.log('Error take camera photo:', e);
+            showAlert('Error', 'Gagal mengambil foto dari kamera.', 'error');
+        }
+    };
 
     const resetForm = () => {
         setForm({
@@ -126,6 +187,8 @@ export default function ManageTenant() {
             emergency_contact_name: '',
             emergency_contact_phone: '',
         });
+        setPhoto(null);
+        setCurrentPhotoUrl(null);
     };
 
     const openAddModal = () => {
@@ -150,6 +213,8 @@ export default function ManageTenant() {
             emergency_contact_name: tenant.emergency_contact_name || '',
             emergency_contact_phone: tenant.emergency_contact_phone || '',
         });
+        setPhoto(null);
+        setCurrentPhotoUrl(tenant.photo ? getPhotoUri(tenant) : null);
         setDetailVisible(false);
         setModalVisible(true);
     };
@@ -166,23 +231,57 @@ export default function ManageTenant() {
         try {
             setLoading(true);
 
+            const formData = new FormData();
+            formData.append('room_id', form.room_id);
+            formData.append('name', form.name);
+            formData.append('email', form.email);
+            formData.append('phone', form.phone);
+            formData.append('id_card', form.id_card);
+            formData.append('address', form.address || '');
+            if (form.entry_date) formData.append('entry_date', form.entry_date);
+            if (form.emergency_contact_name) formData.append('emergency_contact_name', form.emergency_contact_name);
+            if (form.emergency_contact_phone) formData.append('emergency_contact_phone', form.emergency_contact_phone);
+
+            if (photo) {
+                const filename = `ktp_${Date.now()}.jpg`;
+                if (Platform.OS === 'web') {
+                    const response = await fetch(photo);
+                    const blob = await response.blob();
+                    formData.append('photo', blob, filename);
+                } else {
+                    formData.append('photo', {
+                        uri: photo,
+                        name: filename,
+                        type: 'image/jpeg',
+                    });
+                }
+            }
+
             if (editMode) {
                 // Must use UUID for update/{uuid}
                 const tenantId = selectedTenant?.uuid || selectedTenant?.id;
-                const payload = { ...form };
-                if (!payload.password) delete payload.password;
-                if (payload.status === 'inactive' && !payload.exit_date) {
-                    payload.exit_date = new Date().toISOString().split('T')[0];
-                } else if (payload.status === 'active') {
-                    delete payload.exit_date;
+                formData.append('status', form.status);
+                if (form.status === 'inactive') {
+                    formData.append('exit_date', form.exit_date || new Date().toISOString().split('T')[0]);
                 }
-                await api.post(`/admin/tenants/update/${tenantId}`, payload);
+                if (form.password) {
+                    formData.append('password', form.password);
+                }
+
+                await api.post(`/admin/tenants/update/${tenantId}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
                 showAlert('Berhasil', 'Data penghuni berhasil diperbarui.', 'success');
                 setModalVisible(false);
                 resetForm();
                 fetchData();
             } else {
-                const res = await api.post('/admin/tenants/store', form);
+                formData.append('password', form.password || 'password123');
+                formData.append('status', 'active');
+
+                const res = await api.post('/admin/tenants/store', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
                 const created = res.data?.data;
                 const roomObj = rooms.find((r) => (r.uuid || r.id) === form.room_id) || allRooms.find((r) => (r.uuid || r.id) === form.room_id);
                 const roomNumber = created?.room?.room_number || roomObj?.room_number || '-';
@@ -250,12 +349,45 @@ export default function ManageTenant() {
 
     const roomList = editMode ? (allRooms.length ? allRooms : rooms) : rooms;
 
+    const calculateStayDuration = (entryDate, exitDate, status) => {
+        if (!entryDate) return '-';
+        try {
+            const start = new Date(entryDate);
+            const end = status === 'inactive' && exitDate ? new Date(exitDate) : new Date();
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) return '-';
+
+            let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+            let days = end.getDate() - start.getDate();
+            if (days < 0) {
+                months -= 1;
+                const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+                days += prevMonth.getDate();
+            }
+            const years = Math.floor(months / 12);
+            months = months % 12;
+
+            const parts = [];
+            if (years > 0) parts.push(`${years} Tahun`);
+            if (months > 0) parts.push(`${months} Bulan`);
+            if (days > 0 || parts.length === 0) parts.push(`${Math.max(0, days)} Hari`);
+            return parts.join(' ');
+        } catch {
+            return '-';
+        }
+    };
+
+    const activeCount = tenants.filter((t) => t.status === 'active').length;
+    const inactiveCount = tenants.filter((t) => t.status === 'inactive').length;
+
     const filteredTenants = tenants.filter((item) => {
         const name = (item.name || item.user?.name || '').toLowerCase();
         const room = (item.room?.room_number || '').toLowerCase();
         const phone = (item.phone || '').toLowerCase();
+        const email = (item.email || item.user?.email || '').toLowerCase();
         const q = searchQuery.toLowerCase();
-        return name.includes(q) || room.includes(q) || phone.includes(q);
+        const matchesQuery = name.includes(q) || room.includes(q) || phone.includes(q) || email.includes(q);
+        const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+        return matchesQuery && matchesStatus;
     });
 
     const renderTenantItem = ({ item }) => {
@@ -273,19 +405,62 @@ export default function ManageTenant() {
             >
                 <View style={styles.cardInfo}>
                     <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{name.charAt(0).toUpperCase()}</Text>
+                        {item.photo ? (
+                            <Image
+                                source={{
+                                    uri: getPhotoUri(item),
+                                    headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+                                }}
+                                style={{ width: '100%', height: '100%' }}
+                                contentFit="cover"
+                            />
+                        ) : (
+                            <Text style={styles.avatarText}>{name.charAt(0).toUpperCase()}</Text>
+                        )}
                     </View>
                     <View style={{ marginLeft: 14, flex: 1 }}>
                         <Text style={styles.name} numberOfLines={1}>
                             {name}
                         </Text>
-                        <Text style={styles.sub}>
-                            Kamar {item.room?.room_number || '-'} • {item.phone || '-'}
-                        </Text>
+
+                        {/* Room & Phone metadata row */}
+                        <View style={styles.cardMetaRow}>
+                            {item.room?.room_number ? (
+                                <View style={styles.roomPill}>
+                                    <Text style={styles.roomPillText}>
+                                        Kamar {item.room.room_number}
+                                    </Text>
+                                </View>
+                            ) : null}
+                            <View style={styles.cardMetaItem}>
+                                <Ionicons name="call-outline" size={12} color="#64748b" />
+                                <Text style={styles.cardMetaText}>{item.phone || '-'}</Text>
+                            </View>
+                        </View>
+
+                        {/* Email & Entry Date metadata row */}
+                        <View style={[styles.cardMetaRow, { marginTop: 4 }]}>
+                            {item.email ? (
+                                <View style={styles.cardMetaItem}>
+                                    <Ionicons name="mail-outline" size={12} color="#94a3b8" />
+                                    <Text style={[styles.cardMetaText, { color: '#94a3b8' }]} numberOfLines={1}>
+                                        {item.email}
+                                    </Text>
+                                </View>
+                            ) : null}
+                            {item.entry_date ? (
+                                <View style={styles.cardMetaItem}>
+                                    <Ionicons name="calendar-outline" size={12} color="#94a3b8" />
+                                    <Text style={[styles.cardMetaText, { color: '#94a3b8' }]}>
+                                        Masuk {formatDate(item.entry_date)}
+                                    </Text>
+                                </View>
+                            ) : null}
+                        </View>
                     </View>
                 </View>
                 <View style={[styles.badge, { backgroundColor: isActive ? '#ecfdf5' : '#fef2f2' }]}>
-                    <Text style={{ color: isActive ? '#10b981' : '#ef4444', fontSize: 12, fontWeight: '700' }}>
+                    <Text style={{ color: isActive ? '#10b981' : '#ef4444', fontSize: 11, fontWeight: '700' }}>
                         {isActive ? 'AKTIF' : 'NONAKTIF'}
                     </Text>
                 </View>
@@ -360,6 +535,29 @@ export default function ManageTenant() {
                 </View>
             </LinearGradient>
 
+            {/* Filter Status Chips (Matching Web) */}
+            <View style={styles.filterChipsRow}>
+                {[
+                    { key: 'all', label: `Semua (${tenants.length})` },
+                    { key: 'active', label: `Aktif (${activeCount})` },
+                    { key: 'inactive', label: `Tidak Aktif (${inactiveCount})` },
+                ].map((tab) => {
+                    const active = statusFilter === tab.key;
+                    return (
+                        <TouchableOpacity
+                            key={tab.key}
+                            style={[styles.filterChip, active && styles.filterChipActive]}
+                            onPress={() => setStatusFilter(tab.key)}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                                {tab.label}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+
             {loading ? (
                 <LoadingScreen
                     title="Data Penghuni"
@@ -396,52 +594,203 @@ export default function ManageTenant() {
                 contentStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: insets.bottom + 16, maxHeight: '85%' }}
             >
                 <ScrollView showsVerticalScrollIndicator={false}>
-                            <View style={styles.detailHeader}>
-                                <View style={styles.avatarBig}>
-                                    <Text style={styles.avatarBigText}>
-                                        {(selectedTenant?.name || selectedTenant?.user?.name || 'U')
-                                            .charAt(0)
-                                            .toUpperCase()}
-                                    </Text>
-                                </View>
-                                <Text style={styles.detailName}>
-                                    {selectedTenant?.name || selectedTenant?.user?.name}
+                    <View style={styles.detailHeader}>
+                        {selectedTenant?.photo ? (
+                            <TouchableOpacity
+                                style={styles.avatarBig}
+                                activeOpacity={0.85}
+                                onPress={() => setFullPhotoUrl(getPhotoUri(selectedTenant))}
+                            >
+                                <Image
+                                    source={{
+                                        uri: getPhotoUri(selectedTenant),
+                                        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+                                    }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    contentFit="cover"
+                                />
+                            </TouchableOpacity>
+                        ) : (
+                            <View style={styles.avatarBig}>
+                                <Text style={styles.avatarBigText}>
+                                    {(selectedTenant?.name || selectedTenant?.user?.name || 'U')
+                                        .charAt(0)
+                                        .toUpperCase()}
                                 </Text>
-                                <View
-                                    style={[
-                                        styles.badge,
-                                        {
-                                            backgroundColor:
-                                                selectedTenant?.status === 'active' ? '#ecfdf5' : '#fef2f2',
-                                            paddingHorizontal: 12,
-                                            paddingVertical: 4,
-                                        },
-                                    ]}
-                                >
-                                    <Text
-                                        style={{
-                                            color: selectedTenant?.status === 'active' ? '#10b981' : '#ef4444',
-                                            fontWeight: '700',
-                                            fontSize: 12,
-                                        }}
-                                    >
-                                        {selectedTenant?.status === 'active' ? 'AKTIF' : 'NONAKTIF'}
-                                    </Text>
-                                </View>
                             </View>
+                        )}
+                        <Text style={styles.detailName}>
+                            {selectedTenant?.name || selectedTenant?.user?.name}
+                        </Text>
+                        {selectedTenant?.email ? (
+                            <Text style={styles.detailSub}>
+                                {selectedTenant.email}
+                            </Text>
+                        ) : null}
+                        <View
+                            style={[
+                                styles.badge,
+                                {
+                                    backgroundColor:
+                                        selectedTenant?.status === 'active' ? '#ecfdf5' : '#fef2f2',
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 4,
+                                },
+                            ]}
+                        >
+                            <Text
+                                style={{
+                                    color: selectedTenant?.status === 'active' ? '#10b981' : '#ef4444',
+                                    fontWeight: '700',
+                                    fontSize: 12,
+                                }}
+                            >
+                                {selectedTenant?.status === 'active' ? 'AKTIF' : 'NONAKTIF'}
+                            </Text>
+                        </View>
+                    </View>
 
-                            <View style={styles.detailBody}>
-                                {renderDetailRow('Kamar', selectedTenant?.room?.room_number ? `Kamar ${selectedTenant.room.room_number}` : '-')}
-                                {renderDetailRow('Email', selectedTenant?.email || selectedTenant?.user?.email)}
-                                {renderDetailRow('No. Telepon / WA', selectedTenant?.phone, true)}
-                                {renderDetailRow('No. KTP', selectedTenant?.id_card)}
-                                {renderDetailRow('Alamat Asal', selectedTenant?.address)}
-                                {renderDetailRow('Tanggal Masuk', formatDate(selectedTenant?.entry_date))}
-                                {selectedTenant?.exit_date ? renderDetailRow('Tanggal Keluar', formatDate(selectedTenant.exit_date)) : null}
-                                {renderDetailRow('Kontak Darurat', selectedTenant?.emergency_contact_name)}
-                                {renderDetailRow('No. HP Darurat', selectedTenant?.emergency_contact_phone, true)}
+                    <View style={styles.detailBody}>
+                        {/* 1. INFORMASI PRIBADI */}
+                        <View style={styles.sectionDivider}>
+                            <Ionicons name="person-outline" size={15} color="#475569" />
+                            <Text style={styles.sectionDividerText}>Informasi Pribadi</Text>
+                        </View>
+
+                        {renderDetailRow('No. Telepon / WA', selectedTenant?.phone, true)}
+                        {renderDetailRow('No. KTP/ID', selectedTenant?.id_card)}
+
+                        {/* FOTO IDENTITAS KTP */}
+                        <View style={{ marginTop: 6, marginBottom: 12 }}>
+                            <Text style={[styles.detailLabel, { marginBottom: 6 }]}>Foto Identitas KTP</Text>
+                            {selectedTenant?.photo ? (
+                                <TouchableOpacity
+                                    style={styles.detailKtpCard}
+                                    activeOpacity={0.85}
+                                    onPress={() => setFullPhotoUrl(getPhotoUri(selectedTenant))}
+                                >
+                                    <Image
+                                        source={{
+                                            uri: getPhotoUri(selectedTenant),
+                                            headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+                                        }}
+                                        style={styles.detailKtpImage}
+                                        contentFit="cover"
+                                        transition={300}
+                                    />
+                                    <View style={styles.detailKtpOverlay}>
+                                        <Ionicons name="scan-outline" size={13} color="#ffffff" />
+                                        <Text style={styles.detailKtpOverlayText}>Ketuk untuk Perbesar</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            ) : (
+                                <View style={styles.detailEmptyKtpCard}>
+                                    <View style={styles.detailEmptyKtpInfo}>
+                                        <Ionicons name="card-outline" size={26} color="#94a3b8" />
+                                        <View style={{ marginLeft: 12, flex: 1 }}>
+                                            <Text style={styles.detailEmptyKtpTitle}>Belum Ada Foto KTP</Text>
+                                            <Text style={styles.detailEmptyKtpSubtitle}>
+                                                Foto identitas KTP belum diunggah untuk penghuni ini.
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <TouchableOpacity
+                                        style={styles.detailEmptyKtpAction}
+                                        onPress={() => openEditModal(selectedTenant)}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons name="cloud-upload-outline" size={15} color="#1e3a8a" />
+                                        <Text style={styles.detailEmptyKtpActionText}>Unggah Foto KTP Sekarang</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+
+                        {/* ALAMAT ASAL (MULTILINE, TIDAK AKAN KEPOTONG) */}
+                        <View style={styles.detailAddressBlock}>
+                            <View style={styles.detailAddressHeader}>
+                                <Ionicons name="location-outline" size={15} color="#64748b" />
+                                <Text style={styles.detailLabel}>Alamat Asal</Text>
                             </View>
-                        </ScrollView>
+                            <Text style={styles.detailAddressText}>
+                                {selectedTenant?.address || '-'}
+                            </Text>
+                        </View>
+
+                        {renderDetailRow('Tanggal Masuk', formatDate(selectedTenant?.entry_date))}
+                        {selectedTenant?.exit_date ? renderDetailRow('Tanggal Keluar', formatDate(selectedTenant.exit_date)) : null}
+                        {renderDetailRow('Kontak Darurat', selectedTenant?.emergency_contact_name)}
+                        {renderDetailRow('No. HP Darurat', selectedTenant?.emergency_contact_phone, true)}
+
+                        {/* 2. INFORMASI KAMAR (MATCHING WEB) */}
+                        <View style={styles.sectionDivider}>
+                            <Ionicons name="bed-outline" size={15} color="#475569" />
+                            <Text style={styles.sectionDividerText}>Informasi Kamar</Text>
+                        </View>
+
+                        {renderDetailRow('Nomor Kamar', selectedTenant?.room?.room_number ? `Kamar ${selectedTenant.room.room_number}` : '-')}
+                        {renderDetailRow(
+                            'Tipe Kamar',
+                            selectedTenant?.room?.type
+                                ? selectedTenant.room.type === 'singlenoac'
+                                    ? 'Single No AC'
+                                    : selectedTenant.room.type === 'singleac'
+                                    ? 'Single AC'
+                                    : selectedTenant.room.type
+                                : '-'
+                        )}
+                        {renderDetailRow(
+                            'Harga Sewa',
+                            selectedTenant?.room?.price ? formatRupiah(selectedTenant.room.price) : '-'
+                        )}
+                        {renderDetailRow(
+                            'Ukuran Kamar',
+                            selectedTenant?.room?.size ? `${selectedTenant.room.size} m²` : '-'
+                        )}
+
+                        {/* 3. STATISTIK SEWA (MATCHING WEB) */}
+                        <View style={styles.sectionDivider}>
+                            <Ionicons name="stats-chart-outline" size={15} color="#475569" />
+                            <Text style={styles.sectionDividerText}>Statistik Sewa</Text>
+                        </View>
+
+                        <View style={styles.statsGrid}>
+                            <View style={styles.statItemCard}>
+                                <Text style={styles.statItemLabel}>Total Bayar</Text>
+                                <Text style={styles.statItemValue}>
+                                    {selectedTenant?.payments_count ?? selectedTenant?.payments?.length ?? 0} Kali
+                                </Text>
+                            </View>
+                            <View style={styles.statItemCard}>
+                                <Text style={styles.statItemLabel}>Total Pengeluaran</Text>
+                                <Text style={[styles.statItemValue, { color: '#059669' }]} numberOfLines={1}>
+                                    {formatRupiah(
+                                        (selectedTenant?.payments || []).reduce(
+                                            (acc, p) => acc + Number(p.total || p.amount || 0),
+                                            0
+                                        )
+                                    )}
+                                </Text>
+                            </View>
+                            <View style={styles.statItemCard}>
+                                <Text style={styles.statItemLabel}>Total Keluhan</Text>
+                                <Text style={styles.statItemValue}>
+                                    {selectedTenant?.complaints_count ?? selectedTenant?.complaints?.length ?? 0} Keluhan
+                                </Text>
+                            </View>
+                            <View style={styles.statItemCard}>
+                                <Text style={styles.statItemLabel}>Lama Tinggal</Text>
+                                <Text style={styles.statItemValue} numberOfLines={1}>
+                                    {calculateStayDuration(
+                                        selectedTenant?.entry_date,
+                                        selectedTenant?.exit_date,
+                                        selectedTenant?.status
+                                    )}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </ScrollView>
 
                         <View style={styles.detailActions}>
                             <TouchableOpacity
@@ -708,6 +1057,54 @@ export default function ManageTenant() {
                             onChangeText={(v) => setForm({ ...form, address: v })}
                         />
 
+                        {/* UPLOAD FOTO IDENTITAS KTP */}
+                        <Text style={styles.formLabel}>Foto Identitas KTP (Opsional)</Text>
+                        {photo || currentPhotoUrl ? (
+                            <View style={styles.ktpPreviewBox}>
+                                <Image
+                                    source={{
+                                        uri: photo || currentPhotoUrl,
+                                        headers: (!photo && currentPhotoUrl && authToken) ? { Authorization: `Bearer ${authToken}` } : undefined,
+                                    }}
+                                    style={styles.ktpPreviewImage}
+                                    contentFit="cover"
+                                />
+                                <TouchableOpacity
+                                    style={styles.ktpRemoveBtn}
+                                    onPress={() => {
+                                        setPhoto(null);
+                                        setCurrentPhotoUrl(null);
+                                    }}
+                                >
+                                    <Ionicons name="trash-outline" size={16} color="#ffffff" />
+                                </TouchableOpacity>
+                            </View>
+                        ) : null}
+
+                        <View style={styles.ktpPickerActions}>
+                            <TouchableOpacity
+                                style={styles.ktpPickerBtn}
+                                onPress={pickImageFromGallery}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="images-outline" size={18} color="#334155" />
+                                <Text style={styles.ktpPickerBtnText}>
+                                    {photo || currentPhotoUrl ? 'Ganti dari Galeri' : 'Pilih dari Galeri'}
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.ktpPickerBtn}
+                                onPress={takePhotoWithCamera}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="camera-outline" size={18} color="#334155" />
+                                <Text style={styles.ktpPickerBtnText}>
+                                    {photo || currentPhotoUrl ? 'Ambil Ulang' : 'Foto Kamera'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+
                         <Text style={styles.formLabel}>Tanggal Masuk</Text>
                         <TextInput
                             style={styles.formInput}
@@ -889,6 +1286,36 @@ export default function ManageTenant() {
                     <Text style={styles.doneBtnText}>Selesai & Tutup</Text>
                 </TouchableOpacity>
             </SmoothModal>
+
+            {/* FULLSCREEN KTP PREVIEW MODAL */}
+            <Modal
+                visible={Boolean(fullPhotoUrl)}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setFullPhotoUrl(null)}
+            >
+                <View style={styles.fullPhotoModalBg}>
+                    <StatusBar barStyle="light-content" backgroundColor="#000000" />
+                    <TouchableOpacity
+                        style={styles.fullPhotoCloseBtn}
+                        onPress={() => setFullPhotoUrl(null)}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    >
+                        <Ionicons name="close" size={24} color="#ffffff" />
+                    </TouchableOpacity>
+
+                    {fullPhotoUrl ? (
+                        <Image
+                            source={{
+                                uri: fullPhotoUrl,
+                                headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+                            }}
+                            style={styles.fullPhotoImage}
+                            contentFit="contain"
+                        />
+                    ) : null}
+                </View>
+            </Modal>
 
             <GlobalAlert
                 visible={alertConfig.visible}

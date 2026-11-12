@@ -67,6 +67,65 @@ const env = {
 const isWindows = process.platform === 'win32';
 const gradlewCmd = isWindows ? 'gradlew.bat' : './gradlew';
 
+// 4. Auto-sync native assets if assets/images or app.json were modified
+function syncAssetsIfNeeded() {
+    const assetsImagesDir = path.join(projectRoot, 'assets', 'images');
+    const syncMarkerFile = path.join(androidDir, '.last_asset_sync');
+
+    let latestAssetMtime = 0;
+    try {
+        const appJsonStat = fs.statSync(path.join(projectRoot, 'app.json'));
+        latestAssetMtime = Math.max(latestAssetMtime, appJsonStat.mtimeMs);
+        if (fs.existsSync(assetsImagesDir)) {
+            const files = fs.readdirSync(assetsImagesDir);
+            for (const file of files) {
+                const stat = fs.statSync(path.join(assetsImagesDir, file));
+                latestAssetMtime = Math.max(latestAssetMtime, stat.mtimeMs);
+            }
+        }
+    } catch {}
+
+    let lastSyncMtime = 0;
+    if (fs.existsSync(syncMarkerFile)) {
+        try {
+            lastSyncMtime = parseFloat(fs.readFileSync(syncMarkerFile, 'utf8')) || 0;
+        } catch {}
+    }
+
+    const forceSync = process.argv.includes('--sync-assets') || process.argv.includes('--sync') || process.argv.includes('-s');
+    if (forceSync || latestAssetMtime > lastSyncMtime) {
+        console.log('🔄 Mendeteksi aset/konfigurasi diperbarui, menyinkronkan aset native Android...');
+
+        const buildGradlePath = path.join(androidDir, 'app', 'build.gradle');
+        const pkgJsonPath = path.join(projectRoot, 'package.json');
+        const buildGradleBak = fs.existsSync(buildGradlePath) ? fs.readFileSync(buildGradlePath, 'utf8') : null;
+        const pkgJsonBak = fs.existsSync(pkgJsonPath) ? fs.readFileSync(pkgJsonPath, 'utf8') : null;
+
+        const prebuildCmd = isWindows ? 'npx.cmd' : 'npx';
+        const prebuildResult = spawnSync(prebuildCmd, ['expo', 'prebuild', '-p', 'android', '--no-install'], {
+            cwd: projectRoot,
+            env: process.env,
+            stdio: 'inherit',
+        });
+
+        if (buildGradleBak && fs.existsSync(buildGradlePath)) {
+            fs.writeFileSync(buildGradlePath, buildGradleBak, 'utf8');
+        }
+        if (pkgJsonBak && fs.existsSync(pkgJsonPath)) {
+            fs.writeFileSync(pkgJsonPath, pkgJsonBak, 'utf8');
+        }
+
+        if (prebuildResult.status === 0) {
+            fs.writeFileSync(syncMarkerFile, Date.now().toString(), 'utf8');
+            console.log('✅ Aset native Android berhasil disinkronkan!\n');
+        } else {
+            console.warn('⚠️ Gagal menyinkronkan aset native otomatis, melanjutkan kompilasi...\n');
+        }
+    }
+}
+
+syncAssetsIfNeeded();
+
 console.log('⚙️  Menjalankan kompilasi Gradle Release...\n');
 
 const gradleArgs = [

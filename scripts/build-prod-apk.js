@@ -9,14 +9,28 @@ const projectRoot = path.resolve(__dirname, '..');
 const androidDir = path.join(projectRoot, 'android');
 const buildsDir = path.join(projectRoot, 'builds');
 
-// Read app version and name
+// Read and auto-increment app version
+const appJsonPath = path.join(projectRoot, 'app.json');
 let appVersion = '1.0.0';
+let prevVersionCode = 1;
+let nextVersionCode = 2;
 const appName = 'SerrataKost';
+
 try {
-    const appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'app.json'), 'utf8'));
+    const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
     if (appJson.expo?.version) appVersion = appJson.expo.version;
+    if (appJson.expo?.android?.versionCode) {
+        prevVersionCode = appJson.expo.android.versionCode;
+    }
+    nextVersionCode = prevVersionCode + 1;
+
+    // Update and persist new versionCode in app.json
+    if (!appJson.expo) appJson.expo = {};
+    if (!appJson.expo.android) appJson.expo.android = {};
+    appJson.expo.android.versionCode = nextVersionCode;
+    fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n');
 } catch (e) {
-    // fallback defaults
+    console.warn('⚠️  Peringatan: Gagal membaca/memperbarui app.json:', e.message);
 }
 
 // Parse CLI flags
@@ -29,7 +43,7 @@ console.log('📦  BUILD PRODUCTION APK - SERRATA KOST');
 console.log('======================================================');
 console.log(`📌 Target Arsitektur : ${architectures} (${isUniversal ? 'Universal fisik: arm64 + armv7' : 'Super Ramping: arm64-v8a (95%+ HP Android)'})`);
 console.log(`🌐 Production URL   : https://serrata.xyz/api`);
-console.log(`🏷️  Versi Aplikasi   : v${appVersion}`);
+console.log(`🏷️  Versi Aplikasi   : v${appVersion} (versionCode: ${nextVersionCode} [naik dari ${prevVersionCode}])`);
 console.log('------------------------------------------------------\n');
 
 // 1. Ensure android/local.properties has Android SDK path
@@ -67,6 +81,8 @@ console.log('⚙️  Menjalankan kompilasi Gradle Release...\n');
 const gradleArgs = [
     'assembleRelease',
     `-PreactNativeArchitectures=${architectures}`,
+    `-PversionCode=${nextVersionCode}`,
+    `-PversionName=${appVersion}`,
 ];
 
 const result = spawnSync(gradlewCmd, gradleArgs, {
@@ -120,6 +136,7 @@ const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
 console.log('\n======================================================');
 console.log('🎉  BUILD PRODUCTION APK SELESAI & BERHASIL!');
 console.log('======================================================');
+console.log(`🏷️  Versi Aplikasi   : v${appVersion} (versionCode: ${nextVersionCode})`);
 console.log(`📁 File APK Utama     : builds/${appName}.apk`);
 console.log(`📁 File Versi         : builds/${targetFileName}`);
 console.log(`📁 Shortcut Terbaru   : builds/${appName}-latest.apk`);

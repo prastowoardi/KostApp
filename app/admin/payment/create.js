@@ -1,4 +1,5 @@
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -6,7 +7,9 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Image,
     Linking,
+    Platform,
     ScrollView,
     StatusBar,
     Text,
@@ -49,6 +52,7 @@ export default function CreatePayment() {
     const [receipt, setReceipt] = useState(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [datePickerType, setDatePickerType] = useState(null); // 'payment' | 'period'
+    const [proofImage, setProofImage] = useState(null);
 
     const [form, setForm] = useState({
         tenant_id: '',
@@ -156,6 +160,49 @@ export default function CreatePayment() {
         setDatePickerType(null);
     };
 
+    const pickImageFromGallery = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                return showAlert('Izin Galeri Diperlukan', 'Aplikasi memerlukan izin untuk mengakses galeri foto bukti pembayaran.', 'warning');
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setProofImage(result.assets[0].uri);
+            }
+        } catch (e) {
+            console.log('Error pick gallery:', e);
+            showAlert('Gagal Memilih Foto', 'Terjadi kesalahan saat memilih foto bukti pembayaran dari galeri.', 'error');
+        }
+    };
+
+    const takePhotoWithCamera = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+                return showAlert('Izin Kamera Diperlukan', 'Aplikasi memerlukan izin kamera untuk memotret bukti pembayaran.', 'warning');
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setProofImage(result.assets[0].uri);
+            }
+        } catch (e) {
+            console.log('Error take camera photo:', e);
+            showAlert('Gagal Memotret', 'Terjadi kesalahan saat memotret bukti pembayaran dari kamera.', 'error');
+        }
+    };
+
     const handleSubmit = async () => {
         if (!selectedTenant) {
             return showAlert('Data Belum Lengkap', 'Silakan pilih penghuni kost terlebih dahulu.', 'warning');
@@ -177,18 +224,52 @@ export default function CreatePayment() {
 
         setSubmitting(true);
         try {
-            // MUST USE UUID for backend where('uuid', ...)
-            const payload = {
-                tenant_id: selectedTenant.uuid || selectedTenant.id,
-                period_month: form.period_month + '-01',
-                payment_date: form.payment_date,
-                amount: cleanAmount,
-                late_fee: parseInt(form.late_fee.toString().replace(/\D/g, '') || 0),
-                payment_method: form.payment_method,
-                notes: form.notes || 'Pembayaran via Admin Mobile',
-            };
+            const tenantId = selectedTenant.uuid || selectedTenant.id;
+            const periodMonth = form.period_month + '-01';
+            const cleanLateFee = parseInt(form.late_fee.toString().replace(/\D/g, '') || 0);
 
-            const res = await api.post('/admin/payments/store', payload);
+            let res;
+            if (proofImage) {
+                const formData = new FormData();
+                formData.append('tenant_id', tenantId);
+                formData.append('period_month', periodMonth);
+                formData.append('payment_date', form.payment_date);
+                formData.append('amount', cleanAmount.toString());
+                formData.append('late_fee', cleanLateFee.toString());
+                formData.append('payment_method', form.payment_method);
+                formData.append('notes', form.notes || 'Pembayaran via Admin Mobile');
+
+                const filename = `receipt_${Date.now()}.jpg`;
+                if (Platform.OS === 'web') {
+                    const response = await fetch(proofImage);
+                    const blob = await response.blob();
+                    formData.append('receipt_file', blob, filename);
+                } else {
+                    formData.append('receipt_file', {
+                        uri: proofImage,
+                        name: filename,
+                        type: 'image/jpeg',
+                    });
+                }
+
+                res = await api.post('/admin/payments/store', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+            } else {
+                const payload = {
+                    tenant_id: tenantId,
+                    period_month: periodMonth,
+                    payment_date: form.payment_date,
+                    amount: cleanAmount,
+                    late_fee: cleanLateFee,
+                    payment_method: form.payment_method,
+                    notes: form.notes || 'Pembayaran via Admin Mobile',
+                };
+
+                res = await api.post('/admin/payments/store', payload);
+            }
 
             const savedData = res.data?.data || res.data;
             setReceipt(savedData);
@@ -262,6 +343,7 @@ export default function CreatePayment() {
         setSelectedTenant(null);
         setReceipt(null);
         setShowSuccessModal(false);
+        setProofImage(null);
         setForm({
             tenant_id: '',
             period_month: getLocalPeriodString(),
@@ -525,6 +607,53 @@ export default function CreatePayment() {
                         onChangeText={(notes) => setForm((prev) => ({ ...prev, notes }))}
                         textAlignVertical="top"
                     />
+
+                    {/* Proof of Payment / Receipt Upload */}
+                    <View style={styles.proofContainer}>
+                        <Text style={styles.fieldLabel}>Bukti Pembayaran / Struk (Opsional)</Text>
+
+                        {proofImage ? (
+                            <View style={styles.proofPreviewWrap}>
+                                <Image source={{ uri: proofImage }} style={styles.proofImage} resizeMode="contain" />
+                                <View style={styles.proofBadge}>
+                                    <Ionicons name="checkmark-circle" size={14} color="#10b981" />
+                                    <Text style={styles.proofBadgeText}>Bukti Terlampir</Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.proofRemoveBtn}
+                                    onPress={() => setProofImage(null)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Ionicons name="trash-outline" size={13} color="#ffffff" />
+                                    <Text style={styles.proofRemoveText}>Hapus</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : null}
+
+                        <View style={styles.proofActionsRow}>
+                            <TouchableOpacity
+                                style={styles.proofPickerBtn}
+                                onPress={pickImageFromGallery}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="images-outline" size={18} color="#2563eb" />
+                                <Text style={styles.proofPickerBtnText}>
+                                    {proofImage ? 'Ganti dari Galeri' : 'Pilih dari Galeri'}
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.proofPickerBtn}
+                                onPress={takePhotoWithCamera}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="camera-outline" size={18} color="#059669" />
+                                <Text style={styles.proofPickerBtnText}>
+                                    {proofImage ? 'Foto Ulang' : 'Buka Kamera'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
                     {/* Submit Button */}
                     <TouchableOpacity

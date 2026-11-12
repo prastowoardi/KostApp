@@ -30,14 +30,15 @@ export default StyleSheet.create({
         paddingBottom: moderateScale(24),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
-        maxWidth: 720,
         width: '100%',
-        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTitle: {
         fontSize: responsiveFont(18),

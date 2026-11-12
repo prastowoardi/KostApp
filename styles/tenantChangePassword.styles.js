@@ -1,20 +1,25 @@
 import { StyleSheet } from 'react-native';
+import { responsiveFont, moderateScale } from './theme';
 
 export default StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F9FC" },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: moderateScale(20),
+    paddingBottom: moderateScale(24),
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    width: "100%",
   },
   headerTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: responsiveFont(18),
     fontWeight: "bold",
     color: "#ffffff",
   },
@@ -24,12 +29,15 @@ export default StyleSheet.create({
     borderRadius: 12,
   },
   content: {
-    padding: 16,
+    padding: moderateScale(16),
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 20,
-    padding: 20,
+    padding: moderateScale(20),
     borderWidth: 1,
     borderColor: "#e2e8f0",
     elevation: 2,
@@ -47,13 +55,13 @@ export default StyleSheet.create({
     marginBottom: 16,
   },
   instruction: {
-    fontSize: 12,
+    fontSize: responsiveFont(12),
     color: "#475569",
     lineHeight: 18,
     flex: 1,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: responsiveFont(13),
     fontWeight: "600",
     color: "#334155",
     marginTop: 12,
@@ -74,7 +82,7 @@ export default StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 12,
-    fontSize: 14,
+    fontSize: responsiveFont(14),
     color: "#1e293b",
   },
   saveBtn: {
@@ -90,7 +98,7 @@ export default StyleSheet.create({
   saveBtnText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: responsiveFont(14),
     letterSpacing: 0.6,
   },
 });

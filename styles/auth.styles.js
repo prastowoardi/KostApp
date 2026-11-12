@@ -24,9 +24,7 @@ export default StyleSheet.create({
         borderBottomRightRadius: 40,
         paddingHorizontal: moderateScale(20),
         paddingBottom: isTallDevice ? moderateScale(24) : moderateScale(14),
-        maxWidth: 720,
         width: '100%',
-        alignSelf: 'center',
     },
     logoCircle: {
         width: moderateScale(90),

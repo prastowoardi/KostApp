@@ -1,8 +1,10 @@
+import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { AppState, Platform, StatusBar } from 'react-native';
+import { AppState, Dimensions, Platform, StatusBar } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import 'react-native-reanimated';
 import {
@@ -57,6 +59,32 @@ export default function Layout() {
     return () => {
       appStateSub.remove();
     };
+  }, []);
+
+  // Handle dynamic screen orientation: allow landscape & portrait on tablets, lock phones to portrait
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    const setupOrientation = async () => {
+      try {
+        const { width, height } = Dimensions.get('window');
+        const shortest = Math.min(width, height);
+        const deviceType = await Device.getDeviceTypeAsync();
+        const isTablet = deviceType === Device.DeviceType.TABLET || shortest >= 600;
+
+        if (isTablet) {
+          // Tablets can freely rotate between portrait and landscape
+          await ScreenOrientation.unlockAsync();
+        } else {
+          // Phones stay locked to portrait for optimal handheld ergonomics
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        }
+      } catch (err) {
+        console.log('Dynamic orientation error:', err?.message);
+      }
+    };
+
+    setupOrientation();
   }, []);
 
   useEffect(() => {

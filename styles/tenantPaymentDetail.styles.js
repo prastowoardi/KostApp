@@ -40,15 +40,16 @@ export default StyleSheet.create({
         paddingBottom: moderateScale(36),
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
-        maxWidth: 720,
         width: '100%',
-        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 16,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     headerTitle: {
         fontSize: responsiveFont(18),

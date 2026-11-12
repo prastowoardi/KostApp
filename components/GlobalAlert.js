@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     alertBox: {
         width: '100%',
         maxWidth: 420,
+        maxHeight: '90%',
         backgroundColor: '#ffffff',
         borderRadius: 26,
         paddingHorizontal: 26,

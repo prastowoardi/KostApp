@@ -6,24 +6,57 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BASE_WIDTH = 375;
 const BASE_HEIGHT = 812;
 
+const initialShortest = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT);
+const initialLongest = Math.max(SCREEN_WIDTH, SCREEN_HEIGHT);
+
 export const dimensions = {
   width: SCREEN_WIDTH,
   height: SCREEN_HEIGHT,
-  isSmallDevice: SCREEN_WIDTH < 360,
-  isLargeDevice: SCREEN_WIDTH >= 412,
-  isTablet: SCREEN_WIDTH >= 600,
+  isSmallDevice: initialShortest < 360,
+  isLargeDevice: initialShortest >= 412,
+  isTablet: initialShortest >= 600,
+};
+
+// Dynamic helper to get current window dimensions & orientation
+export const getWindowDimensions = () => {
+  const { width, height } = Dimensions.get('window');
+  const shortest = Math.min(width, height);
+  const longest = Math.max(width, height);
+  return {
+    width,
+    height,
+    shortest,
+    longest,
+    isLandscape: width > height,
+    isTablet: shortest >= 600,
+  };
+};
+
+// Effective width for scaling - clamps scaling so landscape orientation or large tablets
+// don't blow up font sizes and paddings abnormally
+export const getEffectiveScaleWidth = () => {
+  const { width, height } = Dimensions.get('window');
+  const shortest = Math.min(width, height);
+  // Cap at 480dp: provides elegant, crisp proportions on tablets while matching phones 1:1
+  return Math.min(shortest, 480);
 };
 
 // Responsive scaling utilities
-export const scale = (size) => (SCREEN_WIDTH / BASE_WIDTH) * size;
-export const verticalScale = (size) => (SCREEN_HEIGHT / BASE_HEIGHT) * size;
+export const scale = (size) => (getEffectiveScaleWidth() / BASE_WIDTH) * size;
+export const verticalScale = (size) => {
+  const { width, height } = Dimensions.get('window');
+  const longest = Math.max(width, height);
+  return (Math.min(longest, 900) / BASE_HEIGHT) * size;
+};
 export const moderateScale = (size, factor = 0.35) => {
-  return Math.round(size + (scale(size) - size) * factor);
+  const s = scale(size);
+  return Math.round(size + (s - size) * factor);
 };
 
 // Responsive font size utility - prevents text from being microscopic on large phones or giant on tablets
 export const responsiveFont = (fontSize) => {
-  const scaled = fontSize + (scale(fontSize) - fontSize) * 0.3;
+  const s = scale(fontSize);
+  const scaled = fontSize + (s - fontSize) * 0.3;
   return Math.round(PixelRatio.roundToNearestPixel(scaled));
 };
 

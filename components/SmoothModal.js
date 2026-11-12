@@ -39,12 +39,13 @@ export default function SmoothModal({
     const scaleAnim = useRef(new Animated.Value(isBottom ? 1 : 0.88)).current;
 
     useEffect(() => {
+        const currentHeight = Dimensions.get('window').height;
         if (visible) {
             setShowModal(true);
             backdropAnim.setValue(0);
 
             if (isBottom) {
-                translateAnim.setValue(SCREEN_HEIGHT * 0.55);
+                translateAnim.setValue(currentHeight * 0.55);
                 Animated.parallel([
                     Animated.timing(backdropAnim, {
                         toValue: 1,
@@ -93,7 +94,7 @@ export default function SmoothModal({
                         useNativeDriver: true,
                     }),
                     Animated.timing(translateAnim, {
-                        toValue: SCREEN_HEIGHT * 0.55,
+                        toValue: currentHeight * 0.55,
                         duration: 220,
                         easing: Easing.in(Easing.cubic),
                         useNativeDriver: true,
@@ -195,6 +196,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 28,
         width: '100%',
         maxWidth: 680,
+        maxHeight: '92%',
         alignSelf: 'center',
         overflow: 'hidden',
         elevation: 24,
@@ -208,6 +210,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         width: '100%',
         maxWidth: 440,
+        maxHeight: '90%',
         overflow: 'hidden',
         elevation: 24,
         shadowColor: '#0f172a',

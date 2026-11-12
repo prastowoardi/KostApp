@@ -21,15 +21,16 @@ export default StyleSheet.create({
         paddingBottom: moderateScale(16),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
-        maxWidth: 720,
         width: '100%',
-        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 16,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     backBtn: {
         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -72,6 +73,9 @@ export default StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
         marginBottom: 16,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     balanceCard: {
         flex: 1,
@@ -106,6 +110,9 @@ export default StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.15)',
         borderRadius: 12,
         padding: 4,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     filterTab: {
         flex: 1,

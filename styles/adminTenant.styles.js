@@ -21,15 +21,16 @@ export default StyleSheet.create({
         paddingBottom: moderateScale(20),
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
-        maxWidth: 720,
         width: '100%',
-        alignSelf: 'center',
     },
     headerTop: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 14,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     backBtn: {
         backgroundColor: 'rgba(255,255,255,0.2)',
@@ -67,6 +68,9 @@ export default StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 12,
         height: 44,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     searchInput: {
         flex: 1,

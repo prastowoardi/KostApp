@@ -21,15 +21,16 @@ export default StyleSheet.create({
     paddingBottom: moderateScale(22),
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    maxWidth: 720,
     width: "100%",
-    alignSelf: "center",
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 16,
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   brandTag: {
     flexDirection: "row",
@@ -87,6 +88,9 @@ export default StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     borderWidth: 1,
     borderColor: "#e2e8f0",
+    maxWidth: 720,
+    width: "100%",
+    alignSelf: "center",
   },
   roomHeroCol: {
     flexDirection: "row",

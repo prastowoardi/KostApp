@@ -9,29 +9,20 @@ const projectRoot = path.resolve(__dirname, '..');
 const androidDir = path.join(projectRoot, 'android');
 const buildsDir = path.join(projectRoot, 'builds');
 
-// Read and auto-increment app version
-const appJsonPath = path.join(projectRoot, 'app.json');
+// Read app version (read-only, does not modify app.json so Git stays clean)
 let appVersion = '1.0.0';
-let prevVersionCode = 1;
-let nextVersionCode = 2;
 const appName = 'SerrataKost';
-
 try {
-    const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+    const appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'app.json'), 'utf8'));
     if (appJson.expo?.version) appVersion = appJson.expo.version;
-    if (appJson.expo?.android?.versionCode) {
-        prevVersionCode = appJson.expo.android.versionCode;
-    }
-    nextVersionCode = prevVersionCode + 1;
-
-    // Update and persist new versionCode in app.json
-    if (!appJson.expo) appJson.expo = {};
-    if (!appJson.expo.android) appJson.expo.android = {};
-    appJson.expo.android.versionCode = nextVersionCode;
-    fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n');
 } catch (e) {
-    console.warn('⚠️  Peringatan: Gagal membaca/memperbarui app.json:', e.message);
+    // fallback defaults
 }
+
+// Generate dynamic timestamp-based versionCode (Seconds since Jan 1, 2024)
+// Guaranteed strictly increasing on every build, fits within 32-bit integer, zero git changes!
+const EPOCH_START = 1704067200000; // 2024-01-01T00:00:00Z
+const buildVersionCode = Math.floor((Date.now() - EPOCH_START) / 1000);
 
 // Parse CLI flags
 const isUniversal = process.argv.includes('--universal') || process.argv.includes('-u');
@@ -43,7 +34,7 @@ console.log('📦  BUILD PRODUCTION APK - SERRATA KOST');
 console.log('======================================================');
 console.log(`📌 Target Arsitektur : ${architectures} (${isUniversal ? 'Universal fisik: arm64 + armv7' : 'Super Ramping: arm64-v8a (95%+ HP Android)'})`);
 console.log(`🌐 Production URL   : https://serrata.xyz/api`);
-console.log(`🏷️  Versi Aplikasi   : v${appVersion} (versionCode: ${nextVersionCode} [naik dari ${prevVersionCode}])`);
+console.log(`🏷️  Versi Aplikasi   : v${appVersion} (versionCode: ${buildVersionCode})`);
 console.log('------------------------------------------------------\n');
 
 // 1. Ensure android/local.properties has Android SDK path
@@ -81,7 +72,7 @@ console.log('⚙️  Menjalankan kompilasi Gradle Release...\n');
 const gradleArgs = [
     'assembleRelease',
     `-PreactNativeArchitectures=${architectures}`,
-    `-PversionCode=${nextVersionCode}`,
+    `-PversionCode=${buildVersionCode}`,
     `-PversionName=${appVersion}`,
 ];
 
@@ -136,7 +127,7 @@ const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
 console.log('\n======================================================');
 console.log('🎉  BUILD PRODUCTION APK SELESAI & BERHASIL!');
 console.log('======================================================');
-console.log(`🏷️  Versi Aplikasi   : v${appVersion} (versionCode: ${nextVersionCode})`);
+console.log(`🏷️  Versi Aplikasi   : v${appVersion} (versionCode: ${buildVersionCode})`);
 console.log(`📁 File APK Utama     : builds/${appName}.apk`);
 console.log(`📁 File Versi         : builds/${targetFileName}`);
 console.log(`📁 Shortcut Terbaru   : builds/${appName}-latest.apk`);

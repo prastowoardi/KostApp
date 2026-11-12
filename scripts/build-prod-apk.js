@@ -9,13 +9,12 @@ const projectRoot = path.resolve(__dirname, '..');
 const androidDir = path.join(projectRoot, 'android');
 const buildsDir = path.join(projectRoot, 'builds');
 
-// Read app version and name from app.json
+// Read app version and name
 let appVersion = '1.0.0';
-let appName = 'SerrataKost';
+const appName = 'SerrataKost';
 try {
     const appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'app.json'), 'utf8'));
     if (appJson.expo?.version) appVersion = appJson.expo.version;
-    if (appJson.expo?.name) appName = appJson.expo.name.replace(/[^a-zA-Z0-9]/g, '');
 } catch (e) {
     // fallback defaults
 }
@@ -95,8 +94,8 @@ if (apkFiles.length === 0) {
     process.exit(1);
 }
 
-// Prefer app-release.apk or first matching
-let sourceApk = apkFiles.find(f => f === 'app-release.apk') || apkFiles[0];
+// Prefer serrata.apk, app-release.apk or first matching
+let sourceApk = apkFiles.find(f => f === 'serrata.apk' || f === 'app-release.apk') || apkFiles[0];
 const sourceApkPath = path.join(apkDir, sourceApk);
 
 // 5. Ensure builds directory exists
@@ -106,20 +105,23 @@ if (!fs.existsSync(buildsDir)) {
 
 // 6. Copy APK to builds directory with branded filename
 const targetFileName = `${appName}-v${appVersion}-${archLabel}.apk`;
+const directApkPath = path.join(buildsDir, `${appName}.apk`);
 const targetFilePath = path.join(buildsDir, targetFileName);
 const latestFilePath = path.join(buildsDir, `${appName}-latest.apk`);
 
+fs.copyFileSync(sourceApkPath, directApkPath);
 fs.copyFileSync(sourceApkPath, targetFilePath);
 fs.copyFileSync(sourceApkPath, latestFilePath);
 
 // 7. Calculate and display file size
-const stats = fs.statSync(targetFilePath);
+const stats = fs.statSync(directApkPath);
 const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
 
 console.log('\n======================================================');
 console.log('🎉  BUILD PRODUCTION APK SELESAI & BERHASIL!');
 console.log('======================================================');
-console.log(`📁 Lokasi File Utama  : builds/${targetFileName}`);
+console.log(`📁 File APK Utama     : builds/${appName}.apk`);
+console.log(`📁 File Versi         : builds/${targetFileName}`);
 console.log(`📁 Shortcut Terbaru   : builds/${appName}-latest.apk`);
 console.log(`📦 Ukuran File        : ${sizeInMB} MB`);
 console.log(`🔗 API URL Terpasang  : https://serrata.xyz/api`);

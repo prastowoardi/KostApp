@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../../components/GlobalAlert';
 import LoadingScreen from '../../../components/LoadingScreen';
 import api from '../../../helpers/api';
-import { formatRupiah, formatDate, getStorageUrl } from '../../../helpers/formatters';
+import { formatRupiah, formatDate, getStorageUrl, getFallbackStorageUrl } from '../../../helpers/formatters';
 import styles from '../../../styles/adminFinanceDetail.styles';
 
 export default function FinanceDetail() {
@@ -32,6 +32,7 @@ export default function FinanceDetail() {
     const [isImageModalVisible, setImageModalVisible] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [useFallbackUri, setUseFallbackUri] = useState(false);
     const [modalImageLoading, setModalImageLoading] = useState(false);
 
     const [alertConfig, setAlertConfig] = useState({
@@ -50,6 +51,7 @@ export default function FinanceDetail() {
         try {
             setLoading(true);
             setImageError(false);
+            setUseFallbackUri(false);
             setImageLoading(false);
             const response = await api.get(`/admin/finances/${id}`);
             setItem(response.data?.data || response.data);
@@ -115,7 +117,9 @@ export default function FinanceDetail() {
         item.payment?.proof_of_payment ||
         item.payment?.receipt_path ||
         item.payment?.receipt_url;
-    const receiptUri = getStorageUrl(rawReceipt);
+    const primaryReceiptUri = getStorageUrl(rawReceipt);
+    const fallbackReceiptUri = getFallbackStorageUrl(rawReceipt);
+    const receiptUri = useFallbackUri && fallbackReceiptUri ? fallbackReceiptUri : primaryReceiptUri;
     const isPdf = typeof receiptUri === 'string' && receiptUri.toLowerCase().includes('.pdf');
 
     return (
@@ -233,8 +237,12 @@ export default function FinanceDetail() {
                                         onLoadStart={() => setImageLoading(true)}
                                         onLoadEnd={() => setImageLoading(false)}
                                         onError={() => {
-                                            setImageLoading(false);
-                                            setImageError(true);
+                                            if (!useFallbackUri && fallbackReceiptUri) {
+                                                setUseFallbackUri(true);
+                                            } else {
+                                                setImageLoading(false);
+                                                setImageError(true);
+                                            }
                                         }}
                                     />
                                     {imageLoading && (

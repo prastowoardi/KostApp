@@ -13,9 +13,11 @@ import {
     Platform,
     ScrollView,
     StatusBar,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -1180,6 +1182,9 @@ export default function ManageTenant() {
                 statusBarTranslucent
             >
                 <View style={styles.modalBg}>
+                    <TouchableWithoutFeedback onPress={() => setRoomModalVisible(false)}>
+                        <View style={StyleSheet.absoluteFillObject} />
+                    </TouchableWithoutFeedback>
                     <View style={styles.roomModalBox}>
                         <Text style={styles.roomModalTitle}>
                             {editMode ? 'Pilih Kamar' : 'Pilih Kamar Tersedia'}
@@ -1307,6 +1312,9 @@ export default function ManageTenant() {
                 statusBarTranslucent
             >
                 <View style={styles.fullPhotoModalBg}>
+                    <TouchableWithoutFeedback onPress={() => setFullPhotoUrl(null)}>
+                        <View style={StyleSheet.absoluteFillObject} />
+                    </TouchableWithoutFeedback>
                     <StatusBar barStyle="light-content" backgroundColor="#000000" />
                     <TouchableOpacity
                         style={styles.fullPhotoCloseBtn}

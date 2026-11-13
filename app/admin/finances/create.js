@@ -11,9 +11,11 @@ import {
     Platform,
     ScrollView,
     StatusBar,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -354,6 +356,9 @@ export default function CreateTransaction() {
                 statusBarTranslucent
             >
                 <View style={styles.modalBg}>
+                    <TouchableWithoutFeedback onPress={() => setShowCategoryModal(false)}>
+                        <View style={StyleSheet.absoluteFillObject} />
+                    </TouchableWithoutFeedback>
                     <View style={styles.categorySheet}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Pilih Kategori</Text>

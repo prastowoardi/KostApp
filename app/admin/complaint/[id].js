@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api, { clearAuthSession } from '../../../helpers/api';
-import { formatDate, getStorageUrl } from '../../../helpers/formatters';
+import { formatDate, getStorageUrl, getFallbackStorageUrl } from '../../../helpers/formatters';
 import styles from '../../../styles/adminComplaintDetail.styles';
 
 const STATUS_OPTIONS = [
@@ -224,25 +224,16 @@ export default function AdminComplaintDetail() {
                     <Text style={styles.sectionHeading}>Foto Lampiran</Text>
                     <View style={styles.imageGrid}>
                         {complaint.images && complaint.images.length > 0 ? (
-                            complaint.images.map((img, index) => {
-                                const uri = getStorageUrl(img.image_path || img.path);
-                                return (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={styles.imageThumb}
-                                        onPress={() => {
-                                            setSelectedImg(uri);
-                                            setModalVisible(true);
-                                        }}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Image source={{ uri }} style={styles.img} resizeMode="cover" />
-                                        <View style={styles.zoomIconWrap}>
-                                            <Ionicons name="expand" size={14} color="#ffffff" />
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })
+                            complaint.images.map((img, index) => (
+                                <ComplaintThumb
+                                    key={index}
+                                    img={img}
+                                    onZoom={(uri) => {
+                                        setSelectedImg(uri);
+                                        setModalVisible(true);
+                                    }}
+                                />
+                            ))
                         ) : (
                             <View style={styles.noImageBox}>
                                 <Ionicons name="images-outline" size={24} color="#94a3b8" />
@@ -304,3 +295,34 @@ export default function AdminComplaintDetail() {
         </View>
     );
 }
+
+const ComplaintThumb = ({ img, onZoom }) => {
+    const rawPath = typeof img === 'string' ? img : (img?.image_path || img?.path || img?.url || img?.uri);
+    const primary = getStorageUrl(rawPath);
+    const fallback = getFallbackStorageUrl(rawPath);
+    const [uri, setUri] = useState(primary);
+
+    if (!uri) return null;
+
+    return (
+        <TouchableOpacity
+            style={styles.imageThumb}
+            onPress={() => onZoom(uri)}
+            activeOpacity={0.8}
+        >
+            <Image
+                source={{ uri }}
+                style={styles.img}
+                resizeMode="cover"
+                onError={() => {
+                    if (fallback && uri !== fallback) {
+                        setUri(fallback);
+                    }
+                }}
+            />
+            <View style={styles.zoomIconWrap}>
+                <Ionicons name="expand" size={14} color="#ffffff" />
+            </View>
+        </TouchableOpacity>
+    );
+};

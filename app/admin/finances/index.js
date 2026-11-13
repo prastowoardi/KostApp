@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LoadingScreen from '../../../components/LoadingScreen';
 import SmoothModal from '../../../components/SmoothModal';
 import api, { API_URL } from '../../../helpers/api';
-import { formatRupiah, formatDate, getStorageUrl } from '../../../helpers/formatters';
+import { formatRupiah, formatDate, getStorageUrl, getFallbackStorageUrl } from '../../../helpers/formatters';
 import styles from '../../../styles/adminFinances.styles';
 
 export default function FinanceIndex() {
@@ -280,9 +280,11 @@ export default function FinanceIndex() {
                             if (receiptUri.toLowerCase().includes('.pdf')) {
                                 Linking.openURL(receiptUri).catch(() => {});
                             } else {
+                                const rawReceipt = item.receipt_file || item.payment?.receipt_file;
                                 setSelectedReceipt({
                                     invoice_number: item.payment?.invoice_number || `INV-${item.id_finance || item.id || ''}`,
                                     file_url: receiptUri,
+                                    fallback_url: getFallbackStorageUrl(rawReceipt),
                                 });
                             }
                         }}
@@ -721,6 +723,12 @@ export default function FinanceIndex() {
                                     resizeMode="contain"
                                     onLoadStart={() => setPreviewImageLoading(true)}
                                     onLoadEnd={() => setPreviewImageLoading(false)}
+                                    onError={() => {
+                                        setPreviewImageLoading(false);
+                                        if (selectedReceipt.fallback_url && selectedReceipt.file_url !== selectedReceipt.fallback_url) {
+                                            setSelectedReceipt((prev) => ({ ...prev, file_url: prev.fallback_url }));
+                                        }
+                                    }}
                                 />
                                 {previewImageLoading && (
                                     <View style={styles.receiptModalLoadingOverlay}>

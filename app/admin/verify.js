@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
 import LoadingScreen from '../../components/LoadingScreen';
 import api, { clearAuthSession } from '../../helpers/api';
-import { formatRupiah, formatDate, getStorageUrl } from '../../helpers/formatters';
+import { formatRupiah, formatDate, getStorageUrl, getFallbackStorageUrl } from '../../helpers/formatters';
 import styles from '../../styles/adminVerify.styles';
 
 export default function VerifyPayment() {
@@ -113,7 +113,6 @@ export default function VerifyPayment() {
     const renderItem = ({ item }) => {
         const targetId = item.uuid || item.id;
         const isProcessing = processingId === targetId;
-        const receiptUri = getStorageUrl(item.receipt_file || item.proof_of_payment);
 
         return (
             <View style={styles.card}>
@@ -156,24 +155,10 @@ export default function VerifyPayment() {
                 ) : null}
 
                 {/* BUKTI BAYAR THUMBNAIL */}
-                {receiptUri ? (
-                    <TouchableOpacity
-                        style={styles.receiptPreview}
-                        onPress={() => setSelectedImg(receiptUri)}
-                        activeOpacity={0.8}
-                    >
-                        <Image source={{ uri: receiptUri }} style={styles.receiptImage} resizeMode="cover" />
-                        <View style={styles.zoomBadge}>
-                            <Ionicons name="expand-outline" size={16} color="#ffffff" />
-                            <Text style={styles.zoomText}>Lihat Bukti</Text>
-                        </View>
-                    </TouchableOpacity>
-                ) : (
-                    <View style={styles.noReceiptBox}>
-                        <Ionicons name="image-outline" size={24} color="#94a3b8" />
-                        <Text style={styles.noReceiptText}>Tidak ada lampiran bukti bayar</Text>
-                    </View>
-                )}
+                <VerifyReceiptPreview
+                    rawReceipt={item.receipt_file || item.proof_of_payment}
+                    onZoom={(uri) => setSelectedImg(uri)}
+                />
 
                 {/* ACTION BUTTONS */}
                 <View style={styles.actionButtons}>
@@ -299,3 +284,41 @@ export default function VerifyPayment() {
         </View>
     );
 }
+
+const VerifyReceiptPreview = ({ rawReceipt, onZoom }) => {
+    const primary = getStorageUrl(rawReceipt);
+    const fallback = getFallbackStorageUrl(rawReceipt);
+    const [imgUri, setImgUri] = useState(primary);
+
+    if (!imgUri) {
+        return (
+            <View style={styles.noReceiptBox}>
+                <Ionicons name="image-outline" size={24} color="#94a3b8" />
+                <Text style={styles.noReceiptText}>Tidak ada lampiran bukti bayar</Text>
+            </View>
+        );
+    }
+
+    return (
+        <TouchableOpacity
+            style={styles.receiptPreview}
+            onPress={() => onZoom(imgUri)}
+            activeOpacity={0.8}
+        >
+            <Image
+                source={{ uri: imgUri }}
+                style={styles.receiptImage}
+                resizeMode="cover"
+                onError={() => {
+                    if (fallback && imgUri !== fallback) {
+                        setImgUri(fallback);
+                    }
+                }}
+            />
+            <View style={styles.zoomBadge}>
+                <Ionicons name="expand-outline" size={16} color="#ffffff" />
+                <Text style={styles.zoomText}>Lihat Bukti</Text>
+            </View>
+        </TouchableOpacity>
+    );
+};

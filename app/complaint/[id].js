@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api, { clearAuthSession } from '../../helpers/api';
-import { formatDate, getStorageUrl } from '../../helpers/formatters';
+import { formatDate, getStorageUrl, getFallbackStorageUrl } from '../../helpers/formatters';
 import styles from '../../styles/complaintDetail.styles';
 
 export default function ComplaintDetailScreen() {
@@ -180,25 +180,16 @@ export default function ComplaintDetailScreen() {
                     <Text style={styles.label}>Foto Bukti Lampiran</Text>
                     <View style={styles.imageGrid}>
                         {complaint.images && complaint.images.length > 0 ? (
-                            complaint.images.map((img, index) => {
-                                const uri = getStorageUrl(img.image_path || img.path);
-                                return (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={styles.imageWrapper}
-                                        onPress={() => {
-                                            setSelectedImg(uri);
-                                            setModalVisible(true);
-                                        }}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Image source={{ uri }} style={styles.img} resizeMode="cover" />
-                                        <View style={styles.zoomBadge}>
-                                            <Ionicons name="expand" size={14} color="#ffffff" />
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })
+                            complaint.images.map((img, index) => (
+                                <ComplaintTenantThumb
+                                    key={index}
+                                    img={img}
+                                    onZoom={(uri) => {
+                                        setSelectedImg(uri);
+                                        setModalVisible(true);
+                                    }}
+                                />
+                            ))
                         ) : (
                             <View style={styles.noImage}>
                                 <Ionicons name="image-outline" size={28} color="#cbd5e1" />
@@ -211,3 +202,34 @@ export default function ComplaintDetailScreen() {
         </View>
     );
 }
+
+const ComplaintTenantThumb = ({ img, onZoom }) => {
+    const rawPath = typeof img === 'string' ? img : (img?.image_path || img?.path || img?.url || img?.uri);
+    const primary = getStorageUrl(rawPath);
+    const fallback = getFallbackStorageUrl(rawPath);
+    const [uri, setUri] = useState(primary);
+
+    if (!uri) return null;
+
+    return (
+        <TouchableOpacity
+            style={styles.imageWrapper}
+            onPress={() => onZoom(uri)}
+            activeOpacity={0.8}
+        >
+            <Image
+                source={{ uri }}
+                style={styles.img}
+                resizeMode="cover"
+                onError={() => {
+                    if (fallback && uri !== fallback) {
+                        setUri(fallback);
+                    }
+                }}
+            />
+            <View style={styles.zoomBadge}>
+                <Ionicons name="expand" size={14} color="#ffffff" />
+            </View>
+        </TouchableOpacity>
+    );
+};

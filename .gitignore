@@ -47,3 +47,4 @@ app-example
 
 .vscode/
 .env*
+.build_version

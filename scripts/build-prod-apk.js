@@ -9,18 +9,60 @@ const projectRoot = path.resolve(__dirname, '..');
 const androidDir = path.join(projectRoot, 'android');
 const buildsDir = path.join(projectRoot, 'builds');
 
-// Read app version (read-only, does not modify app.json so Git stays clean)
+// Read and auto-increment app version (Zero-Git-Changes)
+// Version is tracked in .build_version (listed in .gitignore, so Git stays 100% clean!)
+const buildVersionPath = path.join(projectRoot, '.build_version');
 let appVersion = '1.0.0';
 const appName = 'SerrataKost';
+
+let appJson = {};
 try {
-    const appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'app.json'), 'utf8'));
+    appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'app.json'), 'utf8'));
     if (appJson.expo?.version) appVersion = appJson.expo.version;
-} catch (e) {
-    // fallback defaults
+} catch (e) {}
+
+// If .build_version exists, use it as the source of truth for incremental builds
+if (fs.existsSync(buildVersionPath)) {
+    try {
+        const stored = fs.readFileSync(buildVersionPath, 'utf8').trim();
+        if (stored) appVersion = stored;
+    } catch (e) {}
+}
+
+// Parse CLI flags for versioning
+const noBump = process.argv.includes('--no-bump');
+const bumpMinor = process.argv.includes('--minor');
+const bumpMajor = process.argv.includes('--major');
+const versionArg = process.argv.find((arg) => arg.startsWith('--version=') || arg.startsWith('-v='));
+
+let nextVersion = appVersion;
+if (versionArg) {
+    nextVersion = versionArg.split('=')[1].trim();
+} else if (!noBump) {
+    const parts = appVersion.split('.').map((n) => parseInt(n, 10) || 0);
+    while (parts.length < 3) parts.push(0);
+    if (bumpMajor) {
+        parts[0] += 1;
+        parts[1] = 0;
+        parts[2] = 0;
+    } else if (bumpMinor) {
+        parts[1] += 1;
+        parts[2] = 0;
+    } else {
+        parts[2] += 1; // Default auto-increment patch
+    }
+    nextVersion = parts.join('.');
+}
+
+// Persist only to untracked .build_version (never touches app.json or package.json!)
+if (nextVersion !== appVersion || !fs.existsSync(buildVersionPath)) {
+    fs.writeFileSync(buildVersionPath, nextVersion + '\n', 'utf8');
+    console.log(`\n🚀 Versi aplikasi otomatis dinaikkan: v${appVersion} ➜ v${nextVersion} (Git tetap bersih!)`);
+    appVersion = nextVersion;
 }
 
 // Generate dynamic timestamp-based versionCode (Seconds since Jan 1, 2024)
-// Guaranteed strictly increasing on every build, fits within 32-bit integer, zero git changes!
+// Guaranteed strictly increasing on every build, fits within 32-bit integer!
 const EPOCH_START = 1704067200000; // 2024-01-01T00:00:00Z
 const buildVersionCode = Math.floor((Date.now() - EPOCH_START) / 1000);
 
@@ -61,39 +103,42 @@ const env = {
     ...process.env,
     NODE_ENV: 'production',
     EXPO_PUBLIC_API_URL: 'https://serrata.xyz/api',
+    EXPO_PUBLIC_APP_VERSION: appVersion,
 };
 
 // 3. Determine gradlew command
 const isWindows = process.platform === 'win32';
 const gradlewCmd = isWindows ? 'gradlew.bat' : './gradlew';
 
-// 4. Auto-sync native assets if assets/images or app.json were modified
+// 4. Auto-sync native assets if assets/images or asset configs were modified
 function syncAssetsIfNeeded() {
     const assetsImagesDir = path.join(projectRoot, 'assets', 'images');
     const syncMarkerFile = path.join(androidDir, '.last_asset_sync');
 
-    let latestAssetMtime = 0;
+    let assetSignature = '';
     try {
-        const appJsonStat = fs.statSync(path.join(projectRoot, 'app.json'));
-        latestAssetMtime = Math.max(latestAssetMtime, appJsonStat.mtimeMs);
+        if (appJson.expo) {
+            const { icon, splash, android } = appJson.expo;
+            assetSignature += JSON.stringify({ icon, splash, adaptiveIcon: android?.adaptiveIcon }) + '|';
+        }
         if (fs.existsSync(assetsImagesDir)) {
-            const files = fs.readdirSync(assetsImagesDir);
+            const files = fs.readdirSync(assetsImagesDir).sort();
             for (const file of files) {
                 const stat = fs.statSync(path.join(assetsImagesDir, file));
-                latestAssetMtime = Math.max(latestAssetMtime, stat.mtimeMs);
+                assetSignature += `${file}:${stat.size}:${stat.mtimeMs};`;
             }
         }
     } catch {}
 
-    let lastSyncMtime = 0;
+    let lastSignature = '';
     if (fs.existsSync(syncMarkerFile)) {
         try {
-            lastSyncMtime = parseFloat(fs.readFileSync(syncMarkerFile, 'utf8')) || 0;
+            lastSignature = fs.readFileSync(syncMarkerFile, 'utf8');
         } catch {}
     }
 
     const forceSync = process.argv.includes('--sync-assets') || process.argv.includes('--sync') || process.argv.includes('-s');
-    if (forceSync || latestAssetMtime > lastSyncMtime) {
+    if (forceSync || (assetSignature && assetSignature !== lastSignature)) {
         console.log('🔄 Mendeteksi aset/konfigurasi diperbarui, menyinkronkan aset native Android...');
 
         const buildGradlePath = path.join(androidDir, 'app', 'build.gradle');
@@ -116,7 +161,7 @@ function syncAssetsIfNeeded() {
         }
 
         if (prebuildResult.status === 0) {
-            fs.writeFileSync(syncMarkerFile, Date.now().toString(), 'utf8');
+            fs.writeFileSync(syncMarkerFile, assetSignature, 'utf8');
             console.log('✅ Aset native Android berhasil disinkronkan!\n');
         } else {
             console.warn('⚠️ Gagal menyinkronkan aset native otomatis, melanjutkan kompilasi...\n');

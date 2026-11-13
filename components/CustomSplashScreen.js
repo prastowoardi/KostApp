@@ -164,7 +164,7 @@ export default function CustomSplashScreen({ onFinish }) {
             {/* Bottom Footer Info */}
             <Animated.View style={[styles.footerWrap, { opacity: fadeAnim }]}>
                 <Text style={styles.footerTagline}>Kenyamanan Tempat Tinggal Anda</Text>
-                <Text style={styles.footerVersion}>v{Constants.expoConfig?.version || '1.0.0'}</Text>
+                <Text style={styles.footerVersion}>v{process.env.EXPO_PUBLIC_APP_VERSION || Constants.expoConfig?.version || '1.0.0'}</Text>
             </Animated.View>
         </Animated.View>
     );

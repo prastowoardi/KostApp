@@ -476,7 +476,7 @@ export default function ManageTenant() {
                     onPress={() => {
                         const cleanPhone = value.replace(/\D/g, '');
                         const waPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
-                        Linking.openURL(`https://wa.me/${waPhone}`);
+                        Linking.openURL(`https://wa.me/${waPhone}`).catch(() => {});
                     }}
                     style={styles.phoneLink}
                 >
@@ -897,7 +897,12 @@ export default function ManageTenant() {
             </SmoothModal>
 
             {/* ADD / EDIT MODAL */}
-            <Modal visible={modalVisible} animationType="slide">
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                onRequestClose={() => setModalVisible(false)}
+                statusBarTranslucent
+            >
                 <View style={[styles.modalFull, { paddingTop: insets.top }]}>
                     <View style={styles.modalFullHeader}>
                         <Text style={styles.modalFullTitle}>
@@ -1167,7 +1172,13 @@ export default function ManageTenant() {
             </Modal>
 
             {/* ROOM SELECTOR MODAL */}
-            <Modal visible={roomModalVisible} transparent animationType="fade">
+            <Modal
+                visible={roomModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setRoomModalVisible(false)}
+                statusBarTranslucent
+            >
                 <View style={styles.modalBg}>
                     <View style={styles.roomModalBox}>
                         <Text style={styles.roomModalTitle}>
@@ -1293,6 +1304,7 @@ export default function ManageTenant() {
                 transparent
                 animationType="fade"
                 onRequestClose={() => setFullPhotoUrl(null)}
+                statusBarTranslucent
             >
                 <View style={styles.fullPhotoModalBg}>
                     <StatusBar barStyle="light-content" backgroundColor="#000000" />

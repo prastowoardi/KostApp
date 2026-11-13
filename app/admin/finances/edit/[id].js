@@ -433,7 +433,7 @@ export default function EditTransaction() {
                                     style={styles.receiptActionBtn}
                                     onPress={() => {
                                         if (existingReceipt.toLowerCase().includes('.pdf')) {
-                                            Linking.openURL(existingReceipt);
+                                            Linking.openURL(existingReceipt).catch(() => {});
                                         } else {
                                             setPreviewModalVisible(true);
                                         }
@@ -525,7 +525,13 @@ export default function EditTransaction() {
             />
 
             {/* Category Selector Modal */}
-            <Modal visible={showCategoryModal} transparent animationType="fade">
+            <Modal
+                visible={showCategoryModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowCategoryModal(false)}
+                statusBarTranslucent
+            >
                 <View style={styles.modalBg}>
                     <View style={styles.categorySheet}>
                         <View style={styles.modalHeader}>
@@ -570,6 +576,7 @@ export default function EditTransaction() {
                 transparent
                 animationType="fade"
                 onRequestClose={() => setPreviewModalVisible(false)}
+                statusBarTranslucent
             >
                 <Pressable
                     style={{
@@ -627,7 +634,7 @@ export default function EditTransaction() {
                                     borderRadius: 10,
                                     width: '100%',
                                 }}
-                                onPress={() => Linking.openURL(activePreviewUri)}
+                                onPress={() => Linking.openURL(activePreviewUri).catch(() => {})}
                                 activeOpacity={0.8}
                             >
                                 <Ionicons name="open-outline" size={16} color="#334155" />

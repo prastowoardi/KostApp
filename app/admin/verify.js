@@ -261,18 +261,29 @@ export default function VerifyPayment() {
             )}
 
             {/* MODAL ZOOM GAMBAR */}
-            <Modal visible={!!selectedImg} transparent={true} animationType="fade">
-                <View style={styles.modalBg}>
+            <Modal
+                visible={!!selectedImg}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setSelectedImg(null)}
+                statusBarTranslucent
+            >
+                <TouchableOpacity
+                    style={styles.modalBg}
+                    activeOpacity={1}
+                    onPress={() => setSelectedImg(null)}
+                >
                     <TouchableOpacity
                         style={[styles.closeBtn, { top: insets.top + 16 }]}
                         onPress={() => setSelectedImg(null)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <Ionicons name="close-circle" size={40} color="#ffffff" />
                     </TouchableOpacity>
                     {selectedImg ? (
                         <Image source={{ uri: selectedImg }} style={styles.fullImg} resizeMode="contain" />
                     ) : null}
-                </View>
+                </TouchableOpacity>
             </Modal>
 
             <GlobalAlert

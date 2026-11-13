@@ -278,7 +278,7 @@ export default function FinanceIndex() {
                         style={styles.cardReceiptBtn}
                         onPress={() => {
                             if (receiptUri.toLowerCase().includes('.pdf')) {
-                                Linking.openURL(receiptUri);
+                                Linking.openURL(receiptUri).catch(() => {});
                             } else {
                                 setSelectedReceipt({
                                     invoice_number: item.payment?.invoice_number || `INV-${item.id_finance || item.id || ''}`,
@@ -735,7 +735,7 @@ export default function FinanceIndex() {
                 <View style={styles.receiptModalFooterActions}>
                     <TouchableOpacity
                         style={styles.receiptModalDownloadBtn}
-                        onPress={() => selectedReceipt?.file_url && Linking.openURL(selectedReceipt.file_url)}
+                        onPress={() => selectedReceipt?.file_url && Linking.openURL(selectedReceipt.file_url).catch(() => {})}
                         activeOpacity={0.8}
                     >
                         <Ionicons name="download-outline" size={16} color="#ffffff" />

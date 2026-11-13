@@ -173,7 +173,7 @@ export default function FinanceDetail() {
                         isPdf ? (
                             <TouchableOpacity
                                 activeOpacity={0.8}
-                                onPress={() => Linking.openURL(receiptUri)}
+                                onPress={() => Linking.openURL(receiptUri).catch(() => {})}
                                 style={styles.pdfWrapper}
                             >
                                 <View style={styles.pdfIconContainer}>
@@ -211,7 +211,7 @@ export default function FinanceDetail() {
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.openExternalBtn}
-                                        onPress={() => Linking.openURL(receiptUri)}
+                                        onPress={() => Linking.openURL(receiptUri).catch(() => {})}
                                         activeOpacity={0.8}
                                     >
                                         <Ionicons name="open-outline" size={15} color="#2563eb" />
@@ -303,6 +303,7 @@ export default function FinanceDetail() {
                 transparent={true}
                 animationType="fade"
                 onRequestClose={() => setImageModalVisible(false)}
+                statusBarTranslucent
             >
                 <Pressable style={styles.modalOverlay} onPress={() => setImageModalVisible(false)}>
                     <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
@@ -352,7 +353,7 @@ export default function FinanceDetail() {
                         <View style={styles.modalFooterActions}>
                             <TouchableOpacity
                                 style={styles.btnDownload}
-                                onPress={() => Linking.openURL(receiptUri)}
+                                onPress={() => Linking.openURL(receiptUri).catch(() => {})}
                                 activeOpacity={0.8}
                             >
                                 <Ionicons name="download-outline" size={16} color="#ffffff" />

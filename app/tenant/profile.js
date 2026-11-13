@@ -162,7 +162,7 @@ export default function ProfileScreen() {
             value={user?.phone || "-"}
             onPress={() => {
               if (user?.phone) {
-                Linking.openURL(`tel:${user.phone}`);
+                Linking.openURL(`tel:${user.phone}`).catch(() => {});
               }
             }}
           />
@@ -183,7 +183,7 @@ export default function ProfileScreen() {
             icon="logo-whatsapp"
             label="Hubungi Pengelola Kost"
             color="#10b981"
-            onPress={() => Linking.openURL(OWNER_WHATSAPP)}
+            onPress={() => Linking.openURL(OWNER_WHATSAPP).catch(() => {})}
           />
           <MenuButton
             icon="log-out-outline"

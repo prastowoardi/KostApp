@@ -346,7 +346,13 @@ export default function CreateTransaction() {
             />
 
             {/* Category Selector Modal */}
-            <Modal visible={showCategoryModal} transparent animationType="fade">
+            <Modal
+                visible={showCategoryModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowCategoryModal(false)}
+                statusBarTranslucent
+            >
                 <View style={styles.modalBg}>
                     <View style={styles.categorySheet}>
                         <View style={styles.modalHeader}>

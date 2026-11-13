@@ -109,18 +109,29 @@ export default function AdminComplaintDetail() {
             <StatusBar barStyle="light-content" translucent backgroundColor="#0f172a" />
 
             {/* Modal Image Zoom */}
-            <Modal visible={modalVisible} transparent={true} animationType="fade">
-                <View style={styles.modalBg}>
+            <Modal
+                visible={modalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setModalVisible(false)}
+                statusBarTranslucent
+            >
+                <TouchableOpacity
+                    style={styles.modalBg}
+                    activeOpacity={1}
+                    onPress={() => setModalVisible(false)}
+                >
                     <TouchableOpacity
                         style={[styles.closeBtn, { top: insets.top + 16 }]}
                         onPress={() => setModalVisible(false)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <Ionicons name="close-circle" size={40} color="white" />
                     </TouchableOpacity>
                     {selectedImg ? (
                         <Image source={{ uri: selectedImg }} style={styles.fullImg} resizeMode="contain" />
                     ) : null}
-                </View>
+                </TouchableOpacity>
             </Modal>
 
             {/* Header */}

@@ -162,7 +162,7 @@ export default function PaymentDetail() {
                 {/* WhatsApp Help Button */}
                 <TouchableOpacity
                     style={styles.waButton}
-                    onPress={() => Linking.openURL(OWNER_WHATSAPP)}
+                    onPress={() => Linking.openURL(OWNER_WHATSAPP).catch(() => {})}
                     activeOpacity={0.8}
                 >
                     <Ionicons name="logo-whatsapp" size={20} color="white" />

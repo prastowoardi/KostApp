@@ -395,7 +395,12 @@ export default function RoomManagement() {
             </SmoothModal>
 
             {/* EDIT MODAL */}
-            <Modal visible={editVisible} animationType="slide">
+            <Modal
+                visible={editVisible}
+                animationType="slide"
+                onRequestClose={() => setEditVisible(false)}
+                statusBarTranslucent
+            >
                 <View style={[styles.modalFull, { paddingTop: insets.top }]}>
                     <View style={styles.modalFullHeader}>
                         <Text style={styles.modalFullTitle}>Edit Kamar {selectedRoom?.room_number}</Text>

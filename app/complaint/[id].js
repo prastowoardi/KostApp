@@ -8,8 +8,10 @@ import {
     Modal,
     ScrollView,
     StatusBar,
+    StyleSheet,
     Text,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -96,22 +98,22 @@ export default function ComplaintDetailScreen() {
                 onRequestClose={() => setModalVisible(false)}
                 statusBarTranslucent
             >
-                <TouchableOpacity
-                    style={styles.modalBg}
-                    activeOpacity={1}
-                    onPress={() => setModalVisible(false)}
-                >
+                <View style={styles.modalBg}>
+                    <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                        <View style={StyleSheet.absoluteFillObject} />
+                    </TouchableWithoutFeedback>
                     <TouchableOpacity
                         style={[styles.closeBtn, { top: insets.top + 16 }]}
                         onPress={() => setModalVisible(false)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        activeOpacity={0.7}
                     >
                         <Ionicons name="close-circle" size={40} color="white" />
                     </TouchableOpacity>
                     {selectedImg ? (
                         <Image source={{ uri: selectedImg }} style={styles.fullImg} resizeMode="contain" />
                     ) : null}
-                </TouchableOpacity>
+                </View>
             </Modal>
 
             {/* Header */}

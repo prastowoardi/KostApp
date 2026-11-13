@@ -9,8 +9,10 @@ import {
     Modal,
     RefreshControl,
     StatusBar,
+    StyleSheet,
     Text,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -268,22 +270,22 @@ export default function VerifyPayment() {
                 onRequestClose={() => setSelectedImg(null)}
                 statusBarTranslucent
             >
-                <TouchableOpacity
-                    style={styles.modalBg}
-                    activeOpacity={1}
-                    onPress={() => setSelectedImg(null)}
-                >
+                <View style={styles.modalBg}>
+                    <TouchableWithoutFeedback onPress={() => setSelectedImg(null)}>
+                        <View style={StyleSheet.absoluteFillObject} />
+                    </TouchableWithoutFeedback>
                     <TouchableOpacity
                         style={[styles.closeBtn, { top: insets.top + 16 }]}
                         onPress={() => setSelectedImg(null)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        activeOpacity={0.7}
                     >
                         <Ionicons name="close-circle" size={40} color="#ffffff" />
                     </TouchableOpacity>
                     {selectedImg ? (
                         <Image source={{ uri: selectedImg }} style={styles.fullImg} resizeMode="contain" />
                     ) : null}
-                </TouchableOpacity>
+                </View>
             </Modal>
 
             <GlobalAlert

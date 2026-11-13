@@ -140,6 +140,37 @@ export const getStorageUrl = (path) => {
 };
 
 /**
+ * Fallback storage URL in case primary storage URL (e.g. R2) fails or returns 404.
+ * Swaps between files.serrata.xyz and {BASE_URL}/storage.
+ */
+export const getFallbackStorageUrl = (path) => {
+    if (!path) return null;
+    if (typeof path === 'object') {
+        if (path.uri) return getFallbackStorageUrl(path.uri);
+        if (path.url) return getFallbackStorageUrl(path.url);
+        return null;
+    }
+    const cleanPath = String(path).trim();
+    if (!cleanPath || cleanPath === '[object Object]' || cleanPath === 'undefined' || cleanPath === 'null') {
+        return null;
+    }
+
+    const stripped = cleanPath
+        .replace(/^https?:\/\/[^/]+\/?(storage\/)?/, '')
+        .replace(/^\/?storage\/?/, '')
+        .replace(/^\/+/, '');
+
+    if (!stripped) return null;
+
+    // If in prod (primary is FILES_URL), fallback to BASE_URL/storage
+    if (IS_PROD) {
+        return `${BASE_URL}/storage/${stripped}`;
+    }
+    // If in dev, fallback to FILES_URL
+    return `${FILES_URL}/${stripped}`;
+};
+
+/**
  * Format 'YYYY-MM' period string to Indonesian Month and Year.
  * Safe from UTC timezone shift.
  * Example: "2026-10" -> "Oktober 2026"

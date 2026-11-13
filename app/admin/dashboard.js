@@ -7,21 +7,25 @@ import {
     ActivityIndicator,
     Alert,
     BackHandler,
+    Image,
     Linking,
+    Modal,
     Platform,
     RefreshControl,
     ScrollView,
     StatusBar,
+    StyleSheet,
     Text,
     ToastAndroid,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import GlobalAlert from "../../components/GlobalAlert";
 import LoadingScreen from "../../components/LoadingScreen";
 import api, { clearAuthSession, getCleanToken } from "../../helpers/api";
-import { formatRupiah, getInitials } from "../../helpers/formatters";
+import { formatRupiah, getInitials, formatMonthYear, getStorageUrl, getFallbackStorageUrl } from "../../helpers/formatters";
 import { useAppStateResume } from "../../helpers/useAppStateResume";
 import { syncPushTokenWithBackend } from "../../helpers/notificationHelper";
 import styles from "../../styles/adminDashboard.styles";
@@ -35,6 +39,9 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [sendingReminderId, setSendingReminderId] = useState(null);
+    const [selectedPayment, setSelectedPayment] = useState(null);
+    const [zoomImage, setZoomImage] = useState(null);
+    const [detailImgFailed, setDetailImgFailed] = useState(false);
     const statsRef = useRef(null);
 
     // Keep ref in sync for callbacks
@@ -791,7 +798,10 @@ export default function AdminDashboard() {
                                 <TouchableOpacity
                                     key={index}
                                     style={styles.paymentItem}
-                                    onPress={() => router.push("/admin/verify")}
+                                    onPress={() => {
+                                        setDetailImgFailed(false);
+                                        setSelectedPayment(pay);
+                                    }}
                                     activeOpacity={0.7}
                                 >
                                     <View style={styles.payAvatar}>
@@ -833,6 +843,211 @@ export default function AdminDashboard() {
                     )}
                 </View>
             </ScrollView>
+
+            {/* PAYMENT DETAIL MODAL */}
+            <Modal
+                visible={!!selectedPayment}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setSelectedPayment(null)}
+                statusBarTranslucent
+            >
+                <View style={styles.payModalOverlay}>
+                    <TouchableWithoutFeedback onPress={() => setSelectedPayment(null)}>
+                        <View style={styles.payModalBackdropTouch} />
+                    </TouchableWithoutFeedback>
+                    <View style={[styles.payModalSheet, { paddingBottom: insets.bottom + 16 }]}>
+                        <View style={styles.payModalIndicator} />
+                        <View style={styles.payModalHeader}>
+                            <Text style={styles.payModalTitle}>Detail Pembayaran</Text>
+                            <TouchableOpacity
+                                onPress={() => setSelectedPayment(null)}
+                                style={styles.payModalCloseBtn}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Ionicons name="close" size={24} color="#64748b" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView
+                            style={styles.payModalScroll}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingBottom: 16 }}
+                        >
+                            {(() => {
+                                if (!selectedPayment) return null;
+                                const statusRaw = (selectedPayment.status_raw || selectedPayment.status || '').toLowerCase();
+                                const isSuccess = statusRaw === 'paid' || statusRaw === 'lunas' || statusRaw === 'verified' || statusRaw === 'success';
+                                const isPending = statusRaw === 'pending';
+                                const statusColor = isSuccess ? '#10b981' : isPending ? '#f59e0b' : '#ef4444';
+                                const statusBg = isSuccess ? '#ecfdf5' : isPending ? '#fffbeb' : '#fef2f2';
+                                const statusIcon = isSuccess ? 'checkmark-circle' : isPending ? 'time' : 'close-circle';
+                                const statusLabel = isSuccess ? 'Lunas' : isPending ? 'Menunggu Verifikasi' : 'Ditolak';
+
+                                const rawReceipt = selectedPayment.receipt_url || selectedPayment.receipt_file;
+                                const primaryReceiptUri = getStorageUrl(rawReceipt);
+                                const fallbackReceiptUri = getFallbackStorageUrl(rawReceipt);
+                                const receiptUri = detailImgFailed && fallbackReceiptUri ? fallbackReceiptUri : primaryReceiptUri;
+
+                                return (
+                                    <>
+                                        <View style={styles.payModalAmountCard}>
+                                            <Text style={styles.payModalAmountLabel}>Nominal Pembayaran</Text>
+                                            <Text style={styles.payModalAmountValue}>
+                                                {formatRupiah(selectedPayment.amount)}
+                                            </Text>
+                                            <View style={[styles.payModalBadge, { backgroundColor: statusBg }]}>
+                                                <Ionicons name={statusIcon} size={14} color={statusColor} />
+                                                <Text style={[styles.payModalBadgeText, { color: statusColor }]}>
+                                                    {statusLabel}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        {/* Info Section */}
+                                        <View style={styles.payModalInfoSection}>
+                                            <View style={styles.payModalRow}>
+                                                <Text style={styles.payModalLabel}>Nama Penghuni</Text>
+                                                <Text style={styles.payModalValue}>{selectedPayment.name || '-'}</Text>
+                                            </View>
+                                            <View style={styles.payModalRow}>
+                                                <Text style={styles.payModalLabel}>Unit Kamar</Text>
+                                                <Text style={styles.payModalValue}>Kamar {selectedPayment.room || '-'}</Text>
+                                            </View>
+                                            <View style={styles.payModalRow}>
+                                                <Text style={styles.payModalLabel}>Tanggal Bayar</Text>
+                                                <Text style={styles.payModalValue}>{selectedPayment.date || '-'}</Text>
+                                            </View>
+                                            {selectedPayment.period_month ? (
+                                                <View style={styles.payModalRow}>
+                                                    <Text style={styles.payModalLabel}>Periode Sewa</Text>
+                                                    <Text style={styles.payModalValue}>
+                                                        {formatMonthYear(selectedPayment.period_month)}
+                                                    </Text>
+                                                </View>
+                                            ) : null}
+                                            <View style={styles.payModalRow}>
+                                                <Text style={styles.payModalLabel}>Metode Bayar</Text>
+                                                <Text style={styles.payModalValue}>
+                                                    {(selectedPayment.payment_method || 'transfer').toUpperCase()}
+                                                </Text>
+                                            </View>
+                                            {selectedPayment.notes ? (
+                                                <View style={[styles.payModalRow, { borderBottomWidth: 0 }]}>
+                                                    <Text style={styles.payModalLabel}>Catatan</Text>
+                                                    <Text style={styles.payModalValue}>{selectedPayment.notes}</Text>
+                                                </View>
+                                            ) : null}
+                                        </View>
+
+                                        {/* Proof / Receipt Section */}
+                                        <Text style={styles.payModalProofTitle}>Bukti Pembayaran</Text>
+                                        {receiptUri ? (
+                                            <TouchableOpacity
+                                                style={styles.payModalProofWrap}
+                                                onPress={() => setZoomImage(receiptUri)}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Image
+                                                    source={{ uri: receiptUri }}
+                                                    style={styles.payModalProofImg}
+                                                    resizeMode="cover"
+                                                    onError={() => {
+                                                        if (!detailImgFailed && fallbackReceiptUri) {
+                                                            setDetailImgFailed(true);
+                                                        }
+                                                    }}
+                                                />
+                                                <View style={styles.payModalZoomBadge}>
+                                                    <Ionicons name="expand-outline" size={13} color="#ffffff" />
+                                                    <Text style={styles.payModalZoomText}>Lihat Foto Bukti</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        ) : (
+                                            <View style={styles.payModalNoProof}>
+                                                <Ionicons name="image-outline" size={24} color="#cbd5e1" />
+                                                <Text style={styles.payModalNoProofText}>
+                                                    Tidak ada lampiran bukti pembayaran
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {/* Actions */}
+                                        <View style={styles.payModalActions}>
+                                            {isPending ? (
+                                                <TouchableOpacity
+                                                    style={styles.payModalBtnVerify}
+                                                    onPress={() => {
+                                                        setSelectedPayment(null);
+                                                        router.push("/admin/verify");
+                                                    }}
+                                                    activeOpacity={0.8}
+                                                >
+                                                    <Ionicons name="shield-checkmark" size={18} color="#ffffff" />
+                                                    <Text style={styles.payModalBtnVerifyText}>
+                                                        Verifikasi Pembayaran Ini
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ) : null}
+
+                                            {selectedPayment.tenant_phone ? (
+                                                <TouchableOpacity
+                                                    style={styles.payModalBtnWa}
+                                                    onPress={() => {
+                                                        const cleanPhone = selectedPayment.tenant_phone.replace(/\D/g, '');
+                                                        const waPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
+                                                        Linking.openURL(`https://wa.me/${waPhone}`).catch(() => {});
+                                                    }}
+                                                    activeOpacity={0.8}
+                                                >
+                                                    <Ionicons name="logo-whatsapp" size={18} color="#059669" />
+                                                    <Text style={styles.payModalBtnWaText}>
+                                                        Hubungi Penghuni via WhatsApp
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ) : null}
+
+                                            <TouchableOpacity
+                                                style={styles.payModalBtnClose}
+                                                onPress={() => setSelectedPayment(null)}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Text style={styles.payModalBtnCloseText}>Tutup</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </>
+                                );
+                            })()}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* FULLSCREEN IMAGE ZOOM MODAL */}
+            <Modal
+                visible={!!zoomImage}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setZoomImage(null)}
+                statusBarTranslucent
+            >
+                <View style={styles.zoomModalBg}>
+                    <TouchableWithoutFeedback onPress={() => setZoomImage(null)}>
+                        <View style={StyleSheet.absoluteFillObject} />
+                    </TouchableWithoutFeedback>
+                    <TouchableOpacity
+                        style={[styles.zoomCloseBtn, { top: insets.top + 16 }]}
+                        onPress={() => setZoomImage(null)}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="close-circle" size={40} color="#ffffff" />
+                    </TouchableOpacity>
+                    {zoomImage ? (
+                        <Image source={{ uri: zoomImage }} style={styles.zoomFullImg} resizeMode="contain" />
+                    ) : null}
+                </View>
+            </Modal>
 
             <GlobalAlert
                 visible={alertConfig.visible}

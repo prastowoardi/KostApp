@@ -329,11 +329,20 @@ export default function TenantDashboard() {
               <View style={styles.billCardPaidDivider} />
               <TouchableOpacity
                 style={styles.billCardPaidAction}
-                onPress={() => router.push("/tenant/payment/history")}
+                onPress={() => {
+                  if (data?.latest_payment_id) {
+                    router.push({
+                      pathname: "/tenant/payment/detail",
+                      params: { id: data.latest_payment_id },
+                    });
+                  } else {
+                    router.push("/tenant/payment/history");
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <Ionicons name="receipt-outline" size={16} color="#2563eb" />
-                <Text style={styles.billCardPaidActionText}>Lihat Riwayat & Bukti Pembayaran</Text>
+                <Text style={styles.billCardPaidActionText}>Lihat Detail & Bukti Pembayaran</Text>
                 <Ionicons name="chevron-forward" size={16} color="#2563eb" style={{ marginLeft: "auto" }} />
               </TouchableOpacity>
             </View>
@@ -357,7 +366,16 @@ export default function TenantDashboard() {
               <View style={styles.billCardPendingDivider} />
               <TouchableOpacity
                 style={styles.billCardPendingAction}
-                onPress={() => router.push("/tenant/payment/history")}
+                onPress={() => {
+                  if (data?.latest_payment_id) {
+                    router.push({
+                      pathname: "/tenant/payment/detail",
+                      params: { id: data.latest_payment_id },
+                    });
+                  } else {
+                    router.push("/tenant/payment/history");
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <Ionicons name="eye-outline" size={16} color="#d97706" />

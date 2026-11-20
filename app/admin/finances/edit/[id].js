@@ -140,16 +140,20 @@ export default function EditTransaction() {
     }, [id, router]);
 
     const pickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.7,
-        });
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: false,
+                quality: 0.7,
+            });
 
-        if (!result.canceled && result.assets?.[0]?.uri) {
-            setNewImage(result.assets[0].uri);
-            setRemoveReceipt(false);
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setNewImage(result.assets[0].uri);
+                setRemoveReceipt(false);
+            }
+        } catch (error) {
+            console.log('Error pick image:', error);
+            showAlert('Gagal Memilih Foto', 'Terjadi kesalahan saat memilih foto dari galeri.', 'error');
         }
     };
 

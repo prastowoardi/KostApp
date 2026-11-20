@@ -37,7 +37,11 @@
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
       ]
     },
     "web": {
@@ -64,6 +68,13 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#0f172a"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikasi membutuhkan akses galeri untuk mengunggah bukti pembayaran.",
+          "cameraPermission": "Aplikasi membutuhkan akses kamera untuk memotret bukti pembayaran."
         }
       ]
     ],

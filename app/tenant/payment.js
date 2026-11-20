@@ -92,21 +92,63 @@ export default function PaymentScreen() {
         fetchBillDetail();
     }, [fetchBillDetail]);
 
-    const pickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            return showAlert('Izin Ditolak', 'Aplikasi butuh akses galeri untuk mengunggah bukti pembayaran.', 'error');
-        }
+    const pickImageFromGallery = async () => {
+        try {
+            if (Platform.OS !== 'web') {
+                try {
+                    await ImagePicker.requestMediaLibraryPermissionsAsync();
+                } catch (permErr) {
+                    console.log('Permission request note:', permErr);
+                }
+            }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 0.6,
-        });
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: false,
+                quality: 0.8,
+            });
 
-        if (!result.canceled && result.assets?.[0]?.uri) {
-            setImage(result.assets[0].uri);
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log('Error pick gallery:', error);
+            showAlert('Gagal Memilih Foto', 'Terjadi kesalahan saat membuka galeri foto: ' + (error?.message || 'Silakan coba lagi.'), 'error');
         }
+    };
+
+    const takePhotoFromCamera = async () => {
+        try {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+                return showAlert('Izin Kamera Diperlukan', 'Aplikasi memerlukan izin kamera untuk memotret bukti transfer pembayaran.', 'warning');
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: false,
+                quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets?.[0]?.uri) {
+                setImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log('Error take camera:', error);
+            showAlert('Gagal Memotret', 'Terjadi kesalahan saat membuka kamera: ' + (error?.message || 'Silakan coba lagi.'), 'error');
+        }
+    };
+
+    const handleSelectImageSource = () => {
+        Alert.alert(
+            'Pilih Bukti Pembayaran',
+            'Ambil bukti transfer pembayaran dari mana?',
+            [
+                { text: 'Buka Kamera', onPress: takePhotoFromCamera },
+                { text: 'Pilih dari Galeri', onPress: pickImageFromGallery },
+                { text: 'Batal', style: 'cancel' },
+            ],
+            { cancelable: true }
+        );
     };
 
     const submitPayment = async () => {
@@ -117,7 +159,22 @@ export default function PaymentScreen() {
         setLoading(true);
         try {
             const formData = new FormData();
-            const filename = `proof_${Date.now()}.jpg`;
+            const cleanUri = image.toLowerCase();
+            let fileType = 'image/jpeg';
+            let fileExt = 'jpg';
+
+            if (cleanUri.endsWith('.png')) {
+                fileType = 'image/png';
+                fileExt = 'png';
+            } else if (cleanUri.endsWith('.webp')) {
+                fileType = 'image/webp';
+                fileExt = 'webp';
+            } else if (cleanUri.endsWith('.heic')) {
+                fileType = 'image/heic';
+                fileExt = 'heic';
+            }
+
+            const filename = `proof_${Date.now()}.${fileExt}`;
 
             if (Platform.OS === 'web') {
                 const response = await fetch(image);
@@ -127,7 +184,7 @@ export default function PaymentScreen() {
                 formData.append('proof_image', {
                     uri: image,
                     name: filename,
-                    type: 'image/jpeg',
+                    type: fileType,
                 });
             }
 
@@ -272,31 +329,69 @@ export default function PaymentScreen() {
 
                 {image ? (
                     <View style={styles.previewCard}>
-                        <Image source={{ uri: image }} style={styles.previewImage} resizeMode="contain" />
+                        <View style={styles.previewImageWrap}>
+                            <Image source={{ uri: image }} style={styles.previewImage} resizeMode="contain" />
+                            <View style={styles.proofBadge}>
+                                <Ionicons name="checkmark-circle" size={14} color="#10b981" />
+                                <Text style={styles.proofBadgeText}>Bukti Terpilih</Text>
+                            </View>
+                        </View>
                         <View style={styles.previewActions}>
-                            <TouchableOpacity style={styles.changeBtn} onPress={pickImage}>
-                                <Ionicons name="camera-outline" size={16} color="#4e73df" />
-                                <Text style={styles.changeBtnText}>Ganti Foto</Text>
+                            <TouchableOpacity style={styles.changeBtn} onPress={pickImageFromGallery} activeOpacity={0.7}>
+                                <Ionicons name="images-outline" size={16} color="#2563eb" />
+                                <Text style={styles.changeBtnText}>Galeri</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.removeBtn} onPress={() => setImage(null)}>
+                            <TouchableOpacity style={styles.cameraBtn} onPress={takePhotoFromCamera} activeOpacity={0.7}>
+                                <Ionicons name="camera-outline" size={16} color="#059669" />
+                                <Text style={styles.cameraBtnText}>Kamera</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.removeBtn} onPress={() => setImage(null)} activeOpacity={0.7}>
                                 <Ionicons name="trash-outline" size={16} color="#ef4444" />
                                 <Text style={styles.removeBtnText}>Hapus</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                 ) : (
-                    <TouchableOpacity
-                        style={styles.uploadBox}
-                        onPress={pickImage}
-                        disabled={loading}
-                        activeOpacity={0.8}
-                    >
-                        <View style={styles.uploadIconCircle}>
-                            <Ionicons name="cloud-upload-outline" size={32} color="#4e73df" />
+                    <View>
+                        {/* Two Quick Buttons: Galeri & Kamera */}
+                        <View style={styles.sourceChoiceRow}>
+                            <TouchableOpacity
+                                style={[styles.sourceChoiceBtn, styles.sourceChoiceBtnActive]}
+                                onPress={pickImageFromGallery}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="images-outline" size={18} color="#2563eb" />
+                                <Text style={[styles.sourceChoiceText, styles.sourceChoiceTextActive]}>
+                                    Pilih dari Galeri
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.sourceChoiceBtn}
+                                onPress={takePhotoFromCamera}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="camera-outline" size={18} color="#059669" />
+                                <Text style={[styles.sourceChoiceText, { color: '#059669' }]}>
+                                    Buka Kamera
+                                </Text>
+                            </TouchableOpacity>
                         </View>
-                        <Text style={styles.uploadTitle}>Pilih Bukti Pembayaran</Text>
-                        <Text style={styles.uploadSub}>Format JPG, JPEG, PNG (Maks 5MB)</Text>
-                    </TouchableOpacity>
+
+                        {/* Large Upload Box */}
+                        <TouchableOpacity
+                            style={styles.uploadBox}
+                            onPress={handleSelectImageSource}
+                            disabled={loading}
+                            activeOpacity={0.8}
+                        >
+                            <View style={styles.uploadIconCircle}>
+                                <Ionicons name="cloud-upload-outline" size={32} color="#4e73df" />
+                            </View>
+                            <Text style={styles.uploadTitle}>Klik untuk Pilih Foto Bukti</Text>
+                            <Text style={styles.uploadSub}>Ambil dari Kamera atau Galeri (Maks 5MB)</Text>
+                        </TouchableOpacity>
+                    </View>
                 )}
 
                 <TouchableOpacity

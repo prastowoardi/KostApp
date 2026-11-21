@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GlobalAlert from '../../components/GlobalAlert';
-import SmoothModal from '../../components/SmoothModal';
 import api, { clearAuthSession } from '../../helpers/api';
 import { formatRupiah, formatMonthYear } from '../../helpers/formatters';
 import styles from '../../styles/tenantPayment.styles';
@@ -54,7 +53,6 @@ export default function PaymentScreen() {
     const [loading, setLoading] = useState(false);
     const [billData, setBillData] = useState(null);
     const [copiedBankId, setCopiedBankId] = useState(null);
-    const [pickerModalVisible, setPickerModalVisible] = useState(false);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -133,17 +131,6 @@ export default function PaymentScreen() {
             console.log('Error take camera:', error);
             showAlert('Gagal Memotret', 'Terjadi kesalahan saat membuka kamera: ' + (error?.message || 'Silakan coba lagi.'), 'error');
         }
-    };
-
-    const handleSelectOption = (action) => {
-        setPickerModalVisible(false);
-        setTimeout(() => {
-            if (action === 'camera') {
-                takePhotoFromCamera();
-            } else if (action === 'gallery') {
-                pickImageFromGallery();
-            }
-        }, 280);
     };
 
     const submitPayment = async () => {
@@ -333,12 +320,20 @@ export default function PaymentScreen() {
                         </View>
                         <View style={styles.previewActions}>
                             <TouchableOpacity
-                                style={styles.changeBtn}
-                                onPress={() => setPickerModalVisible(true)}
+                                style={styles.cameraBtn}
+                                onPress={takePhotoFromCamera}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="swap-horizontal-outline" size={16} color="#2563eb" />
-                                <Text style={styles.changeBtnText}>Ganti Foto</Text>
+                                <Ionicons name="camera-outline" size={16} color="#059669" />
+                                <Text style={styles.cameraBtnText}>Foto Ulang</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.changeBtn}
+                                onPress={pickImageFromGallery}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="images-outline" size={16} color="#2563eb" />
+                                <Text style={styles.changeBtnText}>Ganti Galeri</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.removeBtn}
@@ -351,22 +346,63 @@ export default function PaymentScreen() {
                         </View>
                     </View>
                 ) : (
-                    <TouchableOpacity
-                        style={styles.uploadBox}
-                        onPress={() => setPickerModalVisible(true)}
-                        disabled={loading}
-                        activeOpacity={0.8}
-                    >
-                        <View style={styles.uploadIconCircle}>
-                            <Ionicons name="cloud-upload" size={32} color="#2563eb" />
+                    <View style={styles.directOptionsWrap}>
+                        {/* Opsi 1: Buka Kamera */}
+                        <TouchableOpacity
+                            style={styles.optionCard}
+                            onPress={takePhotoFromCamera}
+                            disabled={loading}
+                            activeOpacity={0.75}
+                        >
+                            <View style={[styles.optionIconCircle, { backgroundColor: '#ecfdf5' }]}>
+                                <Ionicons name="camera" size={26} color="#059669" />
+                            </View>
+                            <View style={styles.optionInfo}>
+                                <View style={styles.optionTitleRow}>
+                                    <Text style={styles.optionTitle}>Buka Kamera</Text>
+                                    <View style={styles.optionBadgeGreen}>
+                                        <Text style={styles.optionBadgeTextGreen}>Foto Langsung</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.optionDesc}>
+                                    Potret fisik struk ATM, teller bank, atau nota pembayaran
+                                </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                        </TouchableOpacity>
+
+                        {/* Opsi 2: Pilih dari Galeri */}
+                        <TouchableOpacity
+                            style={styles.optionCard}
+                            onPress={pickImageFromGallery}
+                            disabled={loading}
+                            activeOpacity={0.75}
+                        >
+                            <View style={[styles.optionIconCircle, { backgroundColor: '#eff6ff' }]}>
+                                <Ionicons name="images" size={26} color="#2563eb" />
+                            </View>
+                            <View style={styles.optionInfo}>
+                                <View style={styles.optionTitleRow}>
+                                    <Text style={styles.optionTitle}>Pilih dari Galeri</Text>
+                                    <View style={styles.optionBadgeBlue}>
+                                        <Text style={styles.optionBadgeTextBlue}>Screenshot / File</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.optionDesc}>
+                                    Unggah screenshot bukti transfer m-banking atau e-wallet
+                                </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                        </TouchableOpacity>
+
+                        {/* Tips Box */}
+                        <View style={styles.modalTipsBox}>
+                            <Ionicons name="information-circle" size={18} color="#2563eb" />
+                            <Text style={styles.modalTipsText}>
+                                Format didukung: JPG, PNG, WEBP (maks. 5MB). Pastikan tanggal & nominal transfer terlihat jelas.
+                            </Text>
                         </View>
-                        <Text style={styles.uploadTitle}>Pilih Bukti Pembayaran</Text>
-                        <Text style={styles.uploadSub}>Kamera atau Galeri HP (Maks 5MB)</Text>
-                        <View style={styles.uploadActionBadge}>
-                            <Ionicons name="add-circle" size={15} color="#2563eb" />
-                            <Text style={styles.uploadActionBadgeText}>Sentuh untuk Memilih</Text>
-                        </View>
-                    </TouchableOpacity>
+                    </View>
                 )}
 
                 <TouchableOpacity
@@ -392,99 +428,6 @@ export default function PaymentScreen() {
                     </LinearGradient>
                 </TouchableOpacity>
             </ScrollView>
-
-            {/* BOTTOM SHEET PILIH SUMBER FOTO */}
-            <SmoothModal
-                visible={pickerModalVisible}
-                onClose={() => setPickerModalVisible(false)}
-                type="bottom"
-                contentStyle={{
-                    paddingHorizontal: 20,
-                    paddingTop: 8,
-                    paddingBottom: insets.bottom + 16,
-                }}
-            >
-                <View style={styles.modalHeader}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.modalTitle}>Pilih Bukti Pembayaran</Text>
-                        <Text style={styles.modalSubtitle}>
-                            Pilih metode untuk mengunggah struk atau bukti transfer sewa
-                        </Text>
-                    </View>
-                    <TouchableOpacity
-                        style={styles.modalCloseBtn}
-                        onPress={() => setPickerModalVisible(false)}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="close" size={20} color="#64748b" />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.optionsWrap}>
-                    {/* Opsi 1: Buka Kamera */}
-                    <TouchableOpacity
-                        style={styles.optionCard}
-                        onPress={() => handleSelectOption('camera')}
-                        activeOpacity={0.75}
-                    >
-                        <View style={[styles.optionIconCircle, { backgroundColor: '#ecfdf5' }]}>
-                            <Ionicons name="camera" size={26} color="#059669" />
-                        </View>
-                        <View style={styles.optionInfo}>
-                            <View style={styles.optionTitleRow}>
-                                <Text style={styles.optionTitle}>Buka Kamera</Text>
-                                <View style={styles.optionBadgeGreen}>
-                                    <Text style={styles.optionBadgeTextGreen}>Foto Langsung</Text>
-                                </View>
-                            </View>
-                            <Text style={styles.optionDesc}>
-                                Potret fisik struk ATM, teller bank, atau nota pembayaran
-                            </Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
-                    </TouchableOpacity>
-
-                    {/* Opsi 2: Pilih dari Galeri */}
-                    <TouchableOpacity
-                        style={styles.optionCard}
-                        onPress={() => handleSelectOption('gallery')}
-                        activeOpacity={0.75}
-                    >
-                        <View style={[styles.optionIconCircle, { backgroundColor: '#eff6ff' }]}>
-                            <Ionicons name="images" size={26} color="#2563eb" />
-                        </View>
-                        <View style={styles.optionInfo}>
-                            <View style={styles.optionTitleRow}>
-                                <Text style={styles.optionTitle}>Pilih dari Galeri</Text>
-                                <View style={styles.optionBadgeBlue}>
-                                    <Text style={styles.optionBadgeTextBlue}>Screenshot / File</Text>
-                                </View>
-                            </View>
-                            <Text style={styles.optionDesc}>
-                                Unggah screenshot bukti transfer m-banking atau e-wallet
-                            </Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Tips Box */}
-                <View style={styles.modalTipsBox}>
-                    <Ionicons name="information-circle" size={18} color="#2563eb" />
-                    <Text style={styles.modalTipsText}>
-                        Format didukung: JPG, PNG, WEBP (maks. 5MB). Pastikan tanggal & nominal transfer terlihat jelas.
-                    </Text>
-                </View>
-
-                {/* Tombol Batal */}
-                <TouchableOpacity
-                    style={styles.modalCancelBtn}
-                    onPress={() => setPickerModalVisible(false)}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.modalCancelText}>Batal</Text>
-                </TouchableOpacity>
-            </SmoothModal>
 
             <GlobalAlert
                 visible={alertConfig.visible}
